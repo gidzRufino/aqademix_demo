@@ -1,0 +1,20 @@
+{
+  "name": "wsserver",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://genru06@bitbucket.org/csscoreinc/e-skwela2018.git"
+  },
+  "author": "genru",
+  "license": "ISC",
+  "homepage": "https://bitbucket.org/csscoreinc/e-skwela2018#readme",
+  "dependencies": {
+    "ws": "^7.2.5"
+  }
+}

@@ -1,0 +1,23 @@
+<?php
+echo Modules::run('templates/html_header');
+?>
+<div class="submitLoad hide" style="z-index: 2000;" id="loading">
+    <!--<img src="<?php echo base_url()?>images/loading.gif" style="width:200px" />-->
+</div>
+<div id="wrapper">
+
+        <!-- Navigation -->
+        <nav class="navbar navbar-default navbar-static-top" role="navigation" style="margin-bottom: 0">
+            <?php
+                echo Modules::run('nav/getDashIcons');
+                echo Modules::run('nav/getSideNav');
+                
+            ?>
+        </nav>
+
+        <div id="page-wrapper">
+                   <?php $this->load->view($modules.'/'.$main_content); ?> 
+        </div>
+        <!-- /#page-wrapper -->
+<?php
+echo Modules::run('templates/html_footer');

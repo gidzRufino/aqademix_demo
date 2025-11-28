@@ -1,0 +1,452 @@
+<?php
+
+set_time_limit(120);
+
+class MYPDF extends Pdf {
+
+    public function Header() { //Page header
+        $this->SetTitle('Business Office Collections');
+    }
+
+    public function Footer() { // Page footer
+
+        // Position at 15 mm from bottom
+        $this->SetY(-15);
+        // Set font
+        $this->SetFont('helvetica', 'I', 8);
+        // Page number
+        // $this->Cell(0, 10, 'Page '.$this->getAliasNumPage().'/'.$this->getAliasNbPages(), 0, false, 'R', 0, '', 0, false, 'T', 'M');
+    }
+
+}
+
+$pdf = new MYPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
+// set auto page breaks
+$pdf->SetAutoPageBreak(TRUE, 5);
+
+// set image scale factor
+$pdf->setImageScale(PDF_IMAGE_SCALE_RATIO);
+// remove default header/footer
+$resolution = array(330, 216);
+
+$school = "Livingstone Christian Academy";
+$saddress = "Upper Bagacay, Tayud, Consolacion, Cebu";
+// $sname = $student->lastname;
+// foreach student of a certain grade create a page of SOA
+$month2date = date("n");
+if ($month2date >= 8) {
+    $sch_month = $month2date - 7; // they started at the month of July
+} elseif ($month2date < 8) {
+    $sch_month = $month2date + 5;
+}
+
+foreach ($studperlevel as $spl) {
+    $st_id = $spl->st_id;
+    $cdate = $due_date;
+    $ac_tdate = date("F d, Y");
+
+    $settings = Modules::run('main/getSet');
+    $student = Modules::run('registrar/getSingleStudent', $st_id, $this->session->userdata('school_year'));
+
+    $plan = Modules::run('finance/getPlanByCourse', $student->grade_id, 0, $student->st_type, $student->school_year);
+    $charges = ($plan->fin_plan_id != '' ? Modules::run('finance/financeChargesByPlan', 0, $this->session->userdata('school_year'), 0, $plan->fin_plan_id) : 0);
+    $addCharge = Modules::run('college/finance/financeChargesByPlan', NULL, $student->school_year, 0);
+    // print_r($plan);
+    Modules::run('finance/setFinanceAccount', base64_decode($st_id), $student->school_year, $student->grade_id, null, null);
+
+    $financeAccount = Modules::run('finance/getFinanceAccount', $student->u_id);
+
+    if ($student->u_id == ""):
+        $user_id = $student->us_id;
+    else:
+        $user_id = $student->u_id;
+    endif;
+
+    $i = 1;
+    $total = 0;
+    $amount = 0;
+    $scharge = "";
+
+    if ($charges != 0) {
+        foreach ($charges as $c) {
+            $next = $c->school_year + 1;
+            $scharge = $scharge . '
+            <tr>
+                <td style="font-size: 10px;">' . $i++ . '</td>
+                <td style="font-size: 10px;">' . $c->item_description . '</td>
+                <td style="text-align: left;font-size: 10px;">' . number_format($c->amount, 2, '.', ',') . '</td>
+            </tr>';
+            $total += $c->amount;
+        }
+    
+        $totalExtra = 0;
+        $extraCharges = Modules::run('finance/getExtraFinanceCharges', $user_id, 0, $student->school_year);
+        // $previousYear = Modules::run('finance/getExtraFinanceCharges', $user_id, 0, ($student->school_year - 1));
+        //print_r($previousYear->result());
+    
+        if ($extraCharges->num_rows() > 0):
+            foreach ($extraCharges->result() as $ec) {
+                $scharge = $scharge . '
+                <tr>
+                    <td style="font-size: 10px;">' . $i++ . '</td>
+                    <td style="font-size: 10px;">' . $ec->item_description . '</td>
+                    <td style="font-size: 10px; text-align: left;">' . number_format($ec->extra_amount, 2, '.', ',') . '</td>
+                </tr>';
+                $totalExtra += $ec->extra_amount;
+            }
+            $total = $total + $totalExtra;
+        endif;
+        // if($previousYear->num_rows()>0):
+        //     foreach ($previousYear->result() as $es){
+        //     $scharge = $scharge.'
+        //         <tr>
+        //             <td style="font-size: 10px;">'.$i++.'</td>
+        //             <td style="font-size: 10px;">'.$es->item_description.'</td>
+        //             <td style="font-size: 10px; text-align: left;">'.number_format($es->extra_amount, 2, '.',',').'</td>
+        //         </tr>';
+        //     $totalExtra += $es->extra_amount;
+        //     }
+        //     $total = $total + $totalExtra;
+        // endif;
+    
+        if ($total != 0) {
+            $scharge = $scharge . '
+            <tr>
+                <td></td>
+                <td style="font-size: 12px;"><b>TOTAL</b></td>
+                <td style="font-size: 12px;text-align:left;"><b>' . number_format($total, 2, '.', ',') . '</b></td>
+            </tr>
+            <tr>
+                <td height="10"></td>
+            </tr>
+            ';
+        }
+    } else {
+        $scharge = $scharge . '
+            <tr>
+                <td style="font-size: 10px; text-align: center;" colspan="3">No Finance Plan Type Set</td>
+            </tr>
+            <tr>
+                <td height="10"></td>
+            </tr>
+            ';
+    }
+    $total_charge = $total;
+
+
+    $phistory = "";
+    $phistory = $phistory . '
+        <tr>
+            <td style="font-size:10px;width:15%;"></td>
+            <td style="font-size:10px;width:10%; text-align: center;">-</td>
+            <td style="font-size:10px;width:30%; text-align: center;">Total Charge</td>
+            <td style="font-size:10px;width:28%; text-align: center;">-</td>
+            <td style="font-size:10px;width:20%; text-align: left;">' . number_format($total, 2, '.', ',') . '</td>
+        </tr>
+    ';
+
+    $transaction = Modules::run('college/finance/getTransaction', $student->uid, 0, $student->school_year);
+    $paymentTotal = 0;
+    $i = 1;
+    $tdiscount = 0;
+    $pd_total = 0;
+    if ($transaction->num_rows() > 0):
+        $balance = 0;
+        foreach ($transaction->result() as $tr):
+            $i++;
+            $total = $total - $tr->t_amount;
+            $pd_total = $pd_total + $tr->t_amount;
+            if ($tr->t_type == 2):
+                $discounts = Modules::run('finance/getDiscountsByItemId', $student->uid, 0, $student->school_year, $tr->disc_id);
+                $tdiscount = $tdiscount + $tr->t_amount;
+                $phistory = '
+                <tr>
+                    <td style="width:15%;font-size: 10px;">' . $tr->t_date . '</td>
+                    <td style="width:10%;font-size: 10px;text-align: center;">-</td>
+                    <td style="width:30%;font-size: 10px;text-align: center;">' . $tr->item_description . '</td>
+                    <td style="width:28%;font-size: 10px; text-align: right;">(' . number_format($tr->t_amount, 2, '.', ',') . ')</td>
+                    <td style="width:20%; font-size: 10px;text-align: left;">' . number_format(($total), 2, '.', ',') . '</td>
+                </tr>
+                ' . $phistory;
+            else:
+                $phistory = $phistory . '
+                <tr>
+                    <td style="width:15%;font-size: 10px;">' . $tr->t_date . '</td>
+                    <td style="width:10%;font-size: 10px;">' . $tr->ref_number . '</td>
+                    <td style="width:30%;font-size: 10px;text-align: center;">' . $tr->item_description . '</td>
+                    <td style="width:28%;font-size: 10px; text-align: right;">' . number_format($tr->t_amount, 2, '.', ',') . '</td>
+                    <td style="width:20%; font-size: 10px;text-align: left;">' . number_format(($total), 2, '.', ',') . '</td>
+                </tr>
+                ';
+            endif;
+            $paymentTotal = $total;
+            // $phistory = $phistory.'</tr>';
+        endforeach;
+        // if($paymentTotal!=""):
+        $phistory = $phistory . '
+            <tr>
+                <th></th>
+            </tr>
+            <tr>
+                <th style="text-align:right;font-size: 12px; font-weight: bold;" colspan="4">Running Balance</th>
+                <th  style="text-align:left;font-size: 12px; font-weight: bold;">' . number_format($paymentTotal, 2, '.', ',') . '</th>
+            </tr>
+            ';
+    // endif;
+    endif;
+    $monthly = ($total_charge - $tdiscount) / 10;
+    $sch_month = ($sch_month > 10 ? ($sch_month == 12 ? $sch_month : 10) : $sch_month);
+    $minmonthly = $monthly * $sch_month;
+    // $amount_paid = $total_charge-$paymentTotal;
+    $amount_paid = $pd_total;
+    $paid_discount = $amount_paid - $tdiscount;
+    $min_amount_due = $minmonthly - $paid_discount;
+
+    if ($min_amount_due < 0) {
+        $min_amount_due = 0;
+    }
+
+
+    $phistory = $phistory . '
+            <tr>
+                <th style="text-align:right;font-size: 10px; font-weight: normal;" colspan="4">Total Payments and Discounts Received</th>
+                <th  style="text-align:left;font-size: 10px; font-weight: normal;">' . number_format($pd_total, 2, '.', ',') . '</th>
+            </tr>
+
+            <tr>
+                <th style="text-align:right;font-size: 12px; font-weight: bold;" colspan="4">Amount Due</th>
+                <th  style="text-align:left;font-size: 12px; font-weight: bold;">' . number_format($min_amount_due, 2, '.', ',') . '</th>
+            </tr>
+            <tr>
+                <td height="10"></td>
+            </tr>
+    ';
+
+
+    $pdf->AddPage('P', $resolution);
+
+
+    $html = '
+    <table style="padding-top: 5px;">
+        <tr>
+            <td height="50"></td>
+        </tr>
+        <tr>
+            <td style="padding: 1px;">
+                <table style="width: 100%; margin-left: 50px;">
+                    <tr>
+                        <th colspan="6" style="text-align:center; font-size: 25px;"><br /><b>' . $settings->set_school_name . '</b></th>
+                    </tr>
+                    <tr>
+                        <td colspan="6" style="text-align:center; font-style: italic; font-size: 10px;">' . $settings->set_school_address . '</td>
+                    </tr>
+                    <tr>
+                        <td colspan="6" style="text-align:center; font-style: italic; font-size: 10px;"></td>
+                    </tr>
+
+                    <tr>
+                        <td colspan="6" style="text-align:center;  font-style: bold; font-size: 20px;"><b>STATEMENT OF ACCOUNT</b></td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        <tr>
+            <td height="50"></td>
+        </tr>
+        <tr>
+            <td style="padding: 1px;">
+                <table style="width: 100%; margin-left: 50px;">
+                    <tr>
+                        <th colspan="6" style="text-align:left; font-size: 16px;"><br /><b>Name:</b> ' . $student->lastname . ', ' . $student->firstname . '</th>
+                        <th colspan="3" style="text-align:right; font-size: 14px;"><br /><b>Grade/Level:</b> ' . $student->level . '</th>
+                    </tr>
+                    <tr>
+                        <th colspan="6" style="text-align:left; font-size: 14px;"><br /><b>Student ID:</b> ' . $student->uid . '</th>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        <tr>
+            <td height="20"></td>
+        </tr>
+        <tr>
+            <td style="padding: 1px;">
+                <table style="width: 100%; margin-left: 50px;">
+                    <tr>
+                        <th colspan="3" style="text-align:left; font-size: 16px;"><br />
+                            <table style="width: 100%;border: 1px solid black;">
+                                <tr>
+                                    <th colspan="3" style="text-align: center;font-weight: bold; font-size: 14px; border: 1px solid black;">Finance Details</th>
+                                </tr>
+                                <tr>
+                                    <td height="10"></td>
+                                </tr>
+                                <tr>
+                                    <th style="width:10%;font-size: 12px;"><b></b></th>
+                                    <th style="width:50%;font-size: 12px;"><b>Particulars</b></th>
+                                    <th style="width:40%; font-size: 12px;text-align: center;"><b>Amount</b></th>
+                                </tr>
+                                ' . $scharge . '
+                            </table>
+                        </th>
+                        <th colspan="7" style="text-align:right; font-size: 14px;"><br />
+                            <table style="width: 100%; margin-left: 50px;border: 1px solid black;">
+                                <tr>
+                                    <th colspan="5" style="text-align: center;font-weight: bold; font-size: 14px; border: 1px solid black;">Payment / Discount History</th>
+                                </tr>
+                                <tr>
+                                    <td height="10"></td>
+                                </tr>
+                                <tr>
+                                    <th style="width:15%;font-size: 12px;text-align: center;font-weight: bold;">Date</th>
+                                    <th style="width:10%;font-size: 12px;text-align: center;font-weight: bold;">OR #</th>
+                                    <th style="width:30%;font-size: 12px;text-align: center;font-weight: bold;">Particulars</th>
+                                    <th style="width:28%; font-size: 12px;text-align: center;font-weight: bold;">Payment/Discounts</th>
+                                    <th style="width:20%; font-size: 12px;text-align: left;font-weight: bold;">Balance</th>
+                                </tr>
+                                ' . $phistory . '
+                            </table>
+                        </th>
+                    </tr>
+                    <tr>
+                        <td height="-150"></td>
+                    </tr>
+                    <tr >
+                        <td colspan="10" style="margin-top: 50px;text-align:left; font-size: 9px;"><br /><br />* All details reflected herewith are as of ' . $ac_tdate . '. It excludes all transactions made after the said date.</td>
+                    </tr>
+                    <tr>
+                        <td colspan="10" style="text-align:left; font-size: 9px;"><br />** Please settle this account on or before [ ' . $cdate . ' ]. Please keep this for future reference.</td>
+                    </tr>
+                    <tr>
+                        <td height="50"></td>
+                    </tr>
+                    <tr>
+                        <td colspan="3"></td>
+                        <td colspan="7" style="text-align:center; font-size: 9px;"><br /><br /><br />____________________________________________________</td>
+                    </tr>
+                    <tr>
+                        <td colspan="3"></td>
+                        <td colspan="7" style="text-align:center; font-size: 9px;">Not valid without Authorized Signature over Printed Name<br /><br /></td>
+                    </tr>
+                    <tr>
+                        <td colspan="10" style="text-align:center; font-size: 5px;">-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;[ cut here and return to ' . $settings->set_school_name . ' ]&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;</td>
+                    </tr>
+                    <tr>
+                        <td colspan="6" style="text-align:center; font-size: 8px;"><br /><br /> </td>
+                    </tr>
+                    <tr>
+                        <th colspan="10" style="text-align:left; font-size: 14px;"><br /></th>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <table style="width: 100%;">
+                    <tr>
+                        <td>
+                            <table style="border: 1px solid black; width: 100%;">
+                                <tr>
+                                    <th colspan="4" style="text-align:center; font-size: 11px;"> <br /><br />' . $settings->set_school_name . '</th>
+
+                                </tr>
+                                <tr>
+                                    <th colspan="4" style="text-align:center; font-size: 8px;">' . $settings->set_school_address . '</th>
+                                </tr>
+                                <tr>
+                                    <th colspan="4" style="text-align:center; font-size: 10px;">' . $ac_tdate . '<br /></th>
+                                </tr>
+                                <tr>
+                                    <th colspan="4" style="text-align:center; font-size: 10px;">Statement of Account Acknowledgment Form<br /></th>
+                                </tr>
+                                <tr>
+                                    <th colspan="4" style="text-align:center; font-size: 8px;">Name: ' . $student->lastname . ', ' . $student->firstname . '</th>
+                                </tr>
+                                <tr>
+                                    <th colspan="4" style="text-align:center; font-size: 8px;">Grade / Level: ' . $student->level . ' <br /></th>
+                                </tr>
+                                <tr>
+                                    <th colspan="4" style="text-align:left; font-size: 8px;"> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;___ We have already settled the account. Thank you. </th>
+
+                                </tr>
+                                <tr>
+                                    <th colspan="4" style="text-align:left; font-size: 8px;"> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;___ We will settle the account on ________________  </th>
+                                </tr>
+                                <tr>
+                                    <th colspan="1"></th>
+                                    <th colspan="3" style="text-align:left; font-size: 6px;"> * please settle on or before [' . $cdate . '] <br /><br /></th>
+                                </tr>
+                                <tr>
+                                    <th colspan="1" style="text-align:center; font-size: 8px;"> ______________ </th>
+                                    <th colspan="3" style="text-align:center; font-size: 8px;"> ________________________________________ </th>
+                                </tr>
+                                <tr>
+                                    <th colspan="1" style="text-align:center; font-size: 8px;"> Date</th>
+                                    <th colspan="3" style="text-align:center; font-size: 8px;"> Parent/Guardian Signature over Printed Name <br /></th>
+                                </tr>
+                            </table>
+                        </td>
+                        <td>
+                            <table style="border: 1px solid black; width: 100%;">
+                                <tr>
+                                    <th colspan="4" style="text-align:center; font-size: 11px;"> <br /><br />' . $settings->set_school_name . '</th>
+                                </tr>
+                                <tr>
+                                    <th colspan="1" style="text-align:center; font-size: 8px;"> </th>
+                                    <th colspan="2" style="border: 1px solid gray; text-align:center; font-size: 10px;"><br />Admission Slip</th>
+                                    <th colspan="1" style="text-align:center; font-size: 8px;"> </th>
+                                </tr>
+                                <tr>
+                                    <th><br /></th>
+                                </tr>
+                                <tr>
+                                    <th colspan="4" style="text-align:center; font-size: 8px;">Name: ' . $student->lastname . ', ' . $student->firstname . '
+                                    </th>
+                                </tr>
+                                <tr>
+                                    <th colspan="4" style="text-align:center; font-size: 8px;">Grade / Level: ' . $student->level . ' <br />
+                                    </th>
+                                </tr>
+                                <tr>
+                                    <th colspan="4" style="text-align:center; font-size: 10px;">Remarks: _______________________________
+                                    </th>
+                                </tr>
+                                <tr>
+                                    <th colspan="4" style="text-align:center; font-size: 10px;">___________________________________________
+                                    </th>
+                                </tr>
+                                <tr>
+                                    <th colspan="4" style="text-align:center; font-size: 10px;">___________________________________________
+                                    </th>
+                                </tr>
+                                <tr>
+                                    <th colspan="4" style="text-align:center; font-size: 10px;">___________________________________________ <br />
+                                    </th>
+                                </tr>
+                                <tr>
+                                    <th colspan="1" style="text-align:center; font-size: 8px;"> ______________ </th>
+                                    <th colspan="3" style="text-align:center; font-size: 8px;"> ________________________________________ </th>
+                                </tr>
+                                <tr>
+                                    <th colspan="1" style="text-align:center; font-size: 8px;"> Date</th>
+                                    <th colspan="3" style="text-align:center; font-size: 8px;"> Authorized Signature over Printed Name <br /></th>
+                                </tr>
+                                <tr>
+                                    <th colspan="4"style="text-align:center; font-size: 12px;"></th>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+    ';
+    $pdf->writeHTML($html, true, 0, true, 0);
+} // foreach(studperlevel)
+//Close and output PDF document
+$pdf->Output('business_office_report.pdf', 'I');
+
+//============================================================+
+// END OF FILE
+//============================================================+

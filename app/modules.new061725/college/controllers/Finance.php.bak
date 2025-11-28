@@ -1,0 +1,1381 @@
+<?php if ( ! defined('BASEPATH')) exit('No direct script access allowed');
+
+/**
+ * Description of Registrar
+ *
+ * @author genesis
+ */
+class Finance extends MX_Controller {
+    //put your code here
+    
+    
+    function __construct() {
+        parent::__construct();
+        $this->load->model('finance_model');
+	$this->load->library('pagination');
+        $this->load->library('Pdf');
+    }
+    
+    private function post($name)
+    {
+        return $this->input->post($name);
+    }
+    
+    function getFinanceItemById($item_id, $school_year)
+    {
+        $items = $this->finance_model->getFinanceItemByID($item_id, $school_year);
+        return $items;
+    }
+    
+    function searchFinanceStaff($value, $year=NULL)
+    {
+        $employee = $this->finance_model->searchFinanceStaff($value, $year);
+        echo '<ul>';
+        foreach ($employee as $s):
+        ?>
+                <li style="font-size:18px;" onclick="$('#searchName').hide(), $('#searchBox').val('<?php echo $s->firstname.' '.$s->lastname ?>'), $('#assign_employee_id').val('<?php echo $s->employee_id ?>')" ><?php echo strtoupper($s->firstname.' '.$s->lastname) ?></li>   
+        <?php        
+        endforeach;
+        echo '</ul>';
+        
+    }
+    
+    public function addLabCharge($st_id, $item, $amount, $sem, $sy)
+    {
+        
+        $charge = array(
+            'extra_st_id'           => $st_id,
+            'extra_item_id'         => $item,
+            'extra_amount'          => $amount,
+            'extra_sem'             => $sem,
+            'extra_school_year'     => $sy
+        );
+        
+        if($this->finance_model->addLabCharge($charge, $st_id, $item)):
+            
+        endif;
+    }
+    
+    public function getLaboratoryFees()
+    {
+        $fees = $this->finance_model->getLaboratoryFees();
+        return $fees;
+    }
+    
+    public function getFusedPayments($st_id, $sem, $school_year, $cat_id, $type=NULL)
+    {
+        $transaction = $this->finance_model->getFusedPayments($st_id, $sem, $school_year, $cat_id, $type);
+        return $transaction;
+    }
+    
+    function addCategory()
+    {
+        $cat_id = $this->post('cat_id');
+        $category = $this->post('category');
+        
+        $catDetails = array('fin_category' => $category);
+        
+        if($cat_id==0):
+            if($this->finance_model->addCategory($catDetails, $category)):
+                echo 'Successfully Saved';
+            else:
+                echo 'Sorry Something went wrong, Please contact support';
+            endif;
+        else:
+            if($this->finance_model->editCategory($catDetails, $cat_id)):
+                echo 'Successfully Saved';
+            else:
+                echo 'Sorry Something went wrong, Please contact support';
+            endif;
+            
+        endif;    
+    }
+    
+    function fusedFees()
+    {
+        $cat_id = $this->post('cat_id');
+        $fused = $this->post('is_fused');
+        
+        $fusedDetails = array('is_fused' => $fused);
+        if($this->finance_model->saveFusedFees($fusedDetails, $cat_id)):
+            echo 'Successfully Saved';
+        else:
+            echo 'Sorry Something went wrong, Please contact support';
+        endif;
+    }
+    
+    function editItem()
+    {
+        $item_id = $this->post('item_id');
+        $itemDescription = $this->post('itemDescription');
+        $percentageAmount = $this->post('percentageAmount');
+        $itemCategory = $this->post('itemCategory');
+        $defaultValue = $this->post('defaultAmount');
+        
+        $itemDetails = array(
+            'item_description'      => $itemDescription,
+            'dept_id'               => 4,
+            'category_id'           => $itemCategory,
+            'percentage_amount'     => $percentageAmount,
+            'default_value'         => $defaultValue
+        );
+        
+        if($item_id == 0):
+            if($this->finance_model->addItem($itemDetails, $itemDescription)):
+                echo json_encode(array('msg' => 'Successfully Added'));
+            else:
+                echo json_encode(array('msg' => 'Sorry this Item Already exist'));
+            endif;
+        else:
+            if($this->finance_model->editItem($itemDetails, $item_id)):
+                echo json_encode(array('msg' => 'Successfully Update'));
+            else:
+                echo json_encode(array('msg' => 'Sorry Something went wrong, Please contact support'));
+            endif;
+            
+        endif;
+    }
+    
+    function deleteItem()
+    {
+        $item_id = $this->post('item_id');
+        if($this->finance_model->deleteItem($item_id)):
+            echo 'Deleted Successfully';
+        else:
+            echo 'Sorry Something went wrong, Please contact support';
+        endif;
+    }
+    
+    
+    public function printOR($st_id, $ornum, $transType, $amount, $school_year, $semester)
+    {
+        $data['st_id'] = base64_decode($st_id);
+        $data['ornum'] = $ornum;
+        $data['semester'] = $semester;
+        $data['school_year'] = $school_year;
+        $data['transType'] = $transType;
+        $data['transaction'] = $this->getTransactionByOR($ornum, $school_year);
+        $data['student'] = Modules::run('college/getSingleStudent', base64_decode($st_id), $school_year, $semester);
+        $data['modules'] = 'college';
+        $data['main_content'] = 'finance/reports/printOR';
+        echo Modules::run('templates/print_content', $data);
+       // $this->load->view('reports/printOR', $data);
+    }
+    
+    private function getTransactionByOR($or_num, $school_year = NULL)
+    {
+        $trans = $this->finance_model->getTransactionByOR($or_num, $school_year);
+        return $trans;
+    }
+    
+    public function getSingleSeries($employee_id)
+    {
+        $series = $this->finance_model->getSingleSeries($employee_id);
+        return $series;
+    }
+
+
+    public function useSeries()
+    {
+        if($this->finance_model->useSeries($this->post('id'), $this->post('employee_id'))):
+            $this->saveFinanceLog($this->session->userdata('employee_id'), 'Assigned a Receipt Series id #'.$this->post('id').' to '.$this->post('employee_id'));
+            echo 'Successfully Assigned';
+        endif;
+    }
+    
+    public function getAllSeries()
+    {
+        $series  = $this->finance_model->getAllSeries();
+        return $series;
+    }
+    
+    public function addSeries()
+    {
+        $begin      = $this->post('beginning');
+        $end        = $this->post('ending');
+        $current    = $this->post('current');
+        $series_id   = $this->post('series_id');
+        
+        $details    = array(
+            'or_begin'  => $begin,
+            'or_end'    => $end,
+            'or_current'=> $current,
+            'or_id'     => $series_id
+        );
+        
+        if($series_id==0):
+            $msg = $this->finance_model->addSeries($details, $begin, $end, $series_id);
+        else:
+            $msg = $this->finance_model->updateSeries($details, $series_id);
+        endif;
+        
+        echo $msg;
+    }
+
+    public function OR_series()
+    {
+        if($this->session->userdata('is_logged_in')):
+            $data['ORSeries'] = $this->getAllSeries();
+            $data['FinSettings'] = $this->getSettings();
+            $data['main_content'] = "or_series";
+            $data['modules'] = 'finance';
+            echo Modules::run('templates/college_content', $data);
+        else:
+            redirect('login');
+        endif;
+    }
+    
+    
+    public function getSettings()
+    {
+        $settings = $this->finance_model->getSettings();
+        return $settings;
+    }
+
+    
+    function generalSettings($school_year = NULL)
+    {
+        $school_year = ($school_year==NULL?$this->session->school_year:$school_year);
+        if($this->session->is_admin):
+            $data['course'] = Modules::run('coursemanagement/getCourses');
+            $data['ro_years'] = Modules::run('registrar/getROYear');
+            $data['now'] = $school_year;
+            $data['nextYear'] = $school_year+1;
+            $data['fin_items'] = $this->finance_model->getFinItems();
+            $data['fin_category'] = $this->finance_model->getFinCategory();
+            $data['ORSeries'] = $this->getAllSeries();
+            $data['FinSettings'] = $this->getSettings();
+            $data['modules'] = 'college';
+            $data['main_content'] = 'finance/generalSettings';
+            echo Modules::run('templates/college_content', $data);
+        else:
+            redirect(base_url('college'));
+        endif;
+    }
+    
+    function cancelReceipt()
+    {
+        $receiptNumber = $this->post('receiptNumber');
+        if($this->finance_model_pisd->cancelReceipt($receiptNumber)):
+            $this->saveFinanceLog($this->session->userdata('employee_id'), $this->session->userdata('name').' has Cancel a Receipt with reference #'.$receiptNumber.'.');
+            echo 'Successfully Cancelled';
+        else:
+            echo 'Sorry Something Went Wrong';
+        endif;
+    }
+    
+    public function getTransactionByCategory($st_id, $sem, $school_year, $category_id=NULL, $type=NULL, $item_id = NULL)
+    {
+        $transaction = $this->finance_model->getTransactionByCategory($st_id, $sem, $school_year, $category_id, $type, $item_id);
+        return $transaction;
+    }
+    
+    function financeLog()
+    {
+        if($this->session->is_admin):
+            $data['financeLog'] = $this->finance_model->financeLog();
+            $data['modules'] = 'college';
+            $data['main_content'] = 'finance/financeLog';
+            echo Modules::run('templates/canteen_content', $data);
+        else:
+            redirect(base_url());
+        endif;    
+    }
+    
+    function saveEditTransaction()
+    {
+        $details = array(
+            'ref_number'    => $this->post('ref_number'),
+            't_amount'      => $this->post('amount'),
+            't_date'        => $this->post('trans_date'),
+            't_receipt_type'=> $this->post('receipt')
+        );
+        
+        if($this->finance_model->saveEditTransaction($details, $this->post('trans_id'))):
+            echo 'Transaction Successfully Saved';
+        else:
+            echo 'Sorry, Something went wrong';
+        endif;
+        
+    }
+    
+    function loadFinanceTransaction()
+    {
+        $trans_id = $this->post('trans_id');
+        $trans_type = $this->post('trans_type');
+        $item_id    = $this->post('item_id');
+        
+        $data['transaction'] = $this->finance_model->loadFinanceTransaction($trans_id);
+        $this->load->view('finance/editTransaction', $data);
+    }
+    
+    function getCollectionReport($from=NULL, $to=NULL, $report_type = NULL)
+    {
+       $collection = $this->finance_model->getCollectionDetails($from, $to, $report_type);
+       return $collection;
+    }
+    
+    function saveCashBreakDown()
+    {
+        $transaction = $this->post('items');
+        $count = count(json_decode($transaction));
+        $final = json_decode($transaction);
+        
+        $column = array();
+        
+        for ($x = 0; $x < $count; $x++) {
+            //$items = explode('_', $final[$x]);
+            $details = array(
+                'fdcb_denom_id'     => $final[$x]->den_id,
+                'fdcb_total_count'  => $final[$x]->count,
+                'fdcb_date'         => date('Y-m-d')
+
+            );
+            
+            array_push($column, $details);
+        }
+        //print_r($final) ;
+        if($this->finance_model->saveCashBreakDown($column)):
+            echo 'Successfully Saved';
+        else:
+            echo 'Sorry Something went wrong';
+        endif;
+    }
+    
+    function getChequePayments($teller_id, $date)
+    {
+        $payments = $this->finance_model->getChequePayments($teller_id, $date);
+        return $payments;
+    }
+    
+    function getBank($id=NULL)
+    {
+        $bank = $this->finance_model->getBank($id);
+        return $bank;
+    }
+    
+    function getEncashments($teller_id, $date)
+    {
+        $encashments = $this->finance_model->getEncashments($teller_id, $date);
+        return $encashments;
+    }
+    
+    function saveEncashments()
+    {
+        $bank = $this->post('bank');
+        $chequeNum = $this->post('chequeNumber');
+        $chequeAmount = $this->post('chequeAmount');
+        $chequeDate = $this->post('chequeDate');
+        
+        $details = array(
+            'encash_bank_id'    => $bank,
+            'encash_cheque_num' => $chequeNum,
+            'encash_amount'     => $chequeAmount,
+            'encash_date'       => $chequeDate,
+            'encash_teller_id'  => $this->session->employee_id
+        );
+        
+        if($this->finance_model->saveEncashments($details)):
+            echo 'Cheque Encashments Successfully saved';
+        else:
+            echo 'Sorry something went wrong';
+        endif;
+    }
+    
+    function addBank()
+    {
+        $bank = $this->post('bank');
+        $bankShortName = $this->post('bankShortName');
+        $result = $this->finance_model->addBank(array('bank_name' => $bank, 'bank_short_name'=>$bankShortName), $bank);
+        $result = json_decode($result);
+        if($result->status):
+            echo "<option value='$result->id'>$result->value</option>";
+        endif;
+    }
+    
+    public function getCashDenomination()
+    {
+        $cash = $this->finance_model->getCashDenomination();
+        return $cash;
+    }
+    
+    public function updateCollectibles($user_id, $st_id, $balance, $sy, $semester = NULL)
+    {
+        $details = array(
+            'fc_user_id'        => $user_id,
+            'fc_st_id'          => $st_id,
+            'balance'           => $balance,
+            'last_update'       => date('Y-m-d G:i:s'),
+            'fc_school_year'    => $sy,
+            'fc_semester'       => ($semester==NULL?0:$semester)
+        );
+        
+        $this->finance_model->updateCollectibles($details, $st_id, $sy, ($semester==NULL?0:$semester));
+        return TRUE;
+    }
+
+
+    public function generateCollectibles($sy, $sem=NULL)
+    {
+        $semester = Modules::run('main/getSemester');
+
+        if($sem==NULL):
+            $sem = $semester;
+        endif;
+        $allStudents  = $this->finance_model->getStudents("", "",$sy, $sem);
+        $totalBalance = 0;
+        foreach($allStudents->result() as $as):
+            $AD = json_decode(Modules::run('college/finance/getRunningBalance', base64_encode($as->st_id), $sy, $sem));
+            $balance = $AD->charges - $AD->payments;
+            $this->updateCollectibles($as->uid, $as->st_id, $balance, $sy, $sem);
+            $totalBalance += $balance;
+            unset($balance);
+        endforeach;
+        
+        echo json_encode(array('totalBalance' => number_format($totalBalance,2,'.',',')));
+    }
+    
+    public function getCollectible($limit=NULL, $offset=NULL, $sy = NULL)
+    {   
+	$this->load->library('pagination');
+        if($sy==NULL):
+            $year = $this->session->userdata('school_year');
+        else:
+            $year = $sy;
+        endif;
+        
+        if($this->uri->segment(4)):
+            $seg = $this->uri->segment(4);
+            $base_url = base_url('college/finance/getCollectible/');
+        else:
+            $seg = $this->uri->segment(4);
+            $base_url = base_url('college/finance/getCollectible/');
+        endif;
+        $totalBalance = 0;
+        $result = $this->finance_model->getCollectibles(NULL, NULL,$year);
+        foreach ($result->result() as $r):
+            $totalBalance += $r->balance;
+        endforeach;
+        $config['base_url'] = $base_url;
+        $config['total_rows'] = $result->num_rows();
+        $config['per_page'] = 30;
+        $config['full_tag_open'] = '<ul class="pagination">';
+        $config['full_tag_close'] = '</ul>';
+        $config['first_tag_open'] = '<li>';
+        $config['first_tag_close'] = '</li>';
+        $config['prev_tag_open'] = '<li>';
+        $config['prev_tag_close'] = '</li>';
+        $config['next_tag_open'] = '<li>';
+        $config['next_tag_close'] = '</li>';
+        $config['last_tag_open'] = '<li>';
+        $config['last_tag_close'] = '</li>';
+        $config['num_tag_open'] = '<li>';
+        $config['num_tag_close'] = '</li>';
+        $config['cur_tag_open'] = '<li class="active"><a href="#">';
+        $config['cur_tag_close'] = '</a></li>';
+
+
+        $this->pagination->initialize($config);
+        $data['links'] = $this->pagination->create_links();
+
+        $page = $this->finance_model->getCollectibles($config['per_page'], $seg, $year);
+        $data['students'] = $page->result();
+        $data['totalBalance'] = number_format($totalBalance, 2,'.',',');
+        $data['school_year'] = $year;
+        $data['modules'] = 'college';
+        $data['main_content'] = 'finance/collectible';
+        echo Modules::run('templates/canteen_content', $data);
+    }
+    
+    public function getRunningBalance($st_id, $school_year, $sem=NULL)
+    {
+        $student = Modules::run('college/getSingleStudent', base64_decode($st_id), $school_year, $sem);
+
+        $loadedSubject = Modules::run('college/subjectmanagement/getLoadedSubject', $student->admission_id, $sem);
+        $totalUnits = 0;
+        foreach ($loadedSubject as $sl):
+            $totalUnits += ($sl->s_lect_unit + $sl->s_lab_unit);
+        endforeach;
+
+        $plan = Modules::run('college/finance/getPlanByCourse', $student->course_id, $student->year_level);
+        $charges = Modules::run('college/finance/financeChargesByPlan',$student->year_level, $student->school_year, $sem, $plan->fin_plan_id );
+
+        $tuition = Modules::run('college/finance/getChargesByCategory',1, $student->semester, $student->school_year, $plan->fin_plan_id );
+
+        
+        $i=1;
+        $total=0;
+        $amount=0;
+        $tuitionFee = (($tuition->row()->amount*$totalUnits));
+        if($student->u_id==""):
+            $user_id = $student->us_id;
+        else:
+            $user_id = $student->u_id;
+        endif;
+
+        foreach ($charges as $c):
+            $amount = ($c->item_id<=1 || $c->item_id<=2?0:$c->amount);
+            $totalCharges += $amount;
+        endforeach;
+        
+        $totalExtra = 0;
+        $extraCharges = Modules::run('college/finance/getExtraFinanceCharges',$student->uid, $sem, $student->school_year);
+        if($extraCharges->num_rows()>0):
+            foreach ($extraCharges->result() as $ec):
+            
+                $totalExtra += $ec->extra_amount;
+            endforeach;
+            $total = $totalCharges + $tuitionFee + $totalExtra;
+        endif;
+        
+        //transaction
+        $transaction = Modules::run('college/finance/getTransactionByRefNumber', $student->uid, $sem, $student->school_year);
+        $paymentTotal = 0;
+        if($transaction->num_rows()>0):
+            foreach ($transaction->result() as $tr):
+                $paymentTotal += $tr->subTotal ;
+            endforeach;
+        endif;
+        
+        $details = array(
+           'charges' => $total,
+           'payments' => $paymentTotal
+        );
+        
+        return json_encode($details);
+            
+    }
+    
+    function printPermit($st_id, $sem)
+    {
+        $data['st_id'] = base64_decode($st_id);
+        $data['sem'] = $sem;
+        
+        $this->load->view('finance/examPermitWrapper', $data);
+    }
+    
+    function printSOA($st_id, $sem, $school_year = NULL)
+    {
+        $data['st_id'] = base64_decode($st_id);
+        $data['sem'] = $sem;
+        
+        $this->load->view('finance/reports/printSOA', $data);
+    }
+    
+    function approvePromisory()
+    {
+        $prom_id = $this->post('prom_id');
+        $amount = $this->post('amount');
+        $action = $this->post('action');
+        
+        $details = array(
+            'fr_approved'           => $action,
+            'fr_approved_by'        => $this->session->userdata('employee_id'),
+            'fr_allowable_amount'   => $amount,
+            'approved_date'         => date('Y-m-d g:i:s')
+        );
+        if($this->finance_model->approvePromisory($details, $prom_id)):
+            echo 'Successfully Submited';
+        else:
+            echo 'Sorry something went wrong';
+        endif;
+    }
+    
+    function getPromisoryRequest($st_id, $sem)
+    {
+        $year = $this->session->userdata('school_year');
+        $request = $this->finance_model->getPromisoryRequest($year, $st_id, $sem);
+        return $request;
+    }
+    
+    function requestPromisory()
+    {
+        $st_id = $this->post('st_id');
+        $sem = $this->post('semester');
+        $sy = $this->session->userdata('school_year');
+        $remarks = $this->post('remarks');
+        $student = Modules::run('college/getSingleStudent', $st_id, $this->session->userdata('school_year'), $sem);
+        
+        $details = array(
+            'fr_requesting_id'  => $st_id,
+            'fr_remarks'        => $remarks,
+            'fr_year'           => $sy,
+            'fr_sem'            => $sem
+        );
+        
+        if($this->finance_model->requestPromisory($details)):
+            Modules::run('notification_system/department_notification', "Admin", $student->firstname.' '.$student->lastname.' has submitted a business office promisory note', base_url().'college/finance/accounts/'.base64_encode($st_id).'/'.$sem);
+            echo 'Successfully Submitted';
+        else:
+            echo 'Sorry Something went Wrong';
+        endif;
+    }
+    
+    function getDiscountHistory($details, $balance, $student, $type=NULL)
+    {
+        $data['type'] = $type;
+        $data['student'] = $student;
+        $data['details'] = $details;
+        $data['total'] = $balance;
+        $this->load->view('discountHistory', $data);
+    }
+    
+    function getPaymentHistory($details, $balance, $student, $type=NULL)
+    {
+        $data['type'] = $type;
+        $data['student'] = $student;
+        $data['details'] = $details;
+        $data['total'] = $balance;
+        $this->load->view('paymentHistory', $data);
+    }
+    
+    function saveFinanceLog($id, $remarks)
+    {
+        $logDetails = array(
+                'account_id' => $id,
+                'remarks'    => $remarks
+        );
+        
+        $this->finance_model->saveFinanceLog($logDetails);
+    }
+    
+    function printCollectionReportPerItem($from=NULL, $to=NULL)
+    {
+        $this->load->library('pdf');
+        $data['collection'] = $this->finance_model->printCollectionReportPerItem($from, $to);
+        $this->load->view('finance/reports/printCollectionReportPerItem', $data);
+    }
+    
+    function printCollectionReport($from=NULL, $to=NULL, $report_type=NULL)
+    {
+        $this->load->library('pdf');
+        $data['collection'] = $this->finance_model->getCollection($from, $to);
+        $data['cashbreakdown'] = $this->finance_model->getCashbreakdown($from); 
+        switch ($report_type):
+            case 0:
+                $this->load->view('finance/reports/printCollectionReport', $data);
+            break;    
+            case 1:
+                $this->load->view('finance/reports/printCollectionReportPerItem', $data);
+            break;    
+            case 2:
+                $this->load->view('finance/reports/printSummaryOfCollection', $data);
+            break;    
+        endswitch;
+        
+    }
+   
+    
+    public function collectionReport($from=NULL, $to=NULL, $report_type=NULL)
+    {
+        $data['collection'] = $this->finance_model->getCollection($from, $to);
+        $data['modules'] = 'college';
+        $data['main_content'] = 'finance/sales';
+        echo Modules::run('templates/canteen_content', $data);
+    }
+    
+    public function calculateItem()
+    {
+        $item_id = $this->post('item_id');
+        $sem = $this->post('sem');
+        $school_year = $this->post('school_year');
+        $plan_id = $this->post('plan_id');
+        $st_id = $this->post('st_id');
+        $totalUnits = $this->post('totalUnits');
+        
+        $charges = $this->getChargesByItemId($item_id, $sem, $school_year, $plan_id);
+        $charge = $charges->row()->amount;
+        $item = $charges->row()->item_description;
+        
+        $transaction = $this->getTransaction($st_id, $sem, $school_year);
+        if($transaction->num_rows()!=0):
+            foreach ($transaction->result() as $chrg):
+                $totalPayment += $chrg->t_amount;
+            endforeach;
+        else:
+            $totalPayment = 0;
+        endif;
+        
+        $totalRetail = ($item_id<2?$charge*$totalUnits:$charge) - $totalPayment;
+        
+        echo json_encode(array('totalPayment' => number_format($totalRetail,2,'.',','),'item' => $item));
+ 
+    }
+        
+    public function getTransactionByRefNumber($st_id, $sem, $school_year, $t_type=NULL)
+    {
+        $transaction = $this->finance_model->getTransactionByRefNumber($st_id, $sem, $school_year, $t_type);
+        return $transaction;
+    }
+    
+    public function getTransactionByItemId($st_id, $sem, $school_year, $item_id=NULL, $type=NULL, $order = NULL, $isGroup=NULL)
+    {
+        $transaction = $this->finance_model->getTransactionByItemId($st_id, $sem, $school_year, $item_id, $type, $order,$isGroup);
+        return $transaction;
+    }
+
+
+    public function getDiscountsByDate($st_id, $sem, $school_year, $date=NULL)
+    {
+        $disc = $this->finance_model->getDiscountsByDate($st_id, $sem, $school_year, $date);
+        return $disc;
+    }
+
+    public function getDiscountsByItemId($st_id, $sem, $school_year, $item_id=NULL)
+    {
+        $disc = $this->finance_model->getDiscountsByItemId($st_id, $sem, $school_year, $item_id);
+        return $disc;
+    }
+    
+    public function getTransactionByDate($st_id, $sem, $school_year, $date)
+    {
+        $transaction = $this->finance_model->getTransactionByDate($st_id, $sem, $school_year, $date);
+        return $transaction;
+    }
+    
+    public function getTransaction($st_id, $sem, $school_year)
+    {
+        $transaction = $this->finance_model->getTransaction($st_id, $sem, $school_year);
+        return $transaction;
+    }
+    
+    public function getBalance($st_id, $sem, $school_year)
+    {
+        
+        $student = Modules::run('college/getSingleStudent', urldecode($st_id), $school_year);
+        $plan = Modules::run('college/finance/getPlanByCourse', $student->course_id, $student->year_level);
+        $charges = Modules::run('college/finance/financeChargesByPlan',$student->year_level, $school_year, $sem, $plan->fin_plan_id );
+        $payments = Modules::run('college/finance/getTransactionByRefNumber', $student->uid, $student->semester,$school_year);
+        //print_r($student->uid);
+
+        $loadedSubject = Modules::run('college/subjectmanagement/getLoadedSubject', $student->admission_id);
+        $totalUnits = 0;
+        foreach ($loadedSubject as $sl):
+            $totalUnits += ($sl->s_lect_unit + $sl->s_lab_unit);
+        endforeach;
+        
+        foreach ($charges as $c):
+            $amount = ($c->item_id<=1 || $c->item_id<=2?$c->amount*$totalUnits:$c->amount);
+            $total += $amount;
+            //echo $amount.'<br />';
+            
+        endforeach;
+        $extraCharges = $this->getExtraFinanceCharges(urldecode($st_id), $sem, $school_year);
+        if($extraCharges->num_rows()>0):
+               foreach ($extraCharges->result() as $ec):
+                    $totalExtra += $ec->extra_amount;
+                    //echo $ec->extra_amount;
+               endforeach;
+               $total = $total + $totalExtra;
+            endif;
+        foreach ($payments->result() as $tr):
+           $totalPayments += $tr->subTotal ;
+        endforeach;
+        
+        $totalCharges = $total;
+        
+        $balance =  $totalCharges - $totalPayments;
+        if($balance==0):
+            echo json_encode(array('status'=>TRUE, 'balance' => $balance));
+        else:
+            $promisoryNote = $this->getPromisoryRequest(urldecode($st_id), $sem);
+            if($promisoryNote->num_rows()>0 && $promisoryNote->row()->fr_approved):
+                echo json_encode(array('status'=>TRUE));
+            else:
+                echo json_encode(array('status'=>FALSE));
+            endif;
+        endif;
+        
+    }
+    
+    public function getChargesByItemId($item_id, $sem, $school_year, $plan_id)
+    {
+          $charges = $this->finance_model->getChargesByItemId($item_id,$sem, $school_year, $plan_id);
+          return $charges;
+    }
+    
+    public function getChargesByCategory($cat_id, $sem, $school_year, $plan_id=NULL)
+    {
+          $charges = $this->finance_model->getChargesByCategory($cat_id,$sem, $school_year, $plan_id);
+          return $charges;
+    }
+
+   public function saveTransaction()
+    {
+        $school_year = $this->post('school_year');
+        $semester = $this->post('sem');
+        $or_num = $this->post('or_num');
+        $st_id = $this->post('st_id');
+        $transaction = $this->post('items');
+        $transDate = $this->post('transDate');
+        $receipt = $this->post('receipt');
+        $t_remarks = $this->post('t_remarks');
+        $transType = $this->post('transType');
+        $tcomment = $this->post('tcomment');
+        $icomment = $this->post('icomment');
+        $chequeNumber = $this->post('chequeNumber');
+        $bank = $this->post('bank');
+        $count = count(json_decode($transaction));
+        $final = json_decode($transaction);
+        $column = array();
+        $success = 0;
+        for ($x = 0; $x < $count; $x++) {
+            
+            $items = explode('_', $final[$x]);
+            $comment = "";
+            if ($items[0]=='1') {
+                $comment = $tcomment;
+            }
+            if ($items[0]=='10') {
+                $comment = $icomment;
+            }
+            
+            $details = array(
+                'ref_number'        => $or_num,
+                't_st_id'           => $st_id,
+                't_em_id'           => $this->session->userdata('employee_id'),
+                't_amount'          => $items[1],
+                't_charge_id'       => ($items[2]==0?$items[0]:0),
+                't_type'            => $transType,
+                'bank_id'           => $bank,
+                'tr_cheque_num'     => $chequeNumber,
+                't_date'            => $transDate,
+                't_sem'             => $semester,
+                't_school_year'     => $school_year, 
+                't_receipt_type'    => $receipt,
+                't_remarks'         => $t_remarks,
+                't_comment'         => $comment,
+                'fused_category'    => $items[2],
+            );
+            
+            $result = $this->finance_model->saveTransaction($details,$school_year);
+            //print_r($result);
+            if(!$result):
+            else:
+                $success++;
+                Modules::run('web_sync/updateSyncController', 'c_finance_transactions', 'trans_id', $result, 'create', 6);
+            endif;
+            
+        }
+        
+            if($this->post('isEnrolled')==0):
+                $this->finance_model->updateStudentStatus($this->post('admission_id'), $school_year);
+            endif;
+            if($success==$count):
+                echo 'Successfully Saved';
+                $this->saveFinanceLog($this->session->employee_id, 'Added a Finance Transacton with reference number '.$or_num);
+            endif;
+        
+    }
+
+    public function deleteTransaction()
+    {
+        $school_year = $this->post('school_year');
+        $st_id = $this->post('st_id');
+        $trans_id = $this->post('trans_id');
+        $item_id = $this->post('item_id');
+        $trans_type = $this->post('trans_type');
+        $delete_remarks = $this->post('delete_remarks');
+        if($trans_type==2):
+            if($this->finance_model->deleteDiscount($school_year, $st_id, $item_id)):
+                if($this->finance_model->deleteTransaction($trans_id)):
+                    
+                    $this->saveFinanceLog($this->session->userdata('employee_id'), 'Voided a Transaction with Discount : '.$delete_remarks);
+                    
+                    echo 'Successfully Deleted';
+                else:
+                    echo 'An Error has Occur';
+                endif;
+            endif;
+        else:
+            if($this->finance_model->deleteTransaction($trans_id)):
+                $this->saveFinanceLog($this->session->userdata('employee_id'), $delete_remarks);
+                echo 'Successfully Deleted';
+            else:
+                echo 'An Error has Occur';
+            endif;
+        endif;
+        
+    }
+
+    public function deleteExtraCharges()
+    {
+        $school_year = $this->post('school_year');
+        $st_id = $this->post('st_id');
+        $trans_id = $this->post('trans_id');
+        $delete_remarks = $this->post('delete_remarks');
+        if($this->finance_model->deleteExtraCharges($trans_id)):
+
+            $this->saveFinanceLog($this->session->userdata('employee_id'), 'Deleted an Extra Charges : '.$delete_remarks);
+
+            echo 'Successfully Deleted';
+        else:
+            echo 'An Error has Occur';
+        endif;
+        
+    }
+    
+    public function addFinanceTransaction($ref_num, $st_id, $amount, $charge_id, $t_type, $sem, $school_year, $date=NULL)
+    {
+        $details = array(
+           'ref_number'     => $ref_num,
+            't_st_id'       => $st_id,
+            't_em_id'       => $this->session->userdata('employee_id'),
+            't_amount'      => $amount,
+            't_charge_id'   => $charge_id,
+            't_type'        => $t_type,
+            't_date'        => ($date==NULL?date('Y-m-d'):$date),
+            't_sem'         => $sem,
+            't_school_year' => $school_year
+        );
+        
+        if($this->finance_model->addFinanceTransaction($details)):
+            return TRUE;
+        else:
+            return FALSE;
+        endif;
+    }
+    
+     public function applyDiscounts()
+    {
+        $item = $this->post('finItem');
+        $sem = $this->post('semester');
+        $amount = $this->post('finAmount');
+        $sy = $this->post('school_year');
+        $st_id= $this->post('st_id');
+        $discount_type = $this->post('discount_type');
+        $remarks = $this->post('remarks');
+        $plan_id = $this->post('plan_id');
+        $admission_id = $this->post('admission_id');
+        
+        if($discount_type==0):
+            $loadedSubject = Modules::run('college/subjectmanagement/getLoadedSubject', $admission_id);
+            $charge = $this->getChargesByItemId($item, $sem, $sy, $plan_id);
+            if($item==1 || $item==2):
+                $totalUnits = 0;
+                foreach ($loadedSubject as $sl):
+                    $totalUnits += ($sl->s_lect_unit + $sl->s_lab_unit);
+                endforeach;
+                $charges = ($totalUnits * $charge->row()->amount) * $amount;
+            endif;
+        else:
+            $charges = $amount;
+        endif;
+        
+        $discountDetails = array(
+            'disc_st_id'    => $st_id,
+            'disc_type'     => $discount_type,
+            'disc_amount'   => $amount,
+            'disc_item_id'  => $item,
+            'disc_remarks'  => $remarks,
+            'disc_sem'      => $sem,
+            'disc_school_year' => $sy
+        );
+        
+        if($this->finance_model->applyDiscounts($discountDetails)):
+            $this->addFinanceTransaction(date('Ymdgis'), $st_id, $charges, $item, 2, $sem, $sy);
+            return TRUE;
+        endif;
+        
+        
+    }
+    
+    function financeChargesByPlan($year_level=NULL, $school_year, $sem, $plan=NULL)
+    {
+        $charges = $this->finance_model->financeChargesByPlan($school_year, $sem, $plan, $year_level);
+        return $charges;
+    }
+    
+    function overPayment($st_id, $sem, $school_year)
+    {
+        $charges = $this->finance_model->overPayment($st_id, $sem, $school_year);
+        return $charges;
+    }
+    
+    function getLaboratoryFee($st_id, $sem, $school_year)
+    {
+        $charges = $this->finance_model->getLaboratoryFee($st_id, $sem, $school_year);
+        //print_r($charges->row());
+        return $charges;
+    }
+    
+    function getExtraFinanceCharges($st_id, $sem, $school_year)
+    {
+        $charges = $this->finance_model->getExtraFinanceCharges($st_id, $sem, $school_year);
+        return $charges;
+    }
+            
+    function loadAccountDetails($st_id, $sem, $school_year = NULL)
+    {
+        $data['sem'] = $sem;
+        $data['school_year'] = $school_year;
+        $data['ro_years'] = Modules::run('registrar/getROYear');
+        $data['fin_items'] = $this->finance_model->getFinItems('College');
+        $data['st_id'] = $st_id;
+        $this->load->view('finance/accountDetails', $data);
+    }
+    
+    function setFinanceAccount($st_id, $sem)
+    {
+        $student = Modules::run('college/getSingleStudent', $st_id, $this->session->userdata('school_year'));
+        $course = $student->course_id;
+        $plan = $this->getPlanByCourse($course, $student->year_level);
+        
+        $finDetails = array(
+            'fin_st_id'         => $st_id,
+            'fin_term_id'       => $sem,
+            'fin_plan_id'       => $plan->fin_plan_id,
+            'fin_school_year'   => $this->session->userdata('school_year'),
+        );
+        
+        $this->finance_model->setFinanceAccount($finDetails, $st_id, $plan->fin_plan_id, $this->session->userdata('school_year'), $sem);
+        
+        Modules::run('college/updateEnrollmentStatus', $st_id, $this->session->userdata('school_year'), $sem, 1);  
+        
+        return;
+    }
+    
+    function getPlanByCourse($course_id, $year_level)
+    {
+        $plan_id = $this->finance_model->getPlanByCourse($course_id, $year_level);
+        return $plan_id;
+    }
+    
+    function accounts($id=NULL, $sem=NULL)
+    {
+        if($this->session->userdata('is_logged_in')):
+            $semester = Modules::run('main/getSemester');
+            if($sem==NULL):
+                $sem = $semester;
+            endif;
+            $settings = Modules::run('main/getSet');
+            $data['ro_year'] = Modules::run('registrar/getROYear');
+            $data['sem'] = $sem;
+            $data['id'] = $id;
+            $data['modules'] = 'college';
+            $data['main_content'] = 'finance/financeAccounts';
+            $data['getBanks'] = $this->finance_model->getBanks();
+            $data['FinSettings'] = $this->getSettings();
+            if(file_exists(APPPATH.'modules/college/finance/views/'. strtolower($settings->short_name).'_financeAccounts.php')):
+                $data['main_content'] = strtolower($settings->short_name).'_financeAccounts';
+            else:
+                $data['main_content'] = 'finance/financeAccounts';
+            endif;
+            echo Modules::run('templates/canteen_content', $data);
+       else:
+           redirect('login');
+       endif;
+    }
+    
+    function getFinanceChargesWrapper($course_id=1, $sem=1, $school_year=NULL)
+    {
+        $data['course_id'] = $course_id;
+        $data['sem'] = $sem;
+        $data['school_year'] = ($school_year==NULL?$this->session->school_year:$school_year);
+        $this->load->view('finance/financeChargesWrapper', $data);
+    }
+    
+    function deleteFinanceCharges()
+    {
+        $charge_id = $this->post('charge_id');
+        $success = $this->finance_model->deleteFinanceCharges($charge_id);
+        if($success):
+            echo 'Deleted Successfully';
+        else:
+            echo 'Something went wrong, Please contact csscore inc.';
+        endif;
+    }
+            
+    function editFinanceCharges()
+    {
+        $charge_id = $this->post('charge_id');
+        $amount = $this->post('fin_amount');
+        
+        $success = $this->finance_model->editFinanceCharges($charge_id, $amount);
+        if($success):
+            echo json_encode(array('status'=> TRUE, 'msg' => 'Successfully Updated', 'amount' => $amount));
+        else:
+            echo json_encode(array('status'=> TRUE, 'msg' => 'Sorry Something went wrong', 'amount' => 0));
+        endif;
+    }
+    
+    function financeCharges($course_id, $year_level, $school_year, $sem)
+    {
+        $data['year'] = $year_level;
+        $data['charges'] = $this->finance_model->financeCharges($course_id, $year_level, $school_year, $sem);
+        $this->load->view('finance/financeCharges', $data);
+    }
+    
+    function addFinanceItem()
+    {
+        $item = $this->post('finItem');
+        $result = $this->finance_model->addFinanceItem($item);
+        $result = json_decode($result);
+        if($result->status):
+            echo "<option value='$result->id'>$result->value</option>";
+        endif;
+    }
+    
+    
+    function getFinanceCharges($course_id, $year_level, $school_year, $sem)
+    {
+        $charges = $this->finance_model->financeCharges($course_id, $year_level, $school_year, $sem);
+        return $charges;
+    }
+    
+    public function index()
+    {
+        
+        if($this->session->position=='Cashier'):
+            redirect('college/finance/accounts');
+        else:
+            $data['course_id'] = NULL;
+            $data['sems'] = NULL;
+            $data['course'] = Modules::run('coursemanagement/getCourses');
+            $data['ro_years'] = Modules::run('registrar/getROYear');
+            $data['now'] = $this->session->school_year;
+            $data['nextYear'] = $this->session->school_year+1;
+            $data['fin_items'] = $this->finance_model->getFinItems('College');
+            $data['modules'] = 'college';
+            $data['main_content'] = 'finance/finance_settings';
+            echo Modules::run('templates/college_content', $data);
+        endif;
+    }
+    
+    public function settings($school_year=NULL,$course_id=NULL,$semester=NULL)
+    {
+        $this->load->dbutil();
+        $settings = $this->eskwela->getSet();
+        
+        $db_name = 'eskwela_'.strtolower($settings->short_name).'_'.$school_year;
+        
+        if($this->dbutil->database_exists($db_name))
+        {
+            $data['course'] = Modules::run('coursemanagement/getCourses');
+            $data['ro_years'] = Modules::run('registrar/getROYear');
+            $data['now'] = $this->session->school_year;
+            $data['sems'] = $semester;
+            $data['course_id'] = $course_id;
+            $data['nextYear'] = $this->session->school_year+1;
+            $data['fin_items'] = $this->finance_model->getFinItems('College');
+            $data['modules'] = 'college';
+            $data['main_content'] = 'finance/finance_settings';
+            echo Modules::run('templates/college_content', $data);
+        }else{
+            ?>
+            <script type="text/javascript">
+                alert('Sorry No Record Found');
+                window.history.back();
+            </script>    
+            <?php
+        }
+        
+    }
+    
+    public function addExtraFinanceCharges()
+    {
+        $item = $this->post('finItem');
+        $sem = $this->post('semester');
+        $amount = $this->post('finAmount');
+        $sy = $this->post('school_year');
+        $st_id= $this->post('st_id');
+        $year_level = $this->post('year_level');
+        $plan_id = $this->post('plan_id');
+        $admission_id = $this->post('admission_id');
+        
+        
+        $charge = array(
+            'extra_st_id' => $st_id,
+            'extra_item_id'    => $item,
+            'extra_amount'  => $amount,
+            'extra_sem' => $sem,
+            'extra_school_year'     => $sy
+        );
+        
+        if($this->finance_model->addExtraFinanceCharges($charge)):
+            $charges = Modules::run('college/finance/financeChargesByPlan',$year_level, $sy, $sem, $plan_id );
+            $loadedSubject = Modules::run('college/subjectmanagement/getLoadedSubject', $admission_id);
+            $totalUnits = 0;
+            foreach ($loadedSubject as $sl):
+                $totalUnits += ($sl->s_lect_unit + $sl->s_lab_unit);
+            endforeach;
+            $i=1;
+            $total=0;
+            $amount=0;
+
+                foreach ($charges as $c):
+                 $next = $c->school_year + 1;
+                 $amount = ($c->item_id==14?$c->amount*$totalUnits:$c->amount);
+             ?>
+            <tr id="tr_<?php echo $c->charge_id ?>">
+                <td><?php echo $i++;?></td>
+                <td><?php echo $c->item_description ?></td>
+                <td id="td_<?php echo $c->charge_id ?>" class="text-right"><?php echo number_format($amount, 2, '.',',') ?></td>
+            </tr>
+            <?php
+                $total += $amount;
+                endforeach;
+                $totalExtra = 0;
+                $extraCharges = Modules::run('college/finance/getExtraFinanceCharges',$student->uid, $student->semester, $student->school_year);
+                if($extraCharges->num_rows()>0):
+                    foreach ($extraCharges->result() as $ec):
+                    ?>
+                        <tr style="background: #0ff" id="trExtra_<?php echo $ec->extra_id ?>">
+                            <td><?php echo $i++;?></td>
+                            <td><?php echo $ec->item_description ?></td>
+                            <td id="td_<?php echo $ec->extra_id ?>" class="text-right"><?php echo number_format($ec->extra_amount, 2, '.',',') ?></td>
+                        </tr>
+                    <?php
+                    $totalExtra += $ec->extra_amount;
+                    endforeach;
+                    $total = $total + $totalExtra;
+                endif;
+
+                if($total!=0):
+            ?>
+            <tr style="background:yellow;">
+                <th>TOTAL</th>
+                <th></th>
+                <th class="text-right"><?php echo number_format($total, 2, '.',',') ?></th>
+                <th></th>
+            </tr>
+            <?php endif;
+        endif;
+        
+    }
+    
+    public function addFinanceCharges()
+    {
+        $item = $this->post('finItem');
+        $sem = $this->post('semester');
+        $amount = $this->post('finAmount');
+        $sy = $this->post('school_year');
+        $course_id = $this->post('course_id');
+        $year_level = $this->post('year_level');
+        
+        
+        $plan = array(
+            'fin_course_id'     => $course_id,
+            'fin_year_level'    => $year_level,
+            'is_college'        => 1,
+        );
+        
+        $plan_id = $this->finance_model->addPlan($plan, $course_id, $year_level,$sy);
+        
+        $charge = array(
+            'item_id' => $item,
+            'amount'    => $amount,
+            'semester'  => $sem,
+            'school_year' => $sy,
+            'plan_id'     => $plan_id
+        );
+        
+        $this->finance_model->addFinanceCharges($charge, $plan_id, $item, $sem, $sy);
+        echo Modules::run('finance/financeCharges', $course_id, $year_level, $sy, $sem);
+        
+    }
+    
+    function convert_number($num) {
+        $decones = array(
+            '01' => "One",
+            '02' => "Two",
+            '03' => "Three",
+            '04' => "Four",
+            '05' => "Five",
+            '06' => "Six",
+            '07' => "Seven",
+            '08' => "Eight",
+            '09' => "Nine",
+            10 => "Ten",
+            11 => "Eleven",
+            12 => "Twelve",
+            13 => "Thirteen",
+            14 => "Fourteen",
+            15 => "Fifteen",
+            16 => "Sixteen",
+            17 => "Seventeen",
+            18 => "Eighteen",
+            19 => "Nineteen"
+        );
+        $ones = array(
+            0 => " ",
+            1 => "One",
+            2 => "Two",
+            3 => "Three",
+            4 => "Four",
+            5 => "Five",
+            6 => "Six",
+            7 => "Seven",
+            8 => "Eight",
+            9 => "Nine",
+            10 => "Ten",
+            11 => "Eleven",
+            12 => "Twelve",
+            13 => "Thirteen",
+            14 => "Fourteen",
+            15 => "Fifteen",
+            16 => "Sixteen",
+            17 => "Seventeen",
+            18 => "Eighteen",
+            19 => "Nineteen"
+        );
+        $tens = array(
+            0 => "",
+            2 => "Twenty",
+            3 => "Thirty",
+            4 => "Forty",
+            5 => "Fifty",
+            6 => "Sixty",
+            7 => "Seventy",
+            8 => "Eighty",
+            9 => "Ninety"
+        );
+        $hundreds = array(
+            "Hundred",
+            "Thousand",
+            "Million",
+            "Billion",
+            "Trillion",
+            "Quadrillion"
+        ); //limit t quadrillion 
+        $num = number_format($num, 2, ".", ",");
+        $num_arr = explode(".", $num);
+        $wholenum = $num_arr[0];
+        $decnum = $num_arr[1];
+        $whole_arr = array_reverse(explode(",", $wholenum));
+        krsort($whole_arr);
+        $rettxt = "";
+        foreach ($whole_arr as $key => $i) {
+            if ($i < 20) {
+                $rettxt .= $ones[$i];
+            } elseif ($i < 100) {
+                $rettxt .= $tens[substr($i, 0, 1)];
+                $rettxt .= " " . $ones[substr($i, 1, 1)];
+            } else {
+                $rettxt .= $ones[substr($i, 0, 1)] . " " . $hundreds[0];
+                $rettxt .= " " . $tens[substr($i, 1, 1)];
+                $rettxt .= " " . $ones[substr($i, 2, 1)];
+            }
+            if ($key > 0) {
+                $rettxt .= " " . $hundreds[$key] . " ";
+            }
+        }
+//        $rettxt = $rettxt . " peso/s";
+
+        if ($decnum > 0) {
+            $rettxt .= " and ";
+            if ($decnum < 20) {
+                $rettxt .= $decones[$decnum];
+            } elseif ($decnum < 100) {
+                $rettxt .= $tens[substr($decnum, 0, 1)];
+                $rettxt .= " " . $ones[substr($decnum, 1, 1)];
+            }
+            $rettxt = $rettxt . " centavo/s";
+        }
+        return $rettxt;
+    }
+    
+    
+   
+   
+}

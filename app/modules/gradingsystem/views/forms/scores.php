@@ -1,0 +1,533 @@
+<div class="panel panel-green">
+    <div class="panel-heading">
+        <div class="row">
+            <div class="col-lg-4">
+                <h4 id="myModalLabel">Record Assessment Results</h4>
+            </div>
+        </div>
+    </div>
+    <?php
+    $t = 0;
+    foreach ($category as $cat => $k) {
+        $teachersAssessment = Modules::run('gradingsystem/getAssessmentPerTeacher', $subject_teacher->faculty_id, $section_id, $subject_id, $k->code, $term, $sy);
+        $t += $teachersAssessment->num_rows();
+    }
+    ?>
+    <div class="panel-body" style="overflow-y: scroll;">
+        <table class="table table-striped table-bordered text-center tablesorter">
+            <?php
+            // if ($t != 0) {
+            ?>
+            <tr>
+                <th>Components</th>
+                <?php
+                $total_assess = 0;
+                switch ($term) {
+                    case 1:
+                        $grading = 'first';
+                        break;
+                    case 2:
+                        $grading = 'second';
+                        break;
+                    case 3:
+                        $grading = 'third';
+                        break;
+                    case 4:
+                        $grading = 'fourth';
+                        break;
+                }
+                foreach ($category as $cat => $k) {
+                    switch ($k->component) {
+                        case 'Written Work':
+                            $ww++;
+                            break;
+                        case 'Performance Task':
+                            $pt++;
+                            break;
+                        case 'Quarterly Assessment':
+                            $color = '#B0FF8C';
+                            break;
+                    }
+                    $teachersAssessment = Modules::run('gradingsystem/getAssessmentPerTeacher', $subject_teacher->faculty_id, $section_id, $subject_id, $k->code, $term, $sy);
+                    $total_assess += $teachersAssessment->num_rows();
+
+                ?>
+                    <th colspan="<?php echo $teachersAssessment->num_rows() ?>" style="text-align: center; white-space: nowrap; width: auto"><?php echo $k->component . ' ' . substr($k->category_name, 0, 1) . ' (' . ($k->weight * 100) . '% )' ?><button class="btn btn-sm btn-primary round pull-right" onclick="$('#createAssessment').modal('show'), $('#selectCategory').val('<?php echo $k->code ?>')" title="Create Assessment"><i class="fa fa-plus"></i></button></th>
+                <?php
+                }
+                if ($term == 4):
+                    $t_assesss = Modules::run('gradingsystem/getAssessmentPerTeacher', $subject_teacher->faculty_id, $section_id, $subject_id, $subject_id . '04', $term, $sy);
+                    $total_assess += $t_assesss->num_rows();
+                ?>
+                    <th colspan="<?php echo $t_assesss->num_rows() ?>" style="text-align: center; white-space: nowrap; width: auto">ACHIEVEMENT TEST <button class="btn btn-sm btn-primary round pull-right" onclick="$('#createAssessment').modal('show'), $('#selectCategory').val('<?php echo $subject_id . '04' ?>')" title="Create Assessment"><i class="fa fa-plus"></i></button></th>
+                <?php
+                endif;
+                ?>
+                <th>Grade</th>
+            </tr>
+            <tr>
+                <th style="text-align: center">Assessmane Title <br /> Date</th>
+                <?php
+                if ($total_assess == 0) {
+                    echo '<th></th>';
+                    echo '<th></th>';
+                    echo '<th></th>';
+                    echo '<th></th>';
+                    // echo ($term == 4 ? '<th></th>' : '');
+                } else {
+                    foreach ($category as $cat => $k) {
+                        $teachersAssessment = Modules::run('gradingsystem/getAssessmentPerTeacher', $subject_teacher->faculty_id, $section_id, $subject_id, $k->code, $term, $sy);
+                        if ($teachersAssessment->num_rows() > 0) {
+                            foreach ($teachersAssessment->result() as $IABS) {
+                                echo '<th style="text-align: center">' . $IABS->assess_title . ' <br />[ ' . $IABS->assess_date . ' ] </th>';
+                            }
+                        } else {
+                            echo '<th></th>';
+                        }
+                    }
+
+                    if ($term == 4):
+                        if ($t_assesss->num_rows() > 0) {
+                            foreach ($t_assesss->result() as $at) {
+                                echo '<th style="text-align: center">' . $at->assess_title . '<br/>[ ' . $at->assess_date . ' ] </th>';
+                            }
+                        } else {
+                            echo '<th></th>';
+                        }
+                    endif;
+                ?>
+                    <th></th>
+                <?php
+                }
+                ?>
+            </tr>
+            <tr>
+                <th style="text-align: center">Action</th>
+                <?php
+                if ($total_assess == 0) {
+                    echo '<th></th>';
+                    echo '<th></th>';
+                    echo '<th></th>';
+                    echo '<th></th>';
+                    echo ($term == 4 ? '<th></th>' : '');
+                } else {
+                    foreach ($category as $cat => $k) {
+                        $teachersAssessment = Modules::run('gradingsystem/getAssessmentPerTeacher', $subject_teacher->faculty_id, $section_id, $subject_id, $k->code, $term, $sy);
+                        if ($teachersAssessment->num_rows() > 0) {
+                            foreach ($teachersAssessment->result() as $IABS) {
+                ?>
+                                <th style="text-align: center">
+                                    <button class="btn btn-xs btn-success outline fa fa-pencil-square-o" id="editAssessment" onclick="$('#editAssessForm').modal('show'), $('#no_Items').val('<?php echo $IABS->no_items ?>'), $('#editTerm').val('<?php echo $term ?>'), $('#editAssessTitle').val('<?php echo $IABS->assess_title ?>'), $('#editAssessDate').val('<?php echo $IABS->assess_date ?>') , $('#qcode').val('<?php echo $IABS->assess_id ?>'), getAssesCat('<?php echo $subject_id ?>', '<?php echo $sy ?>')"></button>&nbsp;
+                                    <button class="btn btn-xs btn-danger fa fa-trash" onclick="deleteAssessment('<?php echo $IABS->assess_id ?>')"></button>
+                                </th>
+                            <?php
+                            }
+                        } else {
+                            echo '<th></th>';
+                        }
+                    }
+
+                    if ($term == 4):
+                        if ($t_assesss->num_rows() > 0) {
+                            foreach ($t_assesss->result() as $at) {
+                            ?>
+                                <th style="text-align: center">
+                                    <button class="btn btn-xs btn-success outline fa fa-pencil-square-o" id="editAssessment" onclick="$('#editAssessForm').modal('show'), $('#no_Items').val('<?php echo $at->no_items ?>'), $('#editTerm').val('<?php echo $term ?>'), $('#editAssessTitle').val('<?php echo $at->assess_title ?>'), $('#editAssessDate').val('<?php echo $at->assess_date ?>') , $('#qcode').val('<?php echo $at->assess_id ?>'), getAssesCat('<?php echo $subject_id ?>', '<?php echo $sy ?>')"></button>&nbsp;
+                                    <button class="btn btn-xs btn-danger fa fa-trash" onclick="deleteAssessment('<?php echo $at->assess_id ?>')"></button>
+                                </th>
+                    <?php
+                            }
+                        } else {
+                            echo '<th></th>';
+                        }
+                    endif;
+                    ?>
+                    <th></th>
+                <?php
+                }
+                ?>
+            </tr>
+            <tr>
+                <th>Number of Items</th>
+                <?php
+                if ($total_assess == 0) {
+                    echo '<th></th>';
+                    echo '<th></th>';
+                    echo '<th></th>';
+                    // echo ($term == 4 ? '<th></th>' : '');
+                } else {
+                    foreach ($category as $cat => $k) {
+                        $teachersAssessment = Modules::run('gradingsystem/getAssessmentPerTeacher', $subject_teacher->faculty_id, $section_id, $subject_id, $k->code, $term, $sy);
+                        if ($teachersAssessment->num_rows() > 0) {
+                            foreach ($teachersAssessment->result() as $IABS) {
+                                echo '<th style="text-align: center">' . $IABS->no_items . '</th>';
+                            }
+                        } else {
+                            echo '<th></th>';
+                        }
+                    }
+
+                    if ($term == 4):
+                        if ($t_assesss->num_rows() > 0) {
+                            foreach ($t_assesss->result() as $at) {
+                                echo '<th style="text-align: center">' . $at->no_items . '</th>';
+                            }
+                        } else {
+                            echo '<th></th>';
+                        }
+                    endif;
+                }
+                ?>
+                <th></th>
+            </tr>
+            <tr>
+                <th>Students Name</th>
+                <th colspan="<?php echo ($total_assess == 0 ? ($term == 4 ? 4 : 3) : ($total_assess)) ?>"></th>
+                <th></th>
+            </tr>
+            <?php
+            $students = Modules::run('registrar/getAllStudentsForExternal', '', $section_id, NULL, 1);
+            $r = 0;
+            $c = 0;
+            $kk = 0;
+            foreach ($students->result() as $s) {
+                $r++;
+                $rs = 0;
+                $isGradeValidated = Modules::run('gradingsystem/isGradeValidated', $s->st_id, $subject_id, $term, $sy);
+            ?>
+                <tr>
+                    <td style="text-align:left; width:200px;">
+                        <?php echo strtoupper($s->lastname . ', ' . $s->firstname) ?>
+                    </td>
+                    <?php
+                    if ($total_assess == 0) {
+                        echo '<th></th>';
+                        echo '<th></th>';
+                        echo '<th></th>';
+                        echo '<th></th>';
+                    } else {
+                        foreach ($category as $cat => $k) {
+                            $teachersAssessment = Modules::run('gradingsystem/getAssessmentPerTeacher', $subject_teacher->faculty_id, $section_id, $subject_id, $k->code, $term, $sy);
+                            if ($teachersAssessment->num_rows() > 0) {
+                                foreach ($teachersAssessment->result() as $IABS) {
+                                    $c++;
+                                    $rawScore = Modules::run('gradingsystem/getRawScore', $s->st_id, $IABS->assess_id);
+                                    if ($IABS->no_items < $rawScore->row()->raw_score) {
+                                        $kolor = 'color: red; font-weight: bolder';
+                                        $kk++;
+                                    } else {
+                                        if ($isGradeValidated) {
+                                            $kolor = 'color: green';
+                                        } else {
+                                            $kolor = '';
+                                        }
+                                    }
+                    ?>
+                                    <td tdn="<?php echo $s->st_id ?>" dte="<?php echo $IABS->assess_date ?>" kweight="<?php echo $k->weight ?>" qcat="<?php echo $IABS->quiz_cat ?>" qcode="<?php echo $IABS->assess_id ?>" items="<?php echo $IABS->no_items ?>" id="<?php echo $c ?>" style="<?php echo $kolor ?>" class="editable" isv="<?php echo $isGradeValidated ?>"><?php echo $rawScore->row()->raw_score ?></td>
+                                <?php
+                                }
+                            } else {
+                                echo '<th></th>';
+                            }
+                        }
+
+                        if ($term == 4):
+                            if ($t_assesss->num_rows() > 0) {
+                                foreach ($t_assesss->result() as $at) {
+                                    $c++;
+                                    $totalItems += $at->no_items;
+                                    $rawScore = Modules::run('gradingsystem/getRawScore', $s->st_id, $at->assess_id);
+                                    $rs += $rawScore->row()->raw_score;
+                                    if ($at->no_items < $rawScore->row()->raw_score) {
+                                        $kolor = 'color: red; font-weight: bolder';
+                                        $kk++;
+                                    } else {
+                                        if ($isGradeValidated) {
+                                            $kolor = 'color: green';
+                                        } else {
+                                            $kolor = '';
+                                        }
+                                    }
+                                ?>
+                                    <td tdn="<?php echo $s->st_id ?>" dte="<?php echo $at->assess_date ?>" kweight="0.3" qcat="<?php echo $at->quiz_cat ?>" qcode="<?php echo $at->assess_id ?>" items="<?php echo $at->no_items ?>" id="<?php echo $c ?>" style="<?php echo $kolor ?>" class="editable" isv="<?php echo $isGradeValidated ?>"><?php echo $rawScore->row()->raw_score ?></td>
+                        <?php
+                                }
+                                $tg = ($rs / $totalItems) * 100;
+                                $fin_tg = Modules::run('gradingsystem/new_gs/getTransmutation', $tg, 2);
+                            } else {
+                                echo '<th></th>';
+                            }
+                        endif;
+                        $totalItems = 0;
+                        $rs = 0;
+                        // $totalGrade = Modules::run('gradingsystem/getPartialAssessment',$s->st_id, $section_id, $subject_id, $sy);
+                        $totalGrade = Modules::run('gradingsystem/getPartialGrade', $s->st_id, $subject_teacher->faculty_id, $section_id, $subject_id, $sy, $term);
+                        if ($term == 4):
+                            $final = (($totalGrade * 0.7) + ($fin_tg * 0.3));
+                        else:
+                            $final = $totalGrade;
+                        endif;
+                        ?>
+                        <td class="td_totn text-center" style="font-weight:bold; width:50px;" id="tg-<?php echo $s->st_id ?>"><?php echo round($final, 1); ?></td>
+                    <?php } ?>
+                    <!-- <td class="td_totn text-center" style="font-weight:bold; width:50px;" id="tg-<?php // echo $s->st_id 
+                                                                                                        ?>"><?php // echo ($kk == 0 ? (($isGradeValidated == 1 ? round($totalGrade->$grading,2) : '')) : ''); 
+                                                                                                            ?></td> -->
+                </tr>
+            <?php
+                $kk = 0;
+            }
+            // } else {
+            ?>
+            <!-- <tr>
+                        <th style="text-align: center">
+                            <h3>No Assessment Added</h3>
+                        </th>
+                    </tr> -->
+            <?php
+            // }
+            ?>
+        </table>
+    </div>
+</div>
+<input type="hidden" id="qcode" />
+<input type="hidden" id="grading" value="<?php echo $grading ?>" />
+<input type="hidden" id="total-assess" value="<?php echo $total_assess ?>" />
+<?php $this->load->view('editAssessForm'); ?>
+
+<script type="text/javascript">
+    $(document).ready(function() {
+        $("#assessDate").datepicker();
+        $("#inputDll").select2();
+    });
+
+    $(function() {
+        $(".editable").dblclick(function() {
+            var isValidated = $(this).attr('isv');
+            if (isValidated != 1) {
+                var ID = $(this).attr('tdn');
+                var tdn = $(this).attr('id');
+                var qdate = $(this).attr('dte');
+                var qcode = $(this).attr('qcode');
+                var items = $(this).attr('items');
+                var ta = $('#total-assess').val();
+                var OriginalContent = $(this).text();
+
+                $(this).addClass("cellEditing");
+                $(this).html("<input  type='text' style='width: 100%; text-align:center' value='" + OriginalContent + "' />");
+                $(this).children().first().focus();
+                $(this).children().first().keypress(function(e) {
+                    if (e.which == 13) {
+                        var newContent = $(this).val();
+                        var nxt = parseInt(ta) + parseInt(tdn);
+
+                        var details = 'rawScore=' + newContent + '&recordStudent=' + ID + '&searchDate=' + qdate + '&quizCode=' + qcode + '&total=' + items + '&original=' + OriginalContent + "&relock=0" + '&csrf_test_name=' + $.cookie('csrf_cookie_name')
+
+
+                        $(this).parent().text(newContent);
+                        $(this).parent().removeClass("cellEditing");
+                        if (parseInt(items) >= parseInt(newContent)) {
+                            $.ajax({
+                                type: "POST",
+                                url: "<?php echo base_url() . 'gradingsystem/recordScore' ?>",
+                                dataType: 'json',
+                                data: details,
+                                cache: false,
+                                success: function(data) {
+                                    $('#success').html(data.msg);
+                                    $('#alert-info').fadeOut(5000);
+                                    getPartialGrade(ID);
+
+                                    var nxt = parseInt(ta) + parseInt(tdn);
+                                    getNext(nxt)
+                                }
+                            });
+                        } else {
+                            alert('Score entered should not be greater than the number of items!')
+                            $('#' + ID).html('')
+                        }
+                    }
+                })
+
+                $(this).children().first().blur(function() {
+                    $(this).parent().text(OriginalContent);
+                    $(this).parent().removeClass("cellEditing");
+                });
+            } else {
+                $('#success').html('<div id="alert-info"  style="position:absolute; top:50%; left:45%; z-index:2000;" class="alert alert-danger" data-dismiss="alert-message"><h4>Grades already validated!</h4>');
+                $('#alert-info').fadeOut(5000);
+            }
+        })
+    })
+
+    function getNext(id) {
+        var isValidated = $('#' + id).attr('isv');
+        if (isValidated == 1) {
+            $('#success').html('<div id="alert-info"  style="position:absolute; top:50%; left:45%; z-index:2000;" class="alert alert-danger" data-dismiss="alert-message"><h4>Grades already validated!</h4>');
+            $('#alert-info').fadeOut(5000);
+        } else {
+
+            var ID = $('#' + id).attr('tdn');
+            var tdn = $('#' + id).attr('id');
+            var ta = $('#total-assess').val();
+
+            var OriginalContent = $('#' + id).text();
+            $('#' + id).addClass("cellEditing");
+            $('#' + id).html("<input id ='input_" + tdn + "'type='text' style='width: 100%; text-align:center' value='" + OriginalContent + "' />");
+            $('#' + id).children().first().focus();
+            $('#' + id).children().first().keypress(function(e) {
+                if (e.which == 13) {
+
+                    var newContent = $('#input_' + id).val();
+
+                    $('#' + id).text(newContent);
+                    $('#' + id).parent().removeClass("cellEditing");
+                    var qdate = $('#' + id).attr('dte');
+                    var qcode = $('#' + id).attr('qcode');
+                    var items = $('#' + id).attr('items');
+
+                    var nxt = parseInt(ta) + parseInt(tdn);
+                    getNext(nxt);
+
+                    var details = 'rawScore=' + newContent + '&recordStudent=' + ID + '&searchDate=' + qdate + '&quizCode=' + qcode + '&total=' + items + '&original=' + OriginalContent + "&relock=0" + '&csrf_test_name=' + $.cookie('csrf_cookie_name')
+                    // var dataString2 = 'rawScore=' + newContent + "&recordStudent=" + ID + "&searchDate=" + searchDate + "&quizCode=" + quizCode + "&total=" + numberOfItems + "&original=" + OriginalContent + "&relock=0" + '&csrf_test_name=' + $.cookie('csrf_cookie_name')
+
+                    if (parseInt(items) >= parseInt(newContent)) {
+
+                        $.ajax({
+                            type: "POST",
+                            url: "<?php echo base_url() . 'gradingsystem/recordScore' ?>",
+                            dataType: 'json',
+                            data: details,
+                            cache: false,
+                            success: function(data) {
+                                $('#success').html(data.msg);
+                                $('#alert-info').fadeOut(5000);
+                                getPartialGrade(ID);
+
+                                var nxt = parseInt(ta) + parseInt(tdn);
+                                getNext(nxt)
+                            }
+                        });
+
+                    } else {
+                        alert('Score is greater than the number of Items. Score will not be recorded')
+                        $('#' + ID).html('')
+                    }
+
+                }
+            });
+
+            $('#' + id).children().first().blur(function() {
+                $('#' + id).text(OriginalContent);
+                $('#' + id).parent().removeClass("cellEditing");
+            });
+        }
+    }
+
+    function getPartialGrade(stid) {
+        var section = '<?php echo $section_id ?>';
+        var subject = '<?php echo $subject_id ?>';
+        var faculty_id = '<?php echo $this->session->userdata('employee_id') ?>';
+        var sy = '<?php echo $sy ?>';
+        // var term = $('#grading').val();
+        var term = '<?php echo $term; ?>'
+        var url = '<?php echo base_url() . 'gradingsystem/getPartialGrade/' ?>' + stid + '/' + faculty_id + '/' + section + '/' + subject + '/' + sy + '/' + term;
+        $.ajax({
+            type: 'GET',
+            url: url,
+            success: function(data) {
+                $('#tg-' + stid).text(data);
+            },
+            error: function() {
+                alert('err')
+            }
+        })
+    }
+
+    function editAssessment() {
+        var qcode = $('#qcode').val();
+        var title = $('#editAssessTitle').val()
+        var no_items = $('#no_Items').val()
+        var input_term = $('#editTerm').val();
+        var editAssessDate = $('#editAssessDate').val();
+        var subj_id = '<?php echo $subject_id ?>';
+        var sec_id = '<?php echo $section_id ?>';
+        var term = '<?php echo $term ?>';
+        var sy = '<?php echo $sy ?>';
+        var url = "<?php echo base_url() . 'gradingsystem/updateAssessment/' ?>" + qcode + '/' + title + '/' + no_items + '/' + input_term + '/' + editAssessDate;
+        $.ajax({
+            type: "GET",
+            url: url,
+            data: 'qcode=' + qcode, // serializes the form's elements.
+            success: function(data) {
+                alert('Successfully Changed!')
+                var url2 = '<?php echo base_url() . 'gradingsystem/enterScore/' ?>' + subj_id + '/' + sec_id + '/' + term + '/' + sy;
+                $.ajax({
+                    type: 'GET',
+                    url: url2,
+                    success: function(data) {
+                        $('#recordScore').html(data);
+                    }
+                })
+            }
+        })
+    }
+
+    function getAssesCat(subj_id, sy) {
+        var url = '<?php echo base_url() . 'gradingsystem/getAssessCatDropdown/' ?>' + subj_id + '/' + sy;
+        $.ajax({
+            type: 'GET',
+            url: url,
+            success: function(data) {
+                $('#selectAssessmentCat').html(data)
+            }
+        })
+    }
+
+    function deleteAssessment(qcode) {
+        var subj_id = '<?php echo $subject_id ?>';
+        var sec_id = '<?php echo $section_id ?>';
+        var term = '<?php echo $term ?>';
+        var sy = '<?php echo $sy ?>';
+        var answer = confirm("Do you really want to Delete this Assessment? \n\  Warning: You cannot undo this process.");
+        if (answer == true) {
+            var url = "<?php echo base_url() . 'gradingsystem/deleteAssessment/' ?>" + qcode;
+            $.ajax({
+                type: "GET",
+                url: url,
+                data: 'qcode=' + qcode, // serializes the form's elements.
+                success: function(data) {
+                    alert('Assessment Deleted!')
+                    var url2 = '<?php echo base_url() . 'gradingsystem/enterScore/' ?>' + subj_id + '/' + sec_id + '/' + term + '/' + sy;
+                    $.ajax({
+                        type: 'GET',
+                        url: url2,
+                        success: function(data) {
+                            $('#recordScore').html(data);
+                        }
+                    })
+                }
+            });
+        } else {
+
+            return FALSE
+        }
+    }
+</script>
+
+<style type="text/css">
+    .rotate-text {
+        /* Rotate the text by 90 degrees clockwise */
+        transform: rotate(270deg);
+        /* You may need to adjust the width and height of the cell to accommodate the rotated text */
+        width: 20px;
+        /* Adjust as needed */
+        height: 200px;
+        /* Adjust as needed */
+        /* Set the transformation origin to the center */
+        transform-origin: center center;
+        /* Optionally, adjust other styles such as text alignment */
+        text-align: center;
+    }
+</style>

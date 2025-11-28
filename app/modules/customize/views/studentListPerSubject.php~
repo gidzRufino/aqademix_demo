@@ -1,0 +1,125 @@
+    <?php
+    $position_id = $this->session->userdata('position_id');
+    $dept_id = $this->session->userdata('dept_id');
+    //echo $this->session->userdata('position'); 
+    switch($position_id){
+        case '3':
+            $admin = "display:none;";
+        break;    
+    }
+    ?>
+    <div style="margin-bottom: 100px; ">
+        <div class="row-fluid contentHeader sticky" style="width:1080px; background: #FFF; z-index: 2000">
+             <?php
+            if($getEmployee->position_details==1){ 
+                ?>
+            <h3 class="pull-left" style="margin:0"> <?php echo $selectSection->level.' - '.$selectSection->section;   ?>  </h3>
+            <?php
+            }else{
+                ?>
+            <h3 class="pull-left" style="margin:0"><?php echo $getSpecificSubjects->subject; ?> [ <?php echo $selectSection->level.' - '.$selectSection->section;   ?> ] </h3>
+            <?php
+            }
+            ?>
+            
+            <a class="btn btn-success pull-right" style="margin-left:5px;" href="<?php echo base_url();?>gradingsystem/"  >View Class Record</a>&nbsp;
+            <a class="btn btn-info pull-right" style="" href="<?php echo base_url();?>index.php/attendance/dailyPerSubject/<?php echo $this->uri->segment(3); ?>/<?php echo $this->uri->segment(4); ?>/<?php echo $this->uri->segment(5); ?>"  >Attendance Sheet</a>&nbsp;&nbsp;
+
+        </div>
+    <div style="margin-top:10px;">
+        <div class="clearfix row-fluid">
+       <input type="hidden" id="setAction" />
+       <input type="hidden" id="setId" />
+       <input type="hidden" id="level" />
+       <div id="tableResult">
+            <table class='table table-striped'  >
+
+                <tr><td>First Name</td><td>Middle Name</td><td>Last Name</td><td>Action</td></tr>
+                <?php 
+
+                //$Students = $this->studentgate_model->getEnrollmentList($this->uri->segment(4),'',$this->uri->segment(5),'');
+                foreach ($students->result() as $SL){ ?>
+
+                <tr>
+                    <td><?php echo strtoupper($SL->firstname); ?></td>
+                    <td><?php echo strtoupper($SL->middlename); ?></td>
+                    <td><?php echo strtoupper($SL->lastname); ?></td>
+                    <td>
+                        <a href="<?php echo base_url();?>index.php/registrar/viewDetails/<?php echo base64_encode($SL->uid); ?>" onmouseover="document.getElementById('setId').value='<?php echo $SL->uid; ?>'" >View Info</a>
+                    </td>
+
+                </tr> 
+                 <?php 
+                        }
+
+                    ?>
+            </table>
+
+       </div>
+    </div>
+
+
+
+
+    <script type="text/javascript">
+
+        function setId(){
+
+             var data = new Array();
+
+             data[0] = document.getElementById('inputCard').value;
+             data[1] = document.getElementById('setId').value;
+
+
+             saveAdmission(data);
+            }
+
+        function getStudentByLevel()
+        {
+            var data;
+            document.getElementById('setAction').value = 'getStudent';
+            data = document.getElementById("inputGrade").value;
+           saveAdmission(data);
+
+
+        }
+
+        function setOR(){
+
+            var data = new Array();
+            data[0] = document.getElementById("setId").value;
+            data[1] = document.getElementById("inputOR_num").value;
+            data[2] = document.getElementById('level').value;
+            data[3] = document.getElementById('dateAdmitted').value;
+
+            saveAdmission(data)
+            //alert(data)
+        }
+        function deactivate(){
+
+            var data = new Array();
+            data[0] = document.getElementById("setId").value;
+            data[1] = document.getElementById("inputRemarks").value;
+            data[2] = document.getElementById('level').value;
+            data[3] = document.getElementById('dateRemarked').value;
+
+            saveAdmission(data)
+            //alert(data)
+        }
+
+        function getAllStudents()
+        {
+            document.getElementById('setAction').value = 'getAllStudent';
+            saveAdmission('all');
+        }
+
+        $(document).ready(function() {
+              $("#inputGrade").select2({
+                    minimumInputLength: 2
+                });
+              $("#inputRemarks").select2(); 
+         });
+
+
+    </script>
+    </div>

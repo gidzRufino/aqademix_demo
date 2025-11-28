@@ -1,0 +1,26 @@
+.text{
+    display: inline;
+    margin-right: 30px;
+    font-size:55px;
+    font-weight: bold;
+    line-height: 14px;
+}
+
+.text span{
+    color:yellow;
+}
+
+.marquee
+{
+    width: 100%;
+    overflow: hidden;
+    color:white;
+     position:fixed;
+    bottom: 10px;
+    
+}
+
+.js-marquee{
+    height:60px !important;
+    padding-top:15px !important;
+}

@@ -1,0 +1,63 @@
+<aside class="main-sidebar sidebar-dark-primary elevation-4">
+    <!-- Brand Logo -->
+    <a href="<?php echo base_url() ?>" class="brand-link">
+      <img src="<?php echo base_url() . 'images/forms/' . $settings->set_logo ?>" width="40" alt="<?php echo $settings->short_name ?>"
+           class="brand-image img-circle elevation-3"
+           style="opacity: .8">
+      <span class="brand-text font-weight-light"><?php echo $settings->short_name ?></span>
+    </a>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <!-- Sidebar user panel (optional) -->
+      <div class="user-panel mt-3 pb-3 mb-3 d-flex">
+        <div class="image">
+          <?php if($this->session->isStudent): ?>
+            <img src="<?php echo base_url() . 'uploads/' . $this->session->details->avatar ?>" class="img-circle elevation-2" alt="User Image">
+          <?php else: ?>  
+            <img src="<?php echo base_url() . 'uploads/' . $this->session->basicInfo->avatar ?>" class="img-circle elevation-2" alt="User Image">
+          <?php endif; ?>
+        </div>
+        <div class="info">
+          <a href="#" class="d-block"><?php echo strtoupper($this->session->name) ?></a>
+        </div>
+      </div>
+
+      <!-- Sidebar Menu -->
+      <nav class="mt-2">
+        <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+          <!-- Add icons to the links using the .nav-icon class
+               with font-awesome or any other icon font library -->
+          <?php if(!$this->session->isStudent): ?>
+            <li class="nav-item">
+                <a href="<?php echo base_url() ?>" class="nav-link">
+                <i class="nav-icon fas fa-home"></i>
+                <p>
+                  Home
+                </p>
+              </a>
+            </li>
+          <?php endif; ?>  
+          <li class="nav-item">
+              <a href="<?php echo ($this->session->isStudent?base_url('opl/student'):base_url('opl')) ?>" class="nav-link">
+              <i class="nav-icon fas fa-tachometer-alt"></i>
+              <p>
+                Dashboard
+              </p>
+            </a>
+          </li>
+          <?php 
+            if($this->session->isStudent): 
+                echo Modules::run('opl/student/student_menu', $subjectDetails);
+            else:    
+              if($this->uri->segment(2)!=NULL && $this->session->position="High School Faculty"):
+                echo Modules::run('opl/task_menu');
+              endif; 
+            endif;   
+            ?>
+        </ul>
+      </nav>
+      <!-- /.sidebar-menu -->
+    </div>
+    <!-- /.sidebar -->
+  </aside>

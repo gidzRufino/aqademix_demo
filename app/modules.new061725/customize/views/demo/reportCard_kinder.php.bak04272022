@@ -1,0 +1,728 @@
+<?php
+
+class MYPDF extends Pdf {
+
+    //Page header
+    public function Header() {
+
+        $this->SetTitle('DepED Form 138-A');
+    }
+
+}
+
+$pdf = new MYPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
+
+$pdf->SetLeftMargin(3);
+$pdf->SetRightMargin(3);
+// set auto page breaks
+$pdf->SetAutoPageBreak(TRUE, 5);
+
+// set image scale factor
+$pdf->setImageScale(PDF_IMAGE_SCALE_RATIO);
+// remove default header/footer
+//$resolution= array(166, 200);
+$resolution = array(210, 297);
+$pdf->AddPage('L', $resolution);
+
+$totalDays = 0;
+$total_pdays = 0;
+$total_adays = 0;
+$settings = Modules::run('main/getSet');
+$image_file = K_PATH_IMAGES . '/' . $settings->set_logo;
+$bg_image = K_PATH_IMAGES . '/bg_img.jpg';
+$division_logo = K_PATH_IMAGES . '/division_logo.jpg';
+$principal = Modules::run('hr/getEmployeeByPosition', 'Principal - High School');
+$name = strtoupper($principal->firstname . ' ' . substr($principal->middlename, 0, 1) . '. ' . $principal->lastname);
+$adviser = Modules::run('academic/getAdvisory', NULL, $sy, $student->section_id);
+$adv = strtoupper($adviser->row()->firstname . ' ' . substr($adviser->row()->middlename, 0, 1) . '. ' . $adviser->row()->lastname) . ', LPT';
+$first = Modules::run('gradingsystem/getCardRemarks', $student->uid, 1, $sy);
+$second = Modules::run('gradingsystem/getCardRemarks', $student->uid, 2, $sy);
+$third = Modules::run('gradingsystem/getCardRemarks', $student->uid, 3, $sy);
+$fourth = Modules::run('gradingsystem/getCardRemarks', $student->uid, 4, $sy);
+$bg_image = K_PATH_IMAGES . '/bg_img.jpg';
+//$pdf->SetAlpha(0.4);
+//$pdf->Image($bg_image, 0, 0, 1700, 1000, 'jpg', '', '', true, 300, '', false, false, 0);
+//$pdf->SetAlpha(1);
+
+$pdf->Line(99, 5, 99, 1, array('color' => 'black'));
+$pdf->Line(198, 5, 198, 1, array('color' => 'black'));
+
+//--------------------------- right side ------------------------------------------------------//
+
+
+$pdf->Image($image_file, 235, 5, 25, '', 'PNG', '', 'T', false, 300, '', false, false, 0, false, false, false);
+
+$pdf->SetXY(198, 30);
+$pdf->SetFont('bernard_mt', 'R', 20);
+$pdf->SetTextColor(0, 51, 153);
+$pdf->MultiCell(99, 10, 'CHRISTIAN SCHOOL FOR LIFE', 0, 'C', 0, 0, '', '', true, 0, false, true, 10, 'M');
+$pdf->Ln(8);
+
+$pdf->SetX(198);
+$pdf->SetTextColor(0, 0, 0);
+$pdf->SetFont('bell_mt', 'B', 10);
+$pdf->MultiCell(99, 10, 'Cagayan de Oro City', 0, 'C', 0, 0, '', '', true, 0, false, true, 10, 'M');
+$pdf->Ln(3);
+
+$pdf->SetX(198);
+$pdf->SetFont('bell_mt', 'B', 10);
+$pdf->MultiCell(99, 10, 'www.csflcdo.com', 0, 'C', 0, 0, '', '', true, 0, false, true, 10, 'M');
+$pdf->Ln(10);
+
+$pdf->SetX(198);
+$pdf->SetFont('impact', 'R', 10);
+$pdf->MultiCell(99, 10, 'Pre - School Department', 0, 'C', 0, 0, '', '', true, 0, false, true, 10, 'M');
+$pdf->Ln(10);
+
+$pdf->SetX(198);
+$pdf->SetFont('bernard_mt', 'R', 15);
+$pdf->MultiCell(99, 10, 'PROGRESS REPORT CARD', 0, 'C', 0, 0, '', '', true, 0, false, true, 10, 'M');
+$pdf->Ln(5);
+
+$pdf->SetX(198);
+$pdf->SetFont('bernard_mt', 'R', 10);
+$pdf->MultiCell(99, 10, 'School Year ' . $sy . ' - ' . ($sy + 1), 0, 'C', 0, 0, '', '', true, 0, false, true, 10, 'M');
+$pdf->Ln(10);
+
+$pdf->SetX(205);
+$pdf->SetFont('times', 'R', 9);
+$pdf->MultiCell(12, 5, 'Name :', 0, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->SetFont('times', 'B', 11);
+$pdf->MultiCell(71, 5, '          ' . strtoupper($student->firstname . ' ' . ($student->middlename != '' ? substr($student->middlename, 0, 1) . '.' : '' ) . ' ' . $student->lastname), 'B', 'L', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->Ln(7);
+
+$pdf->SetX(205);
+$pdf->SetFont('times', 'R', 9);
+$pdf->MultiCell(13, 5, 'LRN # :', 0, 'L', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->SetFont('times', 'B', 11);
+$pdf->MultiCell(35, 5, ($student->lrn == '' ? $student->st_id : $student->lrn), 'B', 'L', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->SetFont('times', 'R', 9);
+$pdf->MultiCell(15, 5, 'Gender :', 0, 'R', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->SetFont('times', 'B', 11);
+$pdf->MultiCell(20, 5, $student->sex, 'B', 'L', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->Ln(7);
+
+$pdf->SetX(205);
+$pdf->SetFont('times', 'R', 9);
+$pdf->MultiCell(20, 5, 'Grade/Level :', 0, 'L', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->SetFont('times', 'B', 11);
+$pdf->MultiCell(63, 5, $student->level, 'B', 'L', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->Ln(7);
+
+$pdf->SetX(205);
+$pdf->SetFont('times', 'R', 9);
+$pdf->MultiCell(15, 5, 'Teacher :', 0, 'L', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->SetFont('times', 'B', 11);
+$pdf->MultiCell(68, 5, $adv, 'B', 'L', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->Ln(7);
+
+$pdf->SetX(205);
+$pdf->SetFont('agency_fb', 'R', 9);
+$pdf->MultiCell(48, 5, 'Age of Child at the beginning of the SY: Years: ', 0, 'L', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->MultiCell(12, 5, '', 'B', 'L', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->MultiCell(11, 5, 'Months :', 0, 'R', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->MultiCell(12, 5, '', 'B', 'L', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->Ln(7);
+
+$pdf->SetX(205);
+$pdf->SetFont('agency_fb', 'R', 9);
+$pdf->MultiCell(42, 5, 'Age of Child at the end of the SY: Years: ', 0, 'L', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->MultiCell(18, 5, '', 'B', 'L', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->MultiCell(11, 5, 'Months :', 0, 'R', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->MultiCell(12, 5, '', 'B', 'L', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->Ln(7);
+
+$pdf->SetX(205);
+$pdf->SetLineStyle(array('width' => 0.5, 'cap' => 'butt', 'join' => 'miter', 'dash' => 4, 'color' => array(255, 0, 0)));
+$pdf->SetFillColor(255, 255, 128);
+$pdf->SetTextColor(0, 0, 0);
+
+$text = "The purpose of this Progress Report is to inform parents about their child’s learning achievement based on the Kindergarten Curriculum Guide. This reflects a summary of your child’s learning performance. It identifies your child’s levels of progress in different domains of development not necessarily every ten (10) weeks or quarter so that we know if additional time and follow-up are needed to make your child achieve the competencies expected of her/him.";
+
+$pdf->SetFont('helvetica', 'R', 6);
+$pdf->MultiCell(85, 17, $text, 1, 'L', 0, 0, '', '', true, 0, false, true, 17, 'M');
+$pdf->Ln(10);
+
+$pdf->SetXY(205, 138);
+$pdf->SetFont('helvetica', 'B', 7);
+$pdf->MultiCell(85, 5, 'CERTIFICATE OF TRANSFER', 0, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->Ln();
+
+$pdf->SetX(205);
+$pdf->SetLineStyle(array('width' => 0.3, 'cap' => 'butt', 'join' => 'miter', 'dash' => 0, 'color' => array(0, 0, 0)));
+$pdf->SetFont('helvetica', 'R', 7);
+$pdf->MultiCell(43, 5, 'Eligible for admission to Grade/Level', 0, 'L', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->MultiCell(39, 5, urldecode($this->uri->segment(6)), 'B', 'L', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->Ln();
+
+$pdf->SetX(205);
+$pdf->MultiCell(43, 5, 'Approved:', 0, 'L', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->Ln(8);
+
+$pdf->SetX(205);
+$pdf->SetFont('helvetica', 'R', 6);
+$pdf->MultiCell(3, 5, '', 0, 'R', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->MultiCell(35, 5, 'LUCY P. BAGONGON, M.A', 'B', 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->MultiCell(10, 5, '', 0, 'R', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->MultiCell(35, 5, $adv, 'B', 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->Ln();
+
+$pdf->SetX(205);
+$pdf->MultiCell(3, 5, '', 0, 'R', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->MultiCell(35, 5, 'Principal', 0, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->MultiCell(10, 5, '', 0, 'R', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->MultiCell(35, 5, 'Adviser', 0, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->Ln(7);
+
+$pdf->SetX(205);
+$pdf->SetFont('helvetica', 'B', 7);
+$pdf->MultiCell(85, 5, 'CANCELLATION OF ELIGIBILITY TO TRANSFER', 0, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->Ln(5);
+
+$pdf->SetX(205);
+$pdf->SetFont('helvetica', 'R', 7);
+$pdf->MultiCell(17, 5, 'Admitted in : ', 0, 'L', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->MultiCell(65, 5, '', 'B', 'L', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->Ln(5);
+
+$pdf->SetX(205);
+$pdf->SetFont('helvetica', 'R', 7);
+$pdf->MultiCell(10, 5, 'Date : ', 0, 'L', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->MultiCell(30, 5, '', 'B', 'L', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->Ln(10);
+
+$pdf->SetX(205);
+$pdf->MultiCell(47, 5, '', 0, 'R', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->MultiCell(35, 5, 'Principal', 'T', 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+
+$pdf->SetXY(205, 137);
+$pdf->SetLineStyle(array('width' => 0.8, 'cap' => 'butt', 'join' => 'miter', 'dash' => 0, 'color' => array(0, 0, 255)));
+$pdf->MultiCell(85, 30, '', 1, 'L', 0, 0, '', '', true, 0, false, true, 30, 'M');
+
+//--------------------------- end right side -----------------------------------------------------//
+//--------------------------- start center -------------------------------------------------------//
+
+$pdf->SetLineStyle(array('width' => 0.3, 'cap' => 'butt', 'join' => 'miter', 'dash' => 0, 'color' => array(0, 0, 0)));
+$pdf->SetXY(99, 5);
+$pdf->SetFont('times', 'B', 9);
+$pdf->MultiCell(99, 5, 'ACADEMIC PERFORMANCE', 0, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->Ln(5);
+
+$pdf->SetX(103);
+$pdf->SetFont('Helvetica', 'B', 10);
+$pdf->SetFillColor(242, 219, 219);
+$pdf->MultiCell(35, 10, 'Learning Areas', 'RTL', 'C', 1, 0, '', '', true, 0, false, true, 10, 'M');
+$pdf->MultiCell(44, 5, 'Periodic Rating', 'LTR', 'C', 1, 0, '', '', true, 0, false, true, 5, 'T');
+$pdf->MultiCell(13, 5, 'Final', 'RTL', 'C', 1, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->SetFont('Helvetica', 'B', 8);
+$pdf->Ln();
+
+$pdf->SetX(103);
+$pdf->MultiCell(35, 5, '', 'LB', 'C', 1, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->MultiCell(11, 5, '1', 1, 'C', 1, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->MultiCell(11, 5, '2', 1, 'C', 1, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->MultiCell(11, 5, '3', 1, 'C', 1, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->MultiCell(11, 5, '4', 1, 'C', 1, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->MultiCell(13, 5, 'Rating', 'BR', 'C', 1, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->Ln();
+
+$subject_ids = Modules::run('academic/getSpecificSubjectPerlevel', $student->grade_id);
+$i = 0;
+$m = 0;
+$mp = 0;
+$mapeh1 = 0;
+$mapeh2 = 0;
+$mapeh3 = 0;
+$mapeh4 = 0;
+foreach ($subject_ids as $sp):
+    $singleSub = Modules::run('academic/getSpecificSubjects', $sp->sub_id);
+    if ($singleSub->parent_subject == 11):
+        $fg = Modules::run('gradingsystem/getFinalGrade', $student->uid, $sp->sub_id, 1, $sy);
+        $fg1 += $fg->row()->final_rating;
+        $sg = Modules::run('gradingsystem/getFinalGrade', $student->uid, $sp->sub_id, 2, $sy);
+        $sg1 += $sg->row()->final_rating;
+        $tg = Modules::run('gradingsystem/getFinalGrade', $student->uid, $sp->sub_id, 3, $sy);
+        $tg1 += $tg->row()->final_rating;
+        $frg = Modules::run('gradingsystem/getFinalGrade', $student->uid, $sp->sub_id, 4, $sy);
+        $frg1 += $frg->row()->final_rating;
+        $mp += 1;
+    endif;
+endforeach;
+$mapeh1 = round(($fg1 / $mp));
+$mapeh2 = round(($sg1 / $mp));
+$mapeh3 = round(($tg1 / $mp));
+$mapeh4 = round(($frg1 / $mp));
+$finalMAPEH = round(($mapeh1 + $mapeh2 + $mapeh3 + $mapeh4) / 4, 2);
+
+$pdf->SetFont('times', 'R', 6);
+$pdf->SetFillColor(225, 225, 225);
+$ss = 0;
+foreach ($subject_ids as $s) {
+    $pdf->SetX(103);
+    $singleSub = Modules::run('academic/getSpecificSubjects', $s->sub_id);
+    $fg = Modules::run('gradingsystem/getFinalGrade', $student->uid, $s->sub_id, 1, $sy);
+    $sg = Modules::run('gradingsystem/getFinalGrade', $student->uid, $s->sub_id, 2, $sy);
+    $tg = Modules::run('gradingsystem/getFinalGrade', $student->uid, $s->sub_id, 3, $sy);
+    $frg = Modules::run('gradingsystem/getFinalGrade', $student->uid, $s->sub_id, 4, $sy);
+    if ($singleSub->parent_subject != 11):
+        if ($fg->row()->final_rating != ''):
+            $ss++;
+        endif;
+        if ($sg->row()->final_rating != ''):
+            $ss++;
+        endif;
+        if ($tg->row()->final_rating != ''):
+            $ss++;
+        endif;
+        if ($frg->row()->final_rating != ''):
+            $ss++;
+        endif;
+        $subCount++;
+        $pdf->MultiCell(35, ($singleSub->subject_id == 229933 ? 10 : 5), $singleSub->subject, 1, 'L', 0, 0, '', '', true, 0, false, true, ($singleSub->subject_id == 229933 ? 10 : 5), 'M');
+        $pdf->MultiCell(11, ($singleSub->subject_id == 229933 ? 10 : 5), ($fg->row()->final_rating != '' ? getLetterGrade($fg->row()->final_rating) : ''), 1, 'C', 0, 0, '', '', true, 0, false, true, ($singleSub->subject_id == 229933 ? 10 : 5), 'M');
+        $pdf->MultiCell(11, ($singleSub->subject_id == 229933 ? 10 : 5), ($sg->row()->final_rating != '' ? getLetterGrade($sg->row()->final_rating) : ''), 1, 'C', 0, 0, '', '', true, 0, false, true, ($singleSub->subject_id == 229933 ? 10 : 5), 'M');
+        $pdf->MultiCell(11, ($singleSub->subject_id == 229933 ? 10 : 5), ($tg->row()->final_rating != '' ? getLetterGrade($tg->row()->final_rating) : ''), 1, 'C', 0, 0, '', '', true, 0, false, true, ($singleSub->subject_id == 229933 ? 10 : 5), 'M');
+        $pdf->MultiCell(11, ($singleSub->subject_id == 229933 ? 10 : 5), ($frg->row()->final_rating != '' ? getLetterGrade($frg->row()->final_rating) : ''), 1, 'C', 0, 0, '', '', true, 0, false, true, ($singleSub->subject_id == 229933 ? 10 : 5), 'M');
+        $finRateNum = round(($fg->row()->final_rating + $sg->row()->final_rating + $tg->row()->final_rating + $frg->row()->final_rating) / 4);
+        $pdf->MultiCell(13, ($singleSub->subject_id == 229933 ? 10 : 5), ($ss == 4 ? ($finRateNum != 0 ? $finRateNum . '(' . getLetterGrade($finRateNum) . ')' : '') : ''), 1, 'C', 0, 0, '', '', true, 0, false, true, ($singleSub->subject_id == 229933 ? 10 : 5), 'M');
+        $firstFinal += $fg->row()->final_rating;
+        $secondFinal += $sg->row()->final_rating;
+        $thirdFinal += $tg->row()->final_rating;
+        $fourthFinal += $frg->row()->final_rating;
+        $rateNum += $finRateNum;
+        $pdf->Ln();
+    endif;
+    $ss = 0;
+}
+
+$mm = 0;
+if ($mapeh1 != 0):
+    $mm++;
+endif;
+if ($mapeh2 != 0):
+    $mm++;
+endif;
+if ($mapeh3 != 0):
+    $mm++;
+endif;
+if ($mapeh4 != 0):
+    $mm++;
+endif;
+
+$pdf->SetX(103);
+$pdf->MultiCell(35, 5, 'MAPEH', 1, 'L', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->MultiCell(11, 5, ($mapeh1 != 0 ? getLetterGrade($mapeh1) : ''), 1, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->MultiCell(11, 5, ($mapeh2 != 0 ? getLetterGrade($mapeh2) : ''), 1, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->MultiCell(11, 5, ($mapeh3 != 0 ? getLetterGrade($mapeh3) : ''), 1, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->MultiCell(11, 5, ($mapeh4 != 0 ? getLetterGrade($mapeh4) : ''), 1, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->MultiCell(13, 5, ($finalMAPEH != 0 ? ($mm == 4 ? $finalMAPEH . '(' . getLetterGrade($finalMAPEH) . ')' : '') : ''), 1, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->Ln();
+$pdf->SetX(103);
+
+$generalFinal = round($generalFinal / $i, 2);
+if ($generalFinal <= 75 && $generalFinal >= $settings->final_passing_mark):
+    $generalFinal = 75;
+endif;
+
+$aveFirst = round((($firstFinal + $mapeh1) / ($subCount + 1)), 2);
+$aveSecond = round((($secondFinal + $mapeh2) / ($subCount + 1)), 2);
+$aveThird = round((($thirdFinal + $mapeh3) / ($subCount + 1)), 2);
+$aveFourth = round((($fourthFinal + $mapeh4) / ($subCount + 1)), 2);
+$aveFinRate = round(($rateNum + $finalMAPEH) / ($subCount + 1), 2);
+$cc = 0;
+if ($aveFirst != 0):
+    $cc++;
+endif;
+if ($aveSecond != 0):
+    $cc++;
+endif;
+if ($aveThird != 0):
+    $cc++;
+endif;
+if ($aveFourth != 0):
+    $cc++;
+endif;
+
+$pdf->SetX(103);
+$pdf->SetFillColor(219, 229, 241);
+$pdf->SetFont('times', 'B', 6);
+$pdf->MultiCell(35, 5, 'Average', 1, 'L', 1, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->SetFont('times', 'R', 6);
+$pdf->MultiCell(11, 5, ($aveFirst != 0 ? number_format($aveFirst, 2) . '(' . getLetterGrade(number_format($aveFirst, 2)) . ')' : ''), 1, 'C', 1, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->MultiCell(11, 5, ($aveSecond != 0 ? number_format($aveSecond, 2) . '(' . getLetterGrade(number_format($aveSecond, 2)) . ')' : ''), 1, 'C', 1, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->MultiCell(11, 5, ($aveThird != 0 ? number_format($aveThird, 2) . '(' . getLetterGrade(number_format($aveThird, 2)) . ')' : ''), 1, 'C', 1, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->MultiCell(11, 5, ($aveFourth != 0 ? number_format($aveFourth, 2) . '(' . getLetterGrade(number_format($aveFourth, 2)) . ')' : ''), 1, 'C', 1, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->MultiCell(13, 5, ($aveFinRate != 0 ? ($cc == 4 ? number_format($aveFinRate, 2) . '(' . getLetterGrade(number_format($aveFourth, 2)) . ')' : '') : ''), 1, 'C', 1, 0, '', '', true, 0, false, true, 5, 'M');
+
+
+$pdf->SetXY(103, 72);
+$pdf->SetLineStyle(array('width' => 0.3, 'cap' => 'butt', 'join' => 'miter', 'dash' => 5, 'color' => array(85, 87, 83)));
+$pdf->SetFillColor(255, 255, 128);
+$pdf->SetTextColor(0, 0, 0);
+
+$pdf->SetFont('helvetica', 'R', 6);
+$pdf->SetFillColor(191);
+$pdf->MultiCell(92, 32, '', 1, 'L', 1, 0, '', '', true, 0, false, true, 32, 'M');
+$pdf->Ln(10);
+
+$pdf->SetFont('times', 'B', 8);
+$pdf->SetXY(103, 72);
+$pdf->MultiCell(92, 5, 'Legend:', 0, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->Ln();
+
+$pdf->SetX(103);
+$pdf->SetFont('times', 'B', 8);
+$pdf->MultiCell(30, 5, 'B      -', 0, 'R', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->MultiCell(16, 5, 'Beginning', 0, 'R', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->SetFont('times', 'R', 8);
+$pdf->MultiCell(30, 5, '(74% and below)', 0, 'L', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->Ln();
+
+$pdf->SetX(103);
+$pdf->SetFont('times', 'B', 8);
+$pdf->MultiCell(30, 5, 'D      -', 0, 'R', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->MultiCell(17, 5, 'Developing', 0, 'R', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->SetFont('times', 'R', 8);
+$pdf->MultiCell(30, 5, '(75% - 79%)', 0, 'L', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->Ln();
+
+$pdf->SetX(103);
+$pdf->SetFont('times', 'B', 8);
+$pdf->MultiCell(31, 5, 'AP     - ', 0, 'R', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->MultiCell(33, 5, 'Approaching Proficiency', 0, 'R', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->SetFont('times', 'R', 8);
+$pdf->MultiCell(30, 5, '(80% - 84%)', 0, 'L', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->Ln();
+
+$pdf->SetX(103);
+$pdf->SetFont('times', 'B', 8);
+$pdf->MultiCell(30, 5, 'P      -', 0, 'R', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->MultiCell(17, 5, 'Proficient', 0, 'R', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->SetFont('times', 'R', 8);
+$pdf->MultiCell(30, 5, '(85% - 89%)', 0, 'L', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->Ln();
+
+$pdf->SetX(103);
+$pdf->SetFont('times', 'B', 8);
+$pdf->MultiCell(30, 5, 'A      -', 0, 'R', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->MultiCell(17, 5, 'Advanced', 0, 'R', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->SetFont('times', 'R', 8);
+$pdf->MultiCell(30, 5, '(90% and above)', 0, 'L', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->Ln(10);
+
+$pdf->SetX(99);
+$pdf->SetLineStyle(array('width' => 0.3, 'cap' => 'butt', 'join' => 'miter', 'dash' => 0, 'color' => array(0, 0, 0)));
+$pdf->SetFont('times', 'B', 9);
+$pdf->MultiCell(99, 5, 'Attendance Record', 0, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->Ln();
+
+$gs_start = date('m', strtotime($settings->bosy));
+$gs_end = date('m', strtotime($settings->eosy));
+$gsDays = Modules::run('reports/getRawSchoolDays', $sy, 2);
+
+$pdf->SetX(100);
+$pdf->SetFont('Helvetica', 'R', 5);
+$pdf->MultiCell(20, 7, '', 1, 'L', 0, 0, '', '', true, 0, false, true, 7, 'M');
+
+for ($i = $gs_start; $i <= (12 + $gs_end); $i++):
+    $m = $i;
+    $monthName = date('M', strtotime(date('Y-' . ($m > 12 ? (($m - 12) < 10 ? '0' . ($m - 12) : ($m - 12)) : $m) . '-01')));
+    $pdf->MultiCell(7, 7, $monthName, 1, 'C', 0, 0, '', '', true, 0, false, true, 7, 'M');
+endfor;
+$pdf->MultiCell(7, 7, 'TOTAL', 1, 'C', 0, 0, '', '', true, 0, false, true, 7, 'M');
+$pdf->Ln();
+
+$pdf->SetX(100);
+$pdf->SetFont('Helvetica', 'R', 5);
+$pdf->MultiCell(20, 5, 'No. of School Days', 1, 'L', 0, 0, '', '', true, 0, false, true, 5, 'M');
+
+for ($i = $gs_start; $i <= (12 + $gs_end); $i++):
+    $m = $i;
+    $n = ($m > 12 ? (($m - 12) < 10 ? '0' . ($m - 12) : ($m - 12)) : $m);
+    $monthName = date('F', strtotime(date('Y-' . ($m > 12 ? (($m - 12) < 10 ? '0' . ($m - 12) : ($m - 12)) : $m) . '-01')));
+    $pdf->MultiCell(7, 5, $gsDays->$monthName, 1, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+    $totalDays += $gsDays->$monthName;
+endfor;
+$pdf->MultiCell(7, 5, $totalDays, 1, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->Ln();
+
+$attendance = Modules::run('attendance/attendance_reports/getAttendancePerStudent', $student->st_id, $student->grade_id, $sy);
+$sprDetails = Modules::run('sf10/getSPRrec', $student->st_id, $sy, NULL, $student->grade_id);
+$pdays = Modules::run('sf10/getAttendanceOveride', $sprDetails->spr_id, $sprDetails->school_year);
+
+$pdf->SetX(100);
+$pdf->MultiCell(20, 5, 'School Days Present', 1, 'L', 0, 0, '', '', true, 0, false, true, 5, 'M');
+
+for ($i = $gs_start; $i <= (12 + $gs_end); $i++):
+    $m = $i;
+    $n = ($m > 12 ? (($m - 12) < 10 ? '0' . ($m - 12) : ($m - 12)) : $m);
+    $monthName = date('F', strtotime(date('Y-' . ($m > 12 ? (($m - 12) < 10 ? '0' . ($m - 12) : ($m - 12)) : $m) . '-01')));
+    $schoolDays = Modules::run('main/getNumberOfSchoolDays', $firstDay, $lastDay, $m, $sy);
+    $holiday = Modules::run('calendar/holidayExist', $m, $sy);
+    $totalDaysInAMonth = $totalDays - $holiday->num_rows();
+    $pdf->MultiCell(7, 5, ($pdays ? $pdays->row()->$monthName : ''), 1, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+    $total_pdays += ($pdays ? $pdays->row()->$monthName : 0);
+endfor;
+
+$pdf->MultiCell(7, 5, $total_pdays, 1, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->Ln();
+
+$pdf->SetX(100);
+$pdf->MultiCell(20, 5, 'School Days Absent', 1, 'L', 0, 0, '', '', true, 0, false, true, 5, 'M');
+
+for ($i = $gs_start; $i <= (12 + $gs_end); $i++):
+    $m = $i;
+    $n = ($m > 12 ? (($m - 12) < 10 ? '0' . ($m - 12) : ($m - 12)) : $m);
+    $monthName = date('F', strtotime(date('Y-' . ($m > 12 ? (($m - 12) < 10 ? '0' . ($m - 12) : ($m - 12)) : $m) . '-01')));
+    $schoolDays = Modules::run('main/getNumberOfSchoolDays', $firstDay, $lastDay, $m, $sy);
+    $holiday = Modules::run('calendar/holidayExist', $m, $sy);
+    $totalDaysInAMonth = $totalDays - $holiday->num_rows();
+    $pdf->MultiCell(7, 5, ($gsDays->$monthName - ($pdays ? $pdays->row()->$monthName : 0)), 'BR', 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+    $total_adays += ($gsDays->$monthName - ($pdays ? $pdays->row()->$monthName : 0));
+endfor;
+$pdf->MultiCell(7, 5, $total_adays, 1, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->Ln();
+
+$attTardy = Modules::run('sf10/getTardy', $sprDetails->spr_id);
+//$attTardy = Modules::run('attendance/attendance_reports/getTardyPerStudent', $student->st_id, NULL, $sy);
+$pdf->SetX(100);
+$pdf->MultiCell(20, 5, 'No. of Times Tardy', 1, 'L', 0, 0, '', '', true, 0, false, true, 5, 'M');
+
+for ($i = $gs_start; $i <= (12 + $gs_end); $i++):
+    $m = $i;
+    $n = ($m > 12 ? (($m - 12) < 10 ? '0' . ($m - 12) : ($m - 12)) : $m);
+    $monthName = date('F', strtotime(date('Y-' . ($m > 12 ? (($m - 12) < 10 ? '0' . ($m - 12) : ($m - 12)) : $m) . '-01')));
+    $pdf->MultiCell(7, 5, ($attTardy->$monthName != 0 ? $attTardy->$monthName : ''), 'BR', 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+    $tardy += $attTardy->$monthName;
+endfor;
+$pdf->MultiCell(7, 5, ($tardy != 0 ? $tardy : ''), 1, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->Ln(8);
+
+$pdf->SetX(99);
+$pdf->SetFont('Helvetica', 'R', 7);
+$pdf->MultiCell(45, 5, 'This is to certify that', 0, 'R', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->MultiCell(45, 4, strtoupper($student->firstname . ' ' . ($student->middlename != '' ? substr($student->middlename, 0, 1) . '.' : '' ) . ' ' . $student->lastname), 'B', 'C', 0, 0, '', '', true, 0, false, true, 4, 'M');
+$pdf->Ln();
+
+$pdf->SetX(99);
+$pdf->MultiCell(10, 5, 'of', 0, 'R', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->MultiCell(50, 4, 'CHRISTIAN SCHOOL FOR LIFE', 'B', 'C', 0, 0, '', '', true, 0, false, true, 4, 'M');
+$pdf->MultiCell(40, 5, 'has developed the general', 0, 'L', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->Ln();
+
+$pdf->SetX(99);
+$pdf->MultiCell(72, 5, 'Competencies base on the Kindergarten Curriculum Guide.', 0, 'R', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->Ln(12);
+
+$pdf->SetX(99);
+$pdf->SetFont('helvetica', 'R', 6);
+$pdf->MultiCell(5, 5, '', 0, 'R', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->MultiCell(35, 5, 'LUCY P. BAGONGON, M.A', 'B', 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->MultiCell(15, 5, '', 0, 'R', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->MultiCell(35, 5, $adv, 'B', 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->Ln();
+
+$pdf->SetX(99);
+$pdf->MultiCell(5, 5, '', 0, 'R', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->MultiCell(35, 5, 'School Head\'s Signature', 0, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->MultiCell(15, 5, '', 0, 'R', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->MultiCell(35, 5, 'Teacher\'s Signature', 0, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->Ln(12);
+
+$pdf->SetX(99);
+$pdf->MultiCell(5, 5, '', 0, 'R', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->MultiCell(35, 5, '', 'B', 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->Ln();
+
+$pdf->SetX(99);
+$pdf->MultiCell(5, 5, '', 0, 'R', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->MultiCell(35, 5, 'Date', 0, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->Ln();
+
+//--------------------------- end of center ------------------------------------------------------//
+//--------------------------- start left side ------------------------------------------------------//
+
+$coreVal = Modules::run('reports/getCoreValues');
+
+$pdf->SetXY(5, 5);
+$pdf->SetFont('times', 'B', 9);
+$pdf->MultiCell(99, 5, 'CHARACTER BUILDING', 0, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->Ln();
+
+$pdf->SetX(5);
+$pdf->SetFillColor(242, 219, 219);
+$pdf->SetFont('times', 'B', 8);
+$pdf->MultiCell(20, 10, 'CORE VALUES', 1, 'C', 1, 0, '', '', true, 0, false, true, 10, 'M');
+$pdf->MultiCell(38, 10, 'BEHAVIORAL STATEMENT', 1, 'C', 1, 0, '', '', true, 0, false, true, 10, 'M');
+$pdf->MultiCell(8, 10, 'Q1', 1, 'C', 1, 0, '', '', true, 0, false, true, 10, 'M');
+$pdf->MultiCell(8, 10, 'Q2', 1, 'C', 1, 0, '', '', true, 0, false, true, 10, 'M');
+$pdf->MultiCell(8, 10, 'Q3', 1, 'C', 1, 0, '', '', true, 0, false, true, 10, 'M');
+$pdf->MultiCell(8, 10, 'Q4', 1, 'C', 1, 0, '', '', true, 0, false, true, 10, 'M');
+$pdf->Ln();
+
+$pdf->SetFillColor(0, 0, 0);
+$pdf->SetFont('times', 'R', 8);
+foreach ($coreVal as $c):
+    $bhrate = Modules::run('reports/getBhRate', $c->core_id, 1);
+    $tbh = count($bhrate);
+    $pdf->SetX(5);
+    $pdf->MultiCell(20, (10 * $tbh), $c->core_values, 1, 'C', 0, 0, '', '', true, 0, false, true, (10 * $tbh), 'M');
+    $pdf->SetFont('times', 'R', 7);
+    $z = 0;
+    foreach ($bhrate as $bh):
+        $bhRate1 = Modules::run('gradingsystem/getBHRating', $student->st_id, 1, $sy, $bh->bh_id);
+        $bhRate2 = Modules::run('gradingsystem/getBHRating', $student->st_id, 2, $sy, $bh->bh_id);
+        $bhRate3 = Modules::run('gradingsystem/getBHRating', $student->st_id, 3, $sy, $bh->bh_id);
+        $bhRate4 = Modules::run('gradingsystem/getBHRating', $student->st_id, 4, $sy, $bh->bh_id);
+        $z++;
+        $pdf->SetX(25);
+        $pdf->MultiCell(38, 10, $bh->bh_name, ($z == $tbh ? 'B' : 0), 'L', 0, 0, '', '', true, 0, false, true, 10, 'M');
+        $pdf->MultiCell(8, 10, getRating($bhRate1), ($z == $tbh ? 'LBR' : 'LR'), 'C', 0, 0, '', '', true, 0, false, true, 10, 'M');
+        $pdf->MultiCell(8, 10, getRating($bhRate2), ($z == $tbh ? 'LBR' : 'LR'), 'C', 0, 0, '', '', true, 0, false, true, 10, 'M');
+        $pdf->MultiCell(8, 10, getRating($bhRate3), ($z == $tbh ? 'LBR' : 'LR'), 'C', 0, 0, '', '', true, 0, false, true, 10, 'M');
+        $pdf->MultiCell(8, 10, getRating($bhRate4), ($z == $tbh ? 'LBR' : 'LR'), 'C', 0, 0, '', '', true, 0, false, true, 10, 'M');
+        $pdf->Ln();
+    endforeach;
+endforeach;
+$pdf->Ln(3);
+
+$pdf->SetX(5);
+$pdf->SetFont('times', 'B', 8);
+$pdf->MultiCell(35, 5, 'Marking', 0, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->MultiCell(45, 5, 'Non-numerical Rating', 0, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->Ln();
+
+$pdf->SetX(5);
+$pdf->SetFont('times', 'B', 8);
+$pdf->MultiCell(35, 5, 'AO', 0, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->SetFont('times', 'R', 8);
+$pdf->MultiCell(45, 5, 'Always Observed', 0, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->Ln();
+
+$pdf->SetX(5);
+$pdf->SetFont('times', 'B', 8);
+$pdf->MultiCell(35, 5, 'SO', 0, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->SetFont('times', 'R', 8);
+$pdf->MultiCell(45, 5, 'Sometimes Observed', 0, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->Ln();
+
+$pdf->SetX(5);
+$pdf->SetFont('times', 'B', 8);
+$pdf->MultiCell(35, 5, 'RO', 0, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->SetFont('times', 'R', 8);
+$pdf->MultiCell(45, 5, 'Rarely Observed', 0, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->Ln();
+
+$pdf->SetX(5);
+$pdf->SetFont('times', 'B', 8);
+$pdf->MultiCell(35, 5, 'NO', 0, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->SetFont('times', 'R', 8);
+$pdf->MultiCell(45, 5, 'Not Observed', 0, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->Ln();
+
+$remarks1 = Modules::run('gradingsystem/getCardRemarks', $student->st_id, 1, $sy);
+$remarks2 = Modules::run('gradingsystem/getCardRemarks', $student->st_id, 2, $sy);
+$remarks3 = Modules::run('gradingsystem/getCardRemarks', $student->st_id, 3, $sy);
+$remarks4 = Modules::run('gradingsystem/getCardRemarks', $student->st_id, 4, $sy);
+$pdf->SetX(5);
+$pdf->SetFont('times', 'B', 9);
+$pdf->MultiCell(99, 5, 'TEACHER\'S COMMENTS / REMARKS', 0, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->Ln();
+
+$pdf->SetX(5);
+$pdf->MultiCell(20, 20, 'First Quarter', 1, 'C', 0, 0, '', '', true, 0, false, true, 20, 'M');
+$pdf->SetFont('times', 'R', 7);
+$pdf->MultiCell(70, 10, $remarks1->row()->remarks, 'TR', 'C', 0, 0, '', '', true, 0, false, true, 10, 'T');
+$pdf->Ln();
+$pdf->SetX(25);
+$pdf->MultiCell(70, 10, 'Parent\'s Signature', 'BR', 'C', 0, 0, '', '', true, 0, false, true, 10, 'B');
+$pdf->Ln();
+
+$pdf->SetX(5);
+$pdf->SetFont('times', 'B', 9);
+$pdf->MultiCell(20, 20, 'Second Quarter', 1, 'C', 0, 0, '', '', true, 0, false, true, 20, 'M');
+$pdf->SetFont('times', 'R', 7);
+$pdf->MultiCell(70, 10, $remarks2->row()->remarks, 'TR', 'C', 0, 0, '', '', true, 0, false, true, 10, 'T');
+$pdf->Ln();
+$pdf->SetX(25);
+$pdf->MultiCell(70, 10, 'Parent\'s Signature', 'BR', 'C', 0, 0, '', '', true, 0, false, true, 10, 'B');
+$pdf->Ln();
+
+$pdf->SetX(5);
+$pdf->SetFont('times', 'B', 9);
+$pdf->MultiCell(20, 20, 'Third Quarter', 1, 'C', 0, 0, '', '', true, 0, false, true, 20, 'M');
+$pdf->SetFont('times', 'R', 7);
+$pdf->MultiCell(70, 10, $remarks3->row()->remarks, 'TR', 'C', 0, 0, '', '', true, 0, false, true, 10, 'T');
+$pdf->Ln();
+$pdf->SetX(25);
+$pdf->MultiCell(70, 10, 'Parent\'s Signature', 'BR', 'C', 0, 0, '', '', true, 0, false, true, 10, 'B');
+$pdf->Ln();
+
+$pdf->SetX(5);
+$pdf->SetFont('times', 'B', 9);
+$pdf->MultiCell(20, 20, 'Fourth Quarter', 1, 'C', 0, 0, '', '', true, 0, false, true, 20, 'M');
+$pdf->SetFont('times', 'R', 7);
+$pdf->MultiCell(70, 10, $remarks4->row()->remarks, 'TR', 'C', 0, 0, '', '', true, 0, false, true, 10, 'T');
+$pdf->Ln();
+$pdf->SetX(25);
+$pdf->MultiCell(70, 10, 'Parent\'s Signature', 'BR', 'C', 0, 0, '', '', true, 0, false, true, 10, 'B');
+$pdf->Ln();
+
+
+
+//--------------------------- end left side ------------------------------------------------------//
+
+$pdf->AddPage();
+$data['student'] = $student;
+$data['sy'] = $sy;
+$data['term'] = $term;
+$data['behaviorRate'] = $behavior;
+$data['bh_group'] = $bh_group;
+$data['pdf'] = $pdf;
+$data['settings'] = $settings;
+$this->load->view($short_name . '/reportCardSecondPage_kinder', $data);
+//Close and output PDF document
+ob_end_clean();
+$pdf->Output($student->lastname . ', ' . substr($student->firstname, 0, 1) . '_DepED Form 138-A.pdf', 'I');
+
+//============================================================+
+// END OF FILE
+//================================
+
+
+function getRating($behaviorRating) {
+    $rate = $behaviorRating->row()->rate;
+    switch ($rate) {
+        case 1:
+            $star = 'NO';
+            break;
+        case 2:
+            $star = 'RO';
+            break;
+        case 3:
+            $star = 'SO';
+            break;
+        case 4:
+            $star = 'A0';
+            break;
+        default :
+            $star = '';
+            break;
+    }
+    return $star;
+}
+
+function getLetterGrade($value) {
+    switch (TRUE):
+        case $value <= 74:
+            return 'B';
+        case $value >= 75 && $value <= 79:
+            return 'D';
+        case $value >= 80 && $value <= 84;
+            return 'AP';
+        case $value >= 85 && $value <= 89;
+            return 'P';
+        case $value >= 90;
+            return 'A';
+    endswitch;
+}

@@ -1,0 +1,462 @@
+<?php
+
+function getLetterGrade($value)
+{
+    switch (TRUE):
+        case $value <= 74 && $value > 0:
+            return 'B';
+        case $value >= 75 && $value <= 79:
+            return 'D';
+        case $value >= 80 && $value <= 84:
+            return 'AP';
+        case $value >= 85 && $value <= 89:
+            return 'P';
+        case $value >= 90:
+            return 'A';
+        case $value <= 0:
+            return '';
+    endswitch;
+}
+
+function getRating($behaviorRating)
+{
+    $rate = $behaviorRating->row()->rate;
+    switch ($rate) {
+        case 1:
+            $star = 'NO';
+            break;
+        case 2:
+            $star = 'RO';
+            break;
+        case 3:
+            $star = 'SO';
+            break;
+        case 4:
+            $star = 'A0';
+            break;
+        default:
+            $star = '';
+            break;
+    }
+    return $star;
+}
+
+$children = explode(',', $child_links);
+
+$gs = Modules::run('gradingsystem/getSet');
+$post1 = ($gs->is_fg_first_post != '' ? 1 : 0);
+$post2 = ($gs->is_fg_second_post != '' ? 1 : 0);
+$post3 = ($gs->is_fg_third_post != '' ? 1 : 0);
+$post4 = ($gs->is_fg_fourth_post != '' ? 1 : 0);
+?>
+<div class="col-lg-12">
+    <div class="row">
+        <?php
+        foreach ($children as $c):
+            if ($c != ''):
+                $isEnrolled = Modules::run('registrar/isEnrolled', $c, $this->session->school_year);
+                if (!$isEnrolled):
+                    $school_year = $this->session->userdata('school_year') - 1;
+                else:
+                    $school_year = $this->session->userdata('school_year');
+                endif;
+
+                $childDepartment = Modules::run('registrar/getStudentDepartment', $c, $school_year);
+                $student = Modules::run('registrar/getSingleStudent', $c, $school_year);
+                if ($student):
+                    if ($student->grade_id >= 2 && $student->grade_id <= 11 || $student->deptCode == 11): //-----   Grade school and Junior High school ---- //
+        ?>
+                        <div class="col-md-12">
+                            <div class="card" style="padding: 5px">
+                                <div class="card-header bg-gradient-lightblue card-collapse">
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <img class="card-img-top img-circle img-responsive" style="width: 100px; border: 1px" src="
+                                            <?php
+                                            if ($student->avatar != ""): echo base_url() . 'uploads/' . $student->avatar;
+                                            else: echo base_url() . 'uploads/noImage.png';
+                                            endif;
+                                            ?>">
+                                        </div>
+                                        <div class="col-md-7">
+                                            <span id="name" class="pull-right" style="color:#FFF;"><?php echo strtoupper($student->firstname . " " . $student->lastname) ?></span><br>
+                                            <span><?php echo $student->level ?> - <?php echo $student->section ?></span><br>
+                                            <span><?php echo $student->st_id ?></span>
+                                        </div>
+                                        <div class="col-md-1 pointer">
+                                            <span class="clickable"><i class="fa fa-4x fa-angle-down"></i></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-bordered table-responsive">
+                                        <table class="table">
+                                            <thead>
+                                                <tr>
+                                                    <th colspan="7" style="text-align: center">Class Record</th>
+                                                </tr>
+                                                <tr>
+                                                    <th rowspan="2" style="text-align: center">Subject</th>
+                                                    <th colspan="4" style="text-align: center">Grading Period</th>
+                                                    <th rowspan="2" style="text-align: center">Final Grade</th>
+                                                    <th rowspan="2" style="text-align: center">Remarks</th>
+                                                </tr>
+                                                <tr>
+                                                    <th style="text-align: center">1st</th>
+                                                    <th style="text-align: center">2nd</th>
+                                                    <th style="text-align: center">3rd</th>
+                                                    <th style="text-align: center">4th</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <?php
+                                                $subject_ids = Modules::run('academic/getSpecificSubjectPerlevel', $student->grade_id);
+                                                $mp = 0;
+                                                foreach ($subject_ids as $sp):
+                                                    $singleSub = Modules::run('academic/getSpecificSubjects', $sp->sub_id);
+                                                    $first = Modules::run('gradingsystem/getFinalGrade', $student->st_id, $singleSub->subject_id, 1, $school_year);
+                                                    $second = Modules::run('gradingsystem/getFinalGrade', $student->st_id, $singleSub->subject_id, 2, $school_year);
+                                                    $third = Modules::run('gradingsystem/getFinalGrade', $student->st_id, $singleSub->subject_id, 3, $school_year);
+                                                    $fourth = Modules::run('gradingsystem/getFinalGrade', $student->st_id, $singleSub->subject_id, 4, $school_year);
+
+                                                    if ($singleSub->parent_subject == 11):
+                                                        $mgrd1 += $first->row()->final_rating;
+                                                        $mgrd2 += $second->row()->final_rating;
+                                                        $mgrd3 += $third->row()->final_rating;
+                                                        $mgrd4 += $fourth->row()->final_rating;
+                                                        $mp += 1;
+                                                    endif;
+                                                endforeach;
+
+                                                $fmgrd1 = round($mgrd1 / $mp);
+                                                $fmgrd2 = round($mgrd2 / $mp);
+                                                $fmgrd3 = round($mgrd3 / $mp);
+                                                $fmgrd4 = round($mgrd4 / $mp);
+                                                $fmGrade = round(($fmgrd1 + $fmgrd2 + $fmgrd3 + $fmgrd4) / 4);
+
+                                                foreach ($subject_ids as $s):
+                                                    $singleSub = Modules::run('academic/getSpecificSubjects', $s->sub_id);
+                                                    $first = Modules::run('gradingsystem/getFinalGrade', $student->st_id, $singleSub->subject_id, 1, $school_year);
+                                                    $second = Modules::run('gradingsystem/getFinalGrade', $student->st_id, $singleSub->subject_id, 2, $school_year);
+                                                    $third = Modules::run('gradingsystem/getFinalGrade', $student->st_id, $singleSub->subject_id, 3, $school_year);
+                                                    $fourth = Modules::run('gradingsystem/getFinalGrade', $student->st_id, $singleSub->subject_id, 4, $school_year);
+
+                                                    $fGrade = round(($first->row()->final_rating + $second->row()->final_rating + $third->row()->final_rating + $fourth->row()->final_rating) / 4);
+
+                                                    if ($singleSub->parent_subject != 11):
+                                                ?>
+                                                        <tr>
+                                                            <td class="text-left">
+                                                                <?php echo $singleSub->subject ?>
+                                                            </td>
+                                                            <td><?php echo ($post1 ? ($student->deptCode == 11 ? getLetterGrade($first->row()->final_rating) : $first->row()->final_rating) : ''); ?></td>
+                                                            <td><?php echo ($post2 ? ($student->deptCode == 11 ? getLetterGrade($second->row()->final_rating) : $second->row()->final_rating) : ''); ?></td>
+                                                            <td><?php echo ($post3 ? ($student->deptCode == 11 ? getLetterGrade($third->row()->final_rating) : $third->row()->final_rating) : ''); ?></td>
+                                                            <td><?php echo ($post4 ? ($student->deptCode == 11 ? getLetterGrade($fourth->row()->final_rating) : $fourth->row()->final_rating) : ''); ?></td>
+                                                            <td><?php echo ($post4 ? ($fourth->row()->final_rating == '' ? '' : $fGrade) : '') ?></td>
+                                                            <td><?php echo ($post4 ? ($fourth->row()->final_rating == '' ? '' : ($fGrade < 75 ? 'FAILED' : 'PASSED')) : ''); ?></td>
+                                                        </tr>
+                                                        <?php
+                                                    else:
+                                                        if ($singleSub->subject_id == 13):
+                                                        ?>
+                                                            <tr>
+                                                                <td class="text-left">MAPEH</td>
+                                                                <td><?php echo ($post1 ? ($student->deptCode == 11 ? getLetterGrade($fmgrd1) : $fmgrd1) : ''); ?></td>
+                                                                <td><?php echo ($post2 ? ($student->deptCode == 11 ? getLetterGrade($fmgrd2) : $fmgrd2) : ''); ?></td>
+                                                                <td><?php echo ($post3 ? ($student->deptCode == 11 ? getLetterGrade($fmgrd3) : $fmgrd3) : ''); ?></td>
+                                                                <td><?php echo ($post4 ? ($student->deptCode == 11 ? getLetterGrade($fmgrd4) : $fmgrd4) : ''); ?></td>
+                                                                <td><?php echo ($post4 ? ($fmgrd4 == '' ? '' : $fmGrade) : '') ?></td>
+                                                                <td><?php echo ($post4 ? ($fmgrd4 == '' ? '' : ($fmGrade < 75 ? 'FAILED' : 'PASSED')) : ''); ?></td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="text-left">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<?php echo $singleSub->subject ?></td>
+                                                                <td><?php echo ($post1 ? ($student->deptCode == 11 ? getLetterGrade($first->row()->final_rating) : $first->row()->final_rating) : ''); ?></td>
+                                                                <td><?php echo ($post2 ? ($student->deptCode == 11 ? getLetterGrade($second->row()->final_rating) : $second->row()->final_rating) : ''); ?></td>
+                                                                <td><?php echo ($post3 ? ($student->deptCode == 11 ? getLetterGrade($third->row()->final_rating) : $third->row()->final_rating) : ''); ?></td>
+                                                                <td><?php echo ($post4 ? ($student->deptCode == 11 ? getLetterGrade($fourth->row()->final_rating) : $fourth->row()->final_rating) : ''); ?></td>
+                                                                <td><?php echo ($post4 ? ($fourth->row()->final_rating == '' ? '' : $fGrade) : '') ?></td>
+                                                                <td><?php echo ($post4 ? ($fourth->row()->final_rating == '' ? '' : ($fGrade < 75 ? 'FAILED' : 'PASSED')) : ''); ?></td>
+                                                            </tr>
+                                                        <?php
+                                                        else:
+                                                        ?>
+                                                            <tr>
+                                                                <td class="text-left">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<?php echo $singleSub->subject ?></td>
+                                                                <td><?php echo ($post1 ? $first->row()->final_rating : ''); ?></td>
+                                                                <td><?php echo ($post2 ? $second->row()->final_rating : ''); ?></td>
+                                                                <td><?php echo ($post3 ? $third->row()->final_rating : ''); ?></td>
+                                                                <td><?php echo ($post4 ? $fourth->row()->final_rating : ''); ?></td>
+                                                                <td><?php echo ($post4 ? ($fourth->row()->final_rating == '' ? '' : $fGrade) : '') ?></td>
+                                                                <td><?php echo ($post4 ? ($fourth->row()->final_rating == '' ? '' : ($fGrade < 75 ? 'FAILED' : 'PASSED')) : ''); ?></td>
+                                                            </tr>
+                                                <?php
+                                                        endif;
+
+                                                    endif;
+                                                endforeach;
+                                                ?>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-bordered table-responsive">
+                                        <table class="table table-bordered">
+                                            <thead>
+                                                <tr>
+                                                    <th colspan="5">
+                                                        Character Traits
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <th style="text-align: center">Traits</th>
+                                                    <th style="text-align: center">1st Quarter</th>
+                                                    <th style="text-align: center">2nd Quarter</th>
+                                                    <th style="text-align: center">3rd Quarter</th>
+                                                    <th style="text-align: center">4th Quarter</th>
+                                                </tr>
+                                                <?php
+                                                $coreVal = Modules::run('reports/getCoreValues');
+                                                foreach ($coreVal as $cv):
+                                                    $bhRate1 = Modules::run('gradingsystem/getBHRating', $student->st_id, 1, $school_year, $cv->core_id);
+                                                    $bhRate2 = Modules::run('gradingsystem/getBHRating', $student->st_id, 2, $school_year, $cv->core_id);
+                                                    $bhRate3 = Modules::run('gradingsystem/getBHRating', $student->st_id, 3, $school_year, $cv->core_id);
+                                                    $bhRate4 = Modules::run('gradingsystem/getBHRating', $student->st_id, 4, $school_year, $cv->core_id);
+                                                ?>
+                                                    <tr>
+                                                        <td style="text-align: left">
+                                                            <?php echo $cv->core_values ?>
+                                                        </td>
+                                                        <td style="text-align: center"><?php echo ($post1 ? getRating($bhRate1) : '') ?></td>
+                                                        <td style="text-align: center"><?php echo ($post2 ? getRating($bhRate2) : '') ?></td>
+                                                        <td style="text-align: center"><?php echo ($post3 ? getRating($bhRate3) : '') ?></td>
+                                                        <td style="text-align: center"><?php echo ($post4 ? getRating($bhRate4) : '') ?></td>
+                                                    </tr>
+                                                <?php
+                                                endforeach;
+                                                ?>
+                                            </tbody>
+                                        </table>
+                                        <?php
+                                        // $data['dept_code'] = $student->deptCode;
+                                        // $data['st_id'] = $student->st_id;
+                                        // $data['sy'] = $school_year;
+                                        // echo $this->load->view($student->deptCode == 11 ? 'characterTraits_ps' : 'characterTraits_gs', $data);
+                                        ?>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <?php
+                        $mgrd1 = 0;
+                        $mgrd2 = 0;
+                        $mgrd3 = 0;
+                        $mgrd4 = 0;
+                    else: // Senior High School Class Card
+                    ?>
+                        <div class="col-md-10">
+                            <div class="card" style="padding: 5px">
+                                <div class="card-header bg-gradient-lightblue">
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <img class="card-img-top img-circle img-responsive" style="width: 100px; border: 1px" src="
+                                            <?php
+                                            if ($students->avatar != ""): echo base_url() . 'uploads/' . $student->avatar;
+                                            else: echo base_url() . 'uploads/noImage.png';
+                                            endif;
+                                            ?>">
+                                        </div>
+                                        <div class="col-md-8">
+                                            <span id="name" class="pull-right" style="color:#FFF;"><?php echo strtoupper($student->firstname . " " . $student->lastname) ?></span><br>
+                                            <span><?php echo $student->level ?> - <?php echo $student->section ?></span><br>
+                                            <span><?php echo $student->st_id ?></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-bordered">
+                                        <table class="table">
+                                            <thead>
+                                                <tr>
+                                                    <th rowspan="2">Subject</th>
+                                                    <th colspan="2">First Semester</th>
+                                                    <th rowspan="2" style="width: 50px">Semester Final Grade</th>
+                                                    <th rowspan="2" style="width: 200px">Remarks</th>
+                                                </tr>
+                                                <tr>
+                                                    <th style="text-align: center">1st</th>
+                                                    <th style="text-align: center">2nd</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <?php
+                                                $coreSubs1 = Modules::run('subjectmanagement/getSHSubjects', $student->grade_id, 1, $student->strnd_id, 1);
+                                                $appliedSubs1 = Modules::run('subjectmanagement/getSHSubjects', $student->grade_id, 1, $student->strnd_id);
+                                                ?><tr>
+                                                    <td colspan="5" style="text-align: left">Core Subjects</td>
+                                                </tr><?php
+                                                        $subj1 = 0;
+                                                        $coreTotal1 = 0;
+                                                        $appliedTotal1 = 0;
+                                                        foreach ($coreSubs1 as $c1):
+                                                            $subj1++;
+                                                            $singleSub = Modules::run('academic/getSpecificSubjects', $c1->sh_sub_id);
+                                                            $firstGrade = Modules::run('gradingsystem/getFinalGrade', $student->st_id, $singleSub->subject_id, 1, $school_year);
+                                                            $secondGrade = Modules::run('gradingsystem/getFinalGrade', $student->st_id, $singleSub->subject_id, 2, $school_year);
+                                                        ?>
+                                                    <tr>
+                                                        <td style="text-align: left"><?php echo $c1->subject ?></td>
+                                                        <td><?php echo ($firstGrade->row()->final_rating == '' ? '' : $firstGrade->row()->final_rating) ?></td>
+                                                        <td><?php echo ($secondGrade->row()->final_rating == '' ? '' : $secondGrade->row()->final_rating) ?></td>
+                                                        <?php
+                                                            $semFinalGrade = ($secondGrade->row()->final_rating == '' ? '' : round(($firstGrade->row()->final_rating + $secondGrade->row()->final_rating) / 2));
+                                                            $coreTotal1 += $semFinalGrade;
+                                                        ?>
+
+                                                        <td><?php echo $semFinalGrade ?></td>
+                                                        <td><?php echo ($secondGrade->row()->final_rating == '' ? '' : ($semFinalGrade < 75 ? 'Failed' : 'Passed')) ?></td>
+                                                    </tr>
+                                                <?php
+                                                        endforeach;
+                                                ?><tr>
+                                                    <td colspan="5" style="text-align: left">Applied and Specialized Subjects</td>
+                                                </tr><?php
+                                                        foreach ($appliedSubs1 as $app1):
+                                                            $subj1++;
+                                                            $singleSub = Modules::run('academic/getSpecificSubjects', $app1->sh_sub_id);
+                                                            $firstGrade = Modules::run('gradingsystem/getFinalGrade', $student->st_id, $singleSub->subject_id, 1, $school_year);
+                                                            $secondGrade = Modules::run('gradingsystem/getFinalGrade', $student->st_id, $singleSub->subject_id, 2, $school_year);
+                                                        ?>
+                                                    <tr>
+                                                        <td style="text-align: left"><?php echo $app1->subject ?></td>
+                                                        <td><?php echo ($firstGrade->row()->final_rating == '' ? '' : $firstGrade->row()->final_rating) ?></td>
+                                                        <td><?php echo ($secondGrade->row()->final_rating == '' ? '' : $secondGrade->row()->final_rating) ?></td>
+                                                        <?php
+                                                            $semFinalGrade = ($secondGrade->row()->final_rating == '' ? '' : round(($firstGrade->row()->final_rating + $secondGrade->row()->final_rating) / 2));
+                                                            $appliedTotal1 += $semFinalGrade;
+                                                        ?>
+                                                        <td><?php echo $semFinalGrade ?></td>
+                                                        <td><?php echo ($secondGrade->row()->final_rating == '' ? '' : ($semFinalGrade < 75 ? 'Failed' : 'Passed')) ?></td>
+                                                    </tr>
+                                                <?php
+                                                        endforeach;
+                                                        $genAve = round(($coreTotal1 + $appliedTotal1) / $subj1);
+                                                ?>
+                                                <tr>
+                                                    <td colspan="4" style="text-align: right">General Average for the Semester</td>
+                                                    <td><?php echo ($genAve != 0 ? $genAve : '') ?></td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div class="table-bordered">
+                                        <table class="table">
+                                            <thead>
+                                                <tr>
+                                                    <th rowspan="2">Subject</th>
+                                                    <th colspan="2">Second Semester</th>
+                                                    <th rowspan="2" style="width: 50px">Semester Final Grade</th>
+                                                    <th rowspan="2" style="width: 200px">Remarks</th>
+                                                </tr>
+                                                <tr>
+                                                    <th style="text-align: center">1st</th>
+                                                    <th style="text-align: center">2nd</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <?php
+                                                $coreSubs2 = Modules::run('subjectmanagement/getSHSubjects', $student->grade_id, 2, $student->strnd_id, 1);
+                                                $appliedSubs2 = Modules::run('subjectmanagement/getSHSubjects', $student->grade_id, 2, $student->strnd_id);
+                                                ?><tr>
+                                                    <td colspan="5" style="text-align: left">Core Subjects</td>
+                                                </tr><?php
+                                                        $subj2 = 0;
+                                                        $coreTotal2 = 0;
+                                                        $appliedTotal2 = 0;
+                                                        foreach ($coreSubs2 as $c2):
+                                                            $subj2++;
+                                                            $singleSub = Modules::run('academic/getSpecificSubjects', $c2->sh_sub_id);
+                                                            $firstGrade = Modules::run('gradingsystem/getFinalGrade', $student->st_id, $singleSub->subject_id, 1, $school_year);
+                                                            $secondGrade = Modules::run('gradingsystem/getFinalGrade', $student->st_id, $singleSub->subject_id, 2, $school_year);
+                                                        ?>
+                                                    <tr>
+                                                        <td style="text-align: left"><?php echo $c2->subject ?></td>
+                                                        <td><?php echo ($firstGrade->row()->final_rating == '' ? '' : $firstGrade->row()->final_rating) ?></td>
+                                                        <td><?php echo ($secondGrade->row()->final_rating == '' ? '' : $secondGrade->row()->final_rating) ?></td>
+                                                        <?php
+                                                            $semFinalGrade = ($secondGrade->row()->final_rating == '' ? '' : round(($firstGrade->row()->final_rating + $secondGrade->row()->final_rating) / 2));
+                                                            $coreTotal2 += $semFinalGrade;
+                                                        ?>
+
+                                                        <td><?php echo $semFinalGrade ?></td>
+                                                        <td><?php echo ($secondGrade->row()->final_rating == '' ? '' : ($semFinalGrade < 75 ? 'Failed' : 'Passed')) ?></td>
+                                                    </tr>
+                                                <?php
+                                                        endforeach;
+                                                ?><tr>
+                                                    <td colspan="5" style="text-align: left">Applied and Specialized Subjects</td>
+                                                </tr><?php
+                                                        foreach ($appliedSubs2 as $app2):
+                                                            $subj2++;
+                                                            $singleSub = Modules::run('academic/getSpecificSubjects', $app2->sh_sub_id);
+                                                            $firstGrade = Modules::run('gradingsystem/getFinalGrade', $student->st_id, $singleSub->subject_id, 1, $school_year);
+                                                            $secondGrade = Modules::run('gradingsystem/getFinalGrade', $student->st_id, $singleSub->subject_id, 2, $school_year);
+                                                        ?>
+                                                    <tr>
+                                                        <td style="text-align: left"><?php echo $app2->subject ?></td>
+                                                        <td><?php echo ($firstGrade->row()->final_rating == '' ? '' : $firstGrade->row()->final_rating) ?></td>
+                                                        <td><?php echo ($secondGrade->row()->final_rating == '' ? '' : $secondGrade->row()->final_rating) ?></td>
+                                                        <?php
+                                                            $semFinalGrade = ($secondGrade->row()->final_rating == '' ? '' : round(($firstGrade->row()->final_rating + $secondGrade->row()->final_rating) / 2));
+                                                            $appliedTotal2 += $semFinalGrade;
+                                                        ?>
+                                                        <td><?php echo round(($firstGrade->row()->final_rating + $secondGrade->row()->final_rating) / 2) ?></td>
+                                                        <td><?php echo ($secondGrade->row()->final_rating == '' ? '' : ($semFinalGrade < 75 ? 'Failed' : 'Passed')) ?></td>
+                                                    </tr>
+                                                <?php
+                                                        endforeach;
+                                                        $genAve = round(($coreTotal2 + $appliedTotal2) / $subj2);
+                                                ?>
+                                                <tr>
+                                                    <td colspan="4" style="text-align: right">General Average for the Semester</td>
+                                                    <td><?php echo ($genAve != 0 ? $genAve : '') ?></td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+        <?php
+                    endif;
+                endif;
+            endif;
+        endforeach;
+        ?>
+    </div>
+</div>
+
+<style type="text/css">
+    th,
+    td {
+        text-align: center;
+    }
+</style>
+<script type="text/javascript">
+    $(document).on('click', '.card-header span.clickable', function(e) {
+        var $this = $(this);
+
+        if (!$this.hasClass('card-collapse')) {
+            $this.parents('.card').find('.card-body').slideUp();
+            $this.addClass('card-collapse');
+            $this.find('i').removeClass('fa-angle-down').addClass('fa-angle-up');
+        } else {
+            $this.parents('.card').find('.card-body').slideDown();
+            $this.removeClass('card-collapse');
+            $this.find('i').removeClass('fa-angle-up').addClass('fa-angle-down');
+        }
+    });
+</script>

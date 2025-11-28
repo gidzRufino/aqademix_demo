@@ -1,0 +1,399 @@
+.ui-input-text{
+    background: rgba(255,255,255,0.5) !important;
+}
+
+.ui-input-text input::-moz-placeholder, .ui-input-search input::-moz-placeholder, textarea.ui-input-text::-moz-placeholder
+{
+    color: black  !important;
+}
+
+.ui-bar-b, .ui-page-theme-b .ui-bar-inherit, html .ui-bar-b .ui-bar-inherit, html .ui-body-b .ui-bar-inherit, html body .ui-group-theme-b .ui-bar-inherit
+{
+    background: rgba(0,0,0,0.6) !important;
+}
+
+//button
+.ui-page-theme-b .ui-btn, html .ui-bar-b .ui-btn, html .ui-body-b .ui-btn, html body .ui-group-theme-b .ui-btn, html head + body .ui-btn.ui-btn-b, .ui-page-theme-b .ui-btn:visited, html .ui-bar-b .ui-btn:visited, html .ui-body-b .ui-btn:visited, html body .ui-group-theme-b .ui-btn:visited, html head + body .ui-btn.ui-btn-b:visited
+{
+    background:  rgba(0,0,0,0.6) !important;
+}
+
+#absentPage
+    {
+        background:  none;
+        height: 100vh;
+    }
+
+    #presentPage
+    {
+        background:  none;
+        height: 100vh;
+    }
+
+    #absentPage .absents h4
+    {
+        margin: 5px;
+        background: rgba(255,255,255,0.6) !important;
+    }
+    .col-xs-6{
+        width: 48%;
+    }
+    
+    .col-xs-12{
+        margin-bottom: 10px;
+    }
+
+    
+    .mobile-panel-red {
+        border-color: #D9534F;
+    }
+
+    .mobile-panel-red .panel-heading {
+        border-color: #D9534F;
+        color: #fff;
+        background-color: #D9534F;
+        height:100px;
+        text-shadow: 0 1px 0 #222222;
+    }
+
+    .mobile-panel-red a {
+        color: #D9534F;
+    }
+
+
+    .mobile-panel-red a:hover {
+        color: #df8a13;
+    }
+    
+    .mobile-blue-trans{
+        background-color: rgba(92,154,179, 0.7);
+        color:white;
+        text-shadow: 0 1px 0 #222222;
+    }
+    
+    .mobile-panel-blue {
+        background: #70B1DB;
+        color: white;
+        text-shadow: 0 1px 0 #222222;
+        text-decoration: none;
+    }
+
+    .mobile-panel-blue .panel-heading {
+        border-color: #70B1DB;
+        color: #fff;
+        background-color: #70B1DB;
+        text-shadow: 0 1px 0 #222222;
+        height: 100px;
+    }
+
+    .mobile-panel-blue a {
+        color: white;
+        text-decoration: none;
+    }
+
+
+    .mobile-panel-blue a:hover {
+        color: #df8a13;
+    }
+    
+    .mobile-panel-orange {
+        border-color: #EDA257;
+    }
+
+    .mobile-panel-orange .panel-heading {
+        border-color: #EDA257;
+        color: #fff;
+        background-color: #EDA257;
+        text-shadow: 0 1px 0 #222222;
+        height: 100px;
+    }
+
+    .mobile-panel-orange a {
+        color: #EDA257;
+    }
+
+
+    .mobile-panel-orange a:hover {
+        color: #df8a13;
+    }
+    
+    .mobile-panel-pink {
+        border-color: #DD89AB;
+    }
+
+    .mobile-panel-pink .panel-heading {
+        border-color: #DD89AB;
+        color: #fff;
+        background-color: #DD89AB;
+        text-shadow: 0 1px 0 #222222;
+        height: 100px;
+    }
+
+    .mobile-panel-pink a , .mobile-panel-pink a span{
+        color: #DD89AB;
+    }
+
+
+    .mobile-panel-pink a:hover {
+        color: #DD89AB;
+    }
+    
+    .mobile-panel-green {
+        border-color: #7DDD80;
+    }
+
+    .mobile-panel-green .panel-heading {
+        border-color: #7DDD80;
+        color: #fff;
+        background-color: #7DDD80;
+        text-shadow: 0 1px 0 #222222;
+        height: 100px;
+    }
+
+    .mobile-panel-green a {
+        color: #7DDD80;
+    }
+
+    .mobile-panel-green a:hover {
+        color: #df8a13;
+    }
+    
+    .mobile-panel-white .panel-heading {
+        border-color: white;
+        color: black;
+        background-color: white;
+        text-shadow: 0 1px 0 #222222;
+        height: 100px;
+    }
+
+    .mobile-panel-name {
+        color: black;
+        background-color: white;
+        text-shadow: 0 1px 0 #cccccc;
+    }
+
+    .mobile-panel-white a {
+        color: black;
+    }
+
+    .mobile-panel-green a:hover {
+        color: #df8a13;
+    }
+        
+    .panel-tab-height
+    {
+        height: 35px !important;
+    }
+    
+    .no-radius
+    {
+        border-radius: 0px;
+        
+    }
+
+@media(min-width:320px) {
+    #absentPage
+    {
+        background:  none;
+        height: 100vh;
+    }
+
+    #presentPage
+    {
+        background:  none;
+        height: 100vh;
+    }
+
+    #absentPage .absents h4
+    {
+        margin: 5px;
+        background: rgba(255,255,255,0.6) !important;
+    }
+    .col-xs-6{
+        width: 48%;
+    }
+    
+    .col-xs-12{
+        margin-bottom: 10px;
+    }
+
+    
+    .mobile-panel-red {
+        border-color: #D9534F;
+    }
+
+    .mobile-panel-red .panel-heading {
+        border-color: #D9534F;
+        color: #fff;
+        background-color: #D9534F;
+        height:100px;
+        text-shadow: 0 1px 0 #222222;
+    }
+
+    .mobile-panel-red a {
+        color: #D9534F;
+    }
+
+
+    .mobile-panel-red a:hover {
+        color: #df8a13;
+    }
+    
+    .mobile-blue-trans{
+        background-color: rgba(92,154,179, 0.7);
+        color:white;
+        text-shadow: 0 1px 0 #222222;
+    }
+    
+    .mobile-panel-blue {
+        background: #70B1DB;
+        color: white;
+        text-shadow: 0 1px 0 #222222;
+    }
+
+    .mobile-panel-blue .panel-heading {
+        border-color: #70B1DB;
+        color: #fff;
+        background-color: #70B1DB;
+        text-shadow: 0 1px 0 #222222;
+        height: 100px;
+    }
+
+    .mobile-panel-blue a {
+        color: white;
+    }
+
+
+    .mobile-panel-blue a:hover {
+        color: #df8a13;
+    }
+    
+    .mobile-panel-orange {
+        border-color: #EDA257;
+    }
+
+    .mobile-panel-orange .panel-heading {
+        border-color: #EDA257;
+        color: #fff;
+        background-color: #EDA257;
+        text-shadow: 0 1px 0 #222222;
+        height: 100px;
+    }
+
+    .mobile-panel-orange a {
+        color: #EDA257;
+    }
+
+
+    .mobile-panel-orange a:hover {
+        color: #df8a13;
+    }
+    
+    .mobile-panel-pink {
+        border-color: #DD89AB;
+    }
+
+    .mobile-panel-pink .panel-heading {
+        border-color: #DD89AB;
+        color: #fff;
+        background-color: #DD89AB;
+        text-shadow: 0 1px 0 #222222;
+        height: 100px;
+    }
+
+    .mobile-panel-pink a , .mobile-panel-pink a span{
+        color: #DD89AB;
+    }
+
+
+    .mobile-panel-pink a:hover {
+        color: #DD89AB;
+    }
+    
+    .mobile-panel-green {
+        border-color: #7DDD80;
+    }
+
+    .mobile-panel-green .panel-heading {
+        border-color: #7DDD80;
+        color: #fff;
+        background-color: #7DDD80;
+        text-shadow: 0 1px 0 #222222;
+        height: 100px;
+    }
+
+    .mobile-panel-green a {
+        color: #7DDD80;
+    }
+
+    .mobile-panel-green a:hover {
+        color: #df8a13;
+    }
+    
+    .mobile-panel-white .panel-heading {
+        border-color: white;
+        color: black;
+        background-color: white;
+        text-shadow: 0 1px 0 #222222;
+        height: 100px;
+    }
+
+    .mobile-panel-name {
+        color: black;
+        background-color: white;
+        text-shadow: 0 1px 0 #cccccc;
+    }
+
+    .mobile-panel-white a, .mobile-panel-white span, .mobile-panel-white dl, .mobile-panel-white h5  {
+        color: black;
+        text-shadow: 0 1px 0 #cccccc;
+    }
+
+    .mobile-panel-green a:hover {
+        color: #df8a13;
+    }
+        
+    .panel-tab-height
+    {
+        height: 35px !important;
+    }
+    
+    .no-radius
+    {
+        border-radius: 0px;
+        
+    }
+}
+
+.mobile-panel-white 
+{
+    background-color: white;
+}
+
+.mobile-panel-white dl
+{
+    font-size: 12px;
+}
+.no-margin{
+    margin:0;
+}
+
+.margin-right{
+    margin-right:3%;
+}
+
+.padding-5{
+    padding:5px !important;
+}
+
+.full-height{
+    height: 85vh;  
+    /*overflow-y:scroll;*/
+}
+.text-white{
+    color:white;
+    text-shadow: 0 1px 0 #222222;
+}
+.auto-height{
+    height: auto !important; 
+}

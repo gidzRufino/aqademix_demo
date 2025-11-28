@@ -1,0 +1,101 @@
+<?php if ( ! defined('BASEPATH')) exit('No direct script access allowed');
+
+/*
+ * To change this template, choose Tools | Templates
+ * and open the template in the editor.
+ */
+
+/**
+ * Description of search
+ *
+ * @author genesis
+ */
+class search extends MX_Controller {
+    
+    function __construct() {
+        parent::__construct();
+        $this->load->model('search_model');
+        //$device = new Mobile_Detect();
+    }
+    
+    function getRawProfile($year_id)
+    {
+        $year = Modules::run('financemanagement/yearConverter', base64_decode($year_id));
+        $students = $this->search_model->getRawProfile($year);
+        foreach($students as $s):
+            ?>
+                <option value="<?php echo base64_encode($s->uid); ?>"><?php echo $s->lastname.',&nbsp;'.$s->firstname; ?></option>
+            <?php
+        endforeach;
+    }
+    
+    function getStudents($option, $value, $year=NULL)
+    {
+        $settings = Modules::run('main/getSet');
+        $student = $this->search_model->getPreviousStudent($option, $value, $year, $settings);
+        $data['grade'] = Modules::run('registrar/getGradeLevel');
+            //echo $option;
+        $data['year'] = $year;
+        $data['students'] = $student;
+        $this->load->view('studentTable', $data);
+	//print_r($student);
+    }
+    
+    function getCollegeStudents($option, $value, $year=NULL)
+    {
+        $student = $this->search_model->getCollegeStudents($option, $value, $year=NULL);
+            //echo $option;
+        $data['students'] = $student;
+        $this->load->view('searchCollegeStudentTable', $data);
+	//print_r($student);
+    }
+    function getROStudents($value)
+    {
+        $student = $this->search_model->getStudent($value);
+        $data['grade'] = Modules::run('registrar/getGradeLevel');
+            //echo $option;
+        $data['students'] = $student;
+        $this->load->view('ro_studentTable', $data);
+    }
+    function getStudentBySection($section_id, $value=NULL, $year=NULL)
+    {
+        $student = $this->search_model->getStudentBySection($value, $section_id, $year=NULL);
+            //echo $option;
+        $data['students'] = $student;
+        $this->load->view('studentTable', $data);
+    }
+    
+    function getStudentByGradeLevel($grade_id, $value=NULL, $year=NULL)
+    {
+        $student = $this->search_model->getStudentByGradeLevel($value, $grade_id, $year=NULL);
+            //echo $option;
+        $data['students'] = $student;
+        $this->load->view('studentTable', $data);
+    }
+    
+    function searchStudentAccounts($value, $year=NULL)
+    {
+        $student = $this->search_model->searchStudentAccounts($value, $year=NULL);
+        echo '<ul>';
+        foreach ($student as $s):
+        ?>
+                <li style="font-size:18px;" onclick="$('#searchName').hide(), $('#searchBox').val('<?php echo $s->firstname.' '.$s->lastname ?>'), loadDetails('<?php echo base64_encode($s->st_id) ?>')" ><?php echo $s->firstname.' '.$s->lastname ?></li>   
+        <?php        
+        endforeach;
+        echo '</ul>';
+        
+    }
+    
+    function searchStudentAccountsK12($value, $year=NULL)
+    {
+        $student = $this->search_model->searchStudentAccountsK12($value, $year=NULL);
+        echo '<ul>';
+        foreach ($student as $s):
+        ?>
+                <li style="font-size:18px;" onclick="$('#searchName').hide(), $('#searchBox').val('<?php echo $s->firstname.' '.$s->lastname ?>'), loadDetails('<?php echo base64_encode($s->st_id) ?>')" ><?php echo $s->lastname.', '.$s->firstname ?></li>   
+        <?php        
+        endforeach;
+        echo '</ul>';
+        
+    }
+}

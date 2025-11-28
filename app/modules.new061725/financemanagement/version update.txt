@@ -1,0 +1,61 @@
+Version Update:
+
+for update:
+- add_charge
+- pos
+- [db] del blank on items
+- update config/config.php
+- del trans_id 140704112221-031, 140703043200-031 from fin_transaction
+
+Update FM-032815
+----------------
+- activated rollover function
+
+Update FM-120814
+----------------
+- added edit function to config options
+
+Update FM-112414
+----------------
+- added total expected collection per level at pos dashboard
+- updated LCA db upon request -> separated tuition and misc to tuition fee and misc.
+
+Update FM-112414
+----------------
+- updated lists of transactions > disregard refnum 0000 on sales calculations.
+
+Update FM-110614
+----------------
+- swat payment item change on payment submit bug.
+- edit wrong spelling on 'breif' at add charge
+- update date of add charge to standard m-d-Y
+
+Update FM-110314
+----------------
+- release version 3
+
+Update FM-082714
+----------------
+- updated printable itemized statement of account (long version)
+- updated showing accounts on reports per school year
+- exterminated report tab bug. All tabs are now showing.
+
+Update FM-082214
+----------------
+- exterminated collection per month report bug
+- added printable itemized statement of account (long version)
+
+Update FM-081114
+----------------
+- Take off zero valued items from printable SOA
+- move the collection report per account table up so that the last entry can still be viewed
+- Changed searchable account to full name
+
+
+Update FM-080914
+----------------
+- Fix double calculation bugs on individual reports, printed soa and text soa
+- activated full scholar on the options on customized accounts
+
+check:
+- verify double entry on stg_fin_plan

@@ -1,0 +1,218 @@
+<div style="margin-bottom: 100px; ">
+    <div class="row-fluid contentHeader sticky" style="width:1080px; background: #FFF; z-index: 2000">
+        <h3 class="pull-left" style="margin:0">Grading System</h3><?php print_r($this->session->userdata('term')); ?>
+        <div class="pull-right">
+            <input style="height:30px;" type="hidden" value="" id="section_id" /> 
+            <input style="height:30px;" type="hidden" value="" id="subject_id" /> 
+            <input style="height:30px;" type="hidden" value="" id="grade_id" /> 
+         </div>
+        <div class="pull-right">
+          <select name="subject"  onclick="getDetails(this.value)"  id="subject" class="controls-row span12" required>
+              <option>Select Subject ( Section )</option>
+              <?php 
+                    foreach ($getSubject as $s)
+                      {   
+                ?>                        
+              <option value="<?php echo $s->subject_id.'-'.$s->section_id.'-'.$s->grade_level_id?>"><?php echo $s->subject.' ( '.$s->section.' )'; ?></option>
+
+              <?php }?>
+            </select>
+         </div>
+    </div> 
+    <?php
+   $is_admin = $this->session->userdata('is_admin');
+?>
+    <div id="success">
+        
+    </div>    
+    <div class="row-fluid">
+        <div class="span12" >
+            <div class="span1 pull-left" style="margin:0; border-right:1px black solid; padding-right:5px;">
+                <div onmouseover="document.getElementById('formController').value='createQuiz'" onclick="$('#createQuiz').fadeIn(),$('#recordScore').hide(),$('#classRecord').hide(), getAssessmentCategory()" class="text-center " style="cursor: pointer; margin:0 5%;">
+                    <img  class="dash-icon" style="width:50px; margin:0 auto;" src="<?php echo base_url().'images/addQuiz.png'?>" /> 
+                    Create Assessment
+                </div>
+                <div onmouseover="document.getElementById('formController').value='recordScore'" onclick="$('#createQuiz').hide(), $('#recordScore').fadeIn(),$('#classRecord').hide(), enterRawScore()" class="text-center " style="cursor: pointer; margin:0 5%;">
+                    <img  class="dash-icon" style="width:50px; margin:0 auto;" src="<?php echo base_url().'images/addQuiz.png'?>" /> 
+                    Enter Raw Score
+                </div>
+                <div onmouseover="document.getElementById('formController').value='classRecord'" onclick="$('#createQuiz').hide(), $('#recordScore').hide(),$('#classRecord').fadeIn(), getClassRecord()" class="text-center " style="cursor: pointer; margin:0 5%;">
+                    <img  class="dash-icon" style="width:50px; margin:0 auto;" src="<?php echo base_url().'images/addQuiz.png'?>" /> 
+                    View Grading Sheet
+                </div>
+                <?php if($is_admin){ ?>
+                <div onmouseover="document.getElementById('formController').value='gradeSettings'"
+                    onclick="openForm('gradeSettings')"
+                    class="text-center " style="cursor: pointer; margin:0 5%;">
+                    <img  class="dash-icon" style="width:50px; margin:0 auto;" src="<?php echo base_url().'images/grading-settings.png'?>" /> 
+                    Settings
+                </div> 
+                <?php }else{ ?>
+                <div 
+                    onclick="document.location='<?php echo base_url().'gradingsystemSettings'?>'"
+                    class="text-center " style="cursor: pointer; margin:0 5%;">
+                    <img  class="dash-icon" style="width:50px; margin:0 auto;" src="<?php echo base_url().'images/grading-settings.png'?>" /> 
+                    Grading Setup
+                </div>
+                <?php } ?>  
+            </div>
+            <div class="span10">
+                <!--These are the forms used in the whole grading system-->
+                <?php $this->load->view('gradingsystem/forms/createAssessment'); ?>
+                <?php $this->load->view('gradingsystem/forms/recordScore'); ?>
+                <?php $this->load->view('gradingsystem/forms/createCategory'); ?>
+                <?php $this->load->view('gradingsystem/forms/gradingSettings'); ?>
+                <?php $this->load->view('gradingsystem/forms/subjectSettings'); ?>
+                <?php $this->load->view('gradingsystem/classRecord'); ?>
+                
+            </div>
+        </div>
+        
+    </div>
+<input type="hidden" id="formController" value="0" />
+<input type="hidden" id="formController2" value="0" />
+<input type="hidden" id="setSection" />
+
+
+<script type="text/javascript">
+    function getClassRecord()
+    {
+          var section_id = $('#section_id').val()
+            var subject_id = $('#subject_id').val()
+            var grade_id = $('#grade_id').val()
+            
+           if(section_id!=""){
+               var url = "<?php echo base_url().'gradingsystem/getClassRecord/'?>"+subject_id+'/'+section_id+'/'+grade_id ;
+                $.ajax({
+                 type: "GET",
+                 url: url,
+                 data: 'details='+section_id, // serializes the form's elements.
+                 success: function(data)
+                 {
+                     //$("form#quoteForm")[0].reset()
+                    $('#classRecordTables').html(data)
+
+                 }
+               }); 
+           }else{
+                alert('Please Select Subject First');
+                location.reload();
+           } 
+           
+    }
+
+     $(document).ready(function() {
+         
+          
+          $("#assessDate").datepicker();
+          $("#searchAssessDate").select2();
+          $("#subject").select2();
+          $("#selectQuizCategory").select2({
+              
+          });
+          $('#recordStudent').select2({
+               minimumInputLength: 1
+          });
+         
+          $("#inputQuizCategory").select2(); 
+          $("#recordSection").select2({
+            }); 
+          $("#selectSection").select2({
+            }); 
+          $("#selectSubject").select2(); 
+          $("#selectSubjectA").select2(); 
+          $("#inputGradeModal").select2(); 
+          $("#selectQuizSubject").select2(); 
+          
+          //from gradingSettingsForm
+          $('#fromFirstQuarter').datepicker();
+          
+          
+          
+          
+      });
+      
+      function getAssessmentCategory()
+      {
+           var department = document.getElementById('grade_id').value;
+           var url = "<?php echo base_url().'gradingsystem/getAssessCatDropdown/'?>"+department ;
+         if(department!=""){  
+            $.ajax({
+             type: "GET",
+             url: url,
+             data: 'details='+department, // serializes the form's elements.
+             success: function(data)
+             {
+                 //$("form#quoteForm")[0].reset()
+                $('#selectAssessmentCategory').html(data)
+
+             }
+           });
+         }else{
+                alert('Please Select Subject First');
+                location.reload();
+           } 
+      }
+      
+      function enterRawScore()
+      {
+            var section_id = $('#section_id').val()
+            var subject_id = $('#subject_id').val()
+            
+            if(section_id!=""){
+                var url = "<?php echo base_url().'gradingsystem/getAssessment/'?>" ;
+                    $.ajax({
+                     type: "POST",
+                     url: url,
+                     data: 'section_id='+section_id+"&subject_id="+subject_id, // serializes the form's elements.
+                     success: function(data)
+                     {
+                         $('#searchAssessDate').html(data);
+
+                   }
+                 });
+            }else{
+                alert('Please Select Subject First');
+                location.reload();
+           } 
+            
+      }
+      
+      function getDetails(section){
+           var url = "<?php echo base_url().'gradingsystem/getSectionAndSubject/'?>"+section ;
+          $.ajax({
+           type: "GET",
+           url: url,
+           dataType: 'json',
+           data: 'details='+section, // serializes the form's elements.
+           success: function(data)
+           {
+               //$("form#quoteForm")[0].reset()
+              $('#section_id').val(data.section_id)
+              $('#subject_id').val(data.subject_id)
+              $('#grade_id').val(data.grade_id)
+
+           }
+         });
+      }
+      function getSubject(subject){
+          document.getElementById('createSubjectId').value = subject;
+    }
+     
+      function getQuizBySubject(subject){
+          document.getElementById('setSection').value='getQuizBySubject'
+          var date = document.getElementById('getDate').value
+          
+          
+          var data = new Array();
+          
+          data[0] = subject;
+          data[1] = date;
+          
+            if(data[0]!=""){
+               // alert(subject)
+                sectionAction(data)
+            }
+      }
+
+</script>

@@ -1,0 +1,361 @@
+<?php if ( ! defined('BASEPATH')) exit('No direct script access allowed');
+class main_model extends CI_Model {
+
+    function __construct() {
+        parent::__construct();
+    }
+    
+    function refreshIdGeneration()
+    {
+        $q = $this->db->get('profile_temp_id');
+        return $q;
+        
+    }
+            
+    function saveSystemUpdate($details)
+    {
+        $this->db->insert('system_settings', $details);
+        return TRUE;
+    }
+    
+    function system_version()
+    {
+        $this->db->order_by('sys_id', 'DESC');
+        $this->db->limit(1);
+        $q = $this->db->get('system_settings');
+        return $q->row()->system_version;
+    }
+    function logActivity($title, $msg, $user_id)
+    {
+        $details = array('log_title' => $title,'account_id'=>$user_id, 'remarks'=>$msg);
+        $this->db->insert('system_logs', $details);
+        return;
+    }
+    
+    function editProfile($pk, $pk_id, $details)
+    {
+        $this->db->where($pk, $pk_id);
+        $q = $this->db->get('profile_students');
+        if($q->num_rows()>0):
+            $this->db->where('user_id', $q->row()->user_id);
+            $this->db->update('profile', $details);
+            return TRUE;
+        else:
+            return FALSE;
+        endif;
+        
+    }
+    
+    function removeSubject($sub_id)
+    {
+        $this->db->where('id', $sub_id);
+        if($this->db->delete('subjects_settings')):
+            return TRUE;
+        else:
+            return FALSE;
+        endif;
+    }
+
+
+    function writeLog($details)
+    {
+        $this->db->insert('system_logs', $details);
+        return;
+    }
+
+    public function getSet($year=NULL)
+        {   
+            $query = $this->db->get('settings');
+            return $query->row();
+        }
+        
+    function getMotherTongue()
+        {
+            $query = $this->db->get('mother_tongue');
+            return $query->result();
+        }
+        
+    function getEthnicGroup()
+        {
+            $query = $this->db->get('ethnic_group');
+            return $query->result();
+        }
+        
+    function getMenu($userId){
+        $this->db->select('menu_access');
+        $this->db->from('profile_info');
+        $this->db->where('u_id', $userId);
+        $query = $this->db->get();
+        return $query->row();
+    }
+    
+    function getReligion()
+    {
+       $this->db->select('*');
+       $this->db->from('religion');
+       $this->db->order_by('religion', 'ASC');
+       $query = $this->db->get();
+       return $query->result();
+    }
+    
+    function getCities($city)
+    {
+        $this->db->select('*');
+        $this->db->select('cities.id as cid');
+        $this->db->from('cities');
+        $this->db->join('provinces', 'cities.province_id = provinces.id','left');
+        if($city!=NULL):
+            $this->db->where('mun_city', $city);
+            $query = $this->db->get();
+            return $query->row();
+        else:    
+            $query = $this->db->get();
+            return $query->result();
+        endif;
+    }
+    
+    function getProvince($id)
+    {
+        $this->db->select('*');
+        $this->db->select('cities.id as cid');
+        $this->db->select('provinces.id as pid');
+        $this->db->from('cities');
+        $this->db->join('provinces', 'cities.province_id = provinces.id','left');
+        $this->db->where('cities.id', $id);
+        $query = $this->db->get();
+        return $query->row();
+    }
+    
+    function getProvinces()
+    {
+        $query = $this->db->get('provinces');
+        return $query->result();
+    }
+    
+    function editInLineInfo($column, $value, $school_year)
+    {
+        $this->db->where('school_year', $school_year);
+        $q = $this->db->get('settings');
+        if($q->num_rows()> 0):
+            $details = array(
+                $column => $value
+            );
+            $this->db->where('school_year', $school_year);
+            
+           if($this->db->update('settings', $details)):
+               return TRUE;
+           endif;
+        else:    
+            $details = array(
+                'set_logo'              => $q->row()->short_name.'.jpg',
+                'school_id'             => $q->row()->school_id,
+                'set_school_name'       => $q->row()->set_school_name,
+                'set_school_address'    => $q->row()->set_school_address,
+                'region'                => $q->row()->region,
+                'district'              => $q->row()->district,
+                'division'              => $q->row()->division,
+                'division_address'      => $q->row()->division_address,
+                'school_year'           => $school_year,
+                'web_address'           => $q->row()->web_address,
+                'att_check'             => $q->row()->att_check,
+                'bosy'                  => $q->row()->bosy,
+                'eosy'                  => $q->row()->eosy,
+                'short_name'            => $q->row()->short_name,
+                'time_in'               => $q->row()->time_in,
+                'time_out'              => $q->row()->time_out,
+                'level_catered'         => $q->row()->level_catered,
+            );
+            if($this->db->insert('settings', $details)):
+                   return TRUE;
+               endif;
+        endif;
+           
+    }
+    
+    function singleColumnEdit($table, $column, $value, $pk, $pk_value)
+    {
+        $sql = "UPDATE $table 
+                SET $column = ?
+                WHERE $pk = ?";
+        if($this->db->query($sql,array($value, $pk_value))):
+            return TRUE;
+        endif;
+    }
+        
+    function getRemarksCategory()
+    {
+        $query = $this->db->get('remarks_category');
+        return $query->result();
+    }
+    
+    function getCodeIndicators()
+    {
+        $query = $this->db->get('deped_code_indicator');
+        return $query->result();
+    }
+    
+    function saveAdmissionRemarks($data)
+    {
+        $this->db->insert('admission_remarks', $data);
+        return $this->db->insert_id();
+    }
+    
+    function getAdmissionRemarks($st_id, $month)
+    {
+        if($month!=""):
+            $num_of_days = date("t", mktime(0, 0, 0, $month, 1, date('Y')));
+            $from = $month . '/' . '01' . '/' . date('Y');
+            $to = $month . '/' . $num_of_days . '/'. date('Y');
+        endif;
+        $this->db->select('*');
+        $this->db->from('admission_remarks');
+        $this->db->join('deped_code_indicator', 'admission_remarks.code_indicator_id = deped_code_indicator.id', 'left');
+        $this->db->where('remark_to', $st_id);
+        if($month!=""):
+          $this->db->where("remark_date between '" . $from . "' and'" . $to . "'");  
+        endif;
+        
+        $query = $this->db->get();
+        return $query;
+    }
+    
+    function deleteAdmissionRemark($st_id)
+    {
+        $this->db->where('remark_to', $st_id);
+        $this->db->delete('admission_remarks');
+    }
+
+
+    function updateAdmissionRemarks($details, $st_id){
+        $this->db->where('remark_to', $st_id);
+        $this->db->update('admission_remarks', $details);
+        
+        
+    }
+    
+    function checkAccess($position_id){
+        $this->db->where('position_id', $position_id);
+        $q = $this->db->get('user_groups');
+        if($q->num_rows()>0):
+            return $q->row();
+        else:
+            return FALSE;
+        endif;
+    }
+    
+    function saveAccess($position_id, $details){
+        $this->db->where('position_id', $position_id);
+        $q = $this->db->get('user_groups');
+        if($q->num_rows()>0):
+            $this->db->where('position_id', $position_id);
+            $this->db->update('user_groups', $details);
+        else:
+            $this->db->insert('user_groups', $details);
+        endif;
+        
+        return TRUE;
+    }
+    
+    function getQuarterSettings()
+    {
+        $query = $this->db->get('settings_quarter');
+        return $query->result();
+    }
+    
+    function getTerm($date){
+        $this->db->select('*');
+        $this->db->from('settings_quarter');
+        $this->db->where("from_date >", $date);
+        $this->db->where("to_date <", $date);
+        $query = $this->db->get();
+        return $query->row();
+    }
+    
+    function checkSubjectPerLevel($grade_level, $sub_id)
+    {
+        $this->db->where('sub_id', $sub_id);
+        $this->db->where('grade_level_id', $grade_level);
+        $query = $this->db->get('subjects_settings');
+        if($query->num_rows()>0):
+            return TRUE;
+        else:
+            return FALSE;
+        endif;
+    }
+    
+    function checkSubjectSettings($grade_level)
+    {
+        $this->db->where('grade_level_id', $grade_level);
+        $query = $this->db->get('subject_settings');
+        if($query->num_rows()>0):
+            return TRUE;
+        else:
+            return FALSE;
+        endif;
+    }
+    
+    function searchSubjectIfExist($grade_level,$subject_id)
+    {
+        $this->db->select('*');
+        $this->db->from('subject_settings');
+        $this->db->where('grade_level_id', $grade_level);
+        $this->db->like('subject_id', $subject_id, 'both');
+        $query = $this->db->get();
+        if($query->num_rows()>0):
+            return TRUE;
+        else:
+            return FALSE;
+        endif;
+    }
+    
+    function getSubjectsFromSettings($grade_level)
+    {
+        $this->db->select('*');
+        $this->db->from('subject_settings');
+        $this->db->where('grade_level_id', $grade_level);
+        $query = $this->db->get();
+        return $query->row();
+    }
+    
+    function saveSubjectPerLevel($details)
+    {
+        $this->db->insert('subjects_settings', $details);
+        return;
+    }
+    
+    function saveSubjectSettings($details)
+    {
+        $this->db->insert('subject_settings', $details);
+        return;
+    }
+    
+    function updateSubjectSettings($details, $grade_level)
+    {
+        $this->db->where('grade_level_id', $grade_level);
+        $this->db->update('subject_settings', $details);
+        
+        return;
+        
+    }
+    
+    function deleteSubjectSettings($grade_level)
+    {
+        $this->db->where('grade_level_id', $grade_level);
+        $this->db->delete('subject_settings');
+        
+        return;
+        
+    }
+    
+        
+    function setImage($id, $image)
+    {
+        
+        $data = array(
+               'avatar' => $image
+            );   
+            
+        $this->db->where('user_id', $id);
+        $this->db->update('profile', $data);
+    }
+}

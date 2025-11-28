@@ -1,0 +1,189 @@
+
+<div class="clearfix row" style="margin:0;">
+  <div class="row" style="margin-top: 20px;">
+    <div class="clearfix">
+      <div class="row">
+        <h3>Finance Management Reports</h3>
+      </div>
+      <div class="row">
+        <div class="tabbable"> 
+          <ul class="nav nav-tabs nav-justified">
+            <li class="active"><a href="#tab1" data-toggle="tab">Collection Report per Month</a></li>
+            <li><a href="#tab2" data-toggle="tab">Collection Report per Item</a></li>
+          </ul>
+          <div class="tab-content">
+            <div class="tab-pane active" id="tab1">
+              <div class="row" style="margin-left: 0px;" >                
+                <div class="alert alert-info ">
+                  <strong>Hello!</strong> Select the school year to generate the desired report. 
+                  <div class="span3 pull-right" style="margin-top: -4px;">
+                    <select onclick="selectSY()" tabindex="-1" id="selectSY" style="width:225px;" >   
+                      <option>Select School Year</option>
+                        <?php foreach ($sfinSY as $sy){$id = $sy->sy_id; $sy = $sy->school_year; ?>  
+                      <option value="<?php echo $id; ?>"><?php echo $sy ?></option>
+                        <?php } ?> 
+                    </select>
+                  </div>
+                </div>
+              </div>  
+              <div class="row ">
+                <table class="table table-condensed table-hover table-responsive" >
+                  <tr class="success">
+                    <td style="text-align:center;font-size: 15px; font-weight: bold; color: green;">Month</td>
+                    <td style="text-align:center;font-size: 15px; font-weight: bold; color: green;">Collected</td>
+                    <td style="text-align:center;font-size: 15px; font-weight: bold; color: green;">Expected</td>
+                    <td style="text-align:center;font-size: 15px; font-weight: bold; color: green;">Balance</td>
+                  </tr>
+                    
+                  <?php
+                    $tot_collected = 0;
+                    $tot_expected = 0;
+                    $tot_balance = 0;
+                    $tbalance = 0;
+                    for ($monthRun=1; $monthRun <= 12; $monthRun++) { 
+                      switch ($monthRun) {
+                        case '1':  
+                          $tmonth = 'June';
+                          break;
+                        case '2':
+                          $tmonth = 'July';
+                          break;
+                        case '3':
+                          $tmonth = 'August';
+                          break;
+                        case '4':
+                          $tmonth = 'September';
+                          break;
+                        case '5':
+                          $tmonth = 'October';
+                          break;
+                        case '6':
+                          $tmonth = 'November';
+                          break;
+                        case '7':
+                          $tmonth = 'December';
+                          break;
+                        case '8':
+                          $tmonth = 'January';
+                          break;
+                        case '9':
+                          $tmonth = 'February';
+                          break;
+                        case '10':
+                          $tmonth = 'March';
+                          break;
+                        case '11':
+                          $tmonth = 'April';
+                          break;
+                        case '12':
+                          $tmonth = 'May';
+                          break;
+                      }
+                      $tAmount = 0;
+                      foreach ($sTransaction as $trans) {
+                        $tdate = $trans->tdate;
+                        $dmonth = strchr($tdate," ",true);
+                        $dyear = strchr($tdate,", ",false);
+                        if ($dmonth==$tmonth){
+                          $trans_Amount = $trans->tcredit;
+                          $tAmount = $tAmount + $trans_Amount;       
+                        }
+                      } 
+                      if ($tAmount!=0){
+                        $displayAmount = 'PhP '.number_format($tAmount, 2, '.', ',');
+                      } else {
+                        $displayAmount = '-';
+                      }
+                    $tot_collected = $tot_collected + $tAmount;
+                  ?>
+
+                  <tr>
+                    <td style="text-align:center;color: green;"><?php echo $tmonth.''.$dyear ?></td>
+                    <td style="text-align:center;color: green;"><?php echo $displayAmount ?></td>
+
+                <?php 
+                  if ($tmonth=='April' || $tmonth=='May'){
+                    $tinit_amount = '-';
+                    $tbalance = '-';
+                  }else{
+                    $init_amount = 0;
+                    $tinit_amount = '-';
+                    $tcount = 0;
+                    $genPlan = 1;
+                    // $tbalance = ''; 
+                    foreach ($sAccounts as $cAccounts) {
+                      $check_level = $cAccounts->grade_level_id;
+                      $check_plan = $cAccounts->plan_id;
+                      $check_id = $cAccounts->stud_id;
+                      foreach ($sInitials as $sInit) {
+                        $init_level = $sInit->level_id;
+                        $init_plan = $sInit->plan_id;
+                        $init_sched_id = $sInit->schedule_id;
+                        if(($check_level==$init_level && $check_plan==$init_plan) ||($check_level==$init_level && $init_plan==$genPlan)){
+                          if($init_sched_id==1){
+                            $tcount = $tcount + 1;
+                            $cinit_amount = $sInit->item_amount;
+                            $init_amount = ($init_amount + $cinit_amount);
+                            // $tbalance = $tbalance.' '.$tcount.': '.$check_id.'>'.$cinit_amount.' ';
+                          }
+                        }
+                      }
+                    }                    
+                      $init_amount = $init_amount/10;
+                      $tot_expected = $tot_expected + $init_amount;
+                      $tinit_amount = 'PhP '.number_format($init_amount, 2, '.', ',');
+                      $tbalance = $init_amount - $tAmount;
+                      $tot_balance = $tot_balance + $tbalance;
+                      $tbalance = 'PhP '.number_format($tbalance, 2, '.', ',');
+                  }
+                  ?>
+
+                  <td style="text-align:center;color: green;"><?php echo $tinit_amount ?></td>
+                  
+                  <?php 
+                    $check_neg = substr($tbalance, 4, 1);
+                    if ($check_neg=='-'){ ?>
+
+                    <td style="text-align:center;color: green;"><?php echo $tbalance ?></td>                    
+                                      
+                  <?php }else{ ?>
+                  
+                    <td style="text-align:center;color: red;"><?php echo $tbalance ?></td>
+
+                  <?php } ?>
+
+                    
+                  </tr>
+
+                <?php } 
+                  $tot_collected = 'PhP '.number_format($tot_collected, 2, '.', ',');
+                  $tot_expected = 'PhP '.number_format($tot_expected, 2, '.', ',');
+                  $tot_balance = 'PhP '.number_format($tot_balance, 2, '.', ',');
+                ?>
+
+                  <tr class="success">
+                    <td style="text-align:center;font-size: 15px; font-weight: bold; color: green;">T O T A L</td>
+                    <td style="text-align:center;font-size: 15px; font-weight: bold; color: green;"><?php echo $tot_collected ?></td>
+                    <td style="text-align:center;font-size: 15px; font-weight: bold; color: green;"><?php echo $tot_expected ?></td>
+                    <td style="text-align:center;font-size: 15px; font-weight: bold; color: green;"><?php echo $tot_balance ?></td>                    
+                  </tr>
+                  
+                </table>
+              </div>              
+            </div>
+            <div class="tab-pane" id="tab2">
+              <p>Put collection report per Item here</p>
+              <div class="container" id="container">
+                
+              </div>
+              <!--  -->
+    
+
+              <!--  -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
