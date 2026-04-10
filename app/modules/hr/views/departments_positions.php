@@ -1,97 +1,112 @@
-<div class="panel panel-primary">
-    <div class="panel-heading">
-        <h5>List Of Departments & Positions  <i class="fa fa-plus fa-fw fa-2x pull-right pointer clickover" 
-                                                rel="clickoverDept" 
-                                                data-content=" 
-                                                <div style='width:100%; color:black;'>
-                                                <h6 style='color:black'>Add Department</h6>
-                                                <input type='text' id='addDepartment' placeholder='department' /><br />
-                                                <small>( Use this with caution. ) </small>
-                                                <input type='text' id='idDepartment' placeholder='custome ID'  />
-                                                <div style='margin:5px 0;'>
-                                                <button data-dismiss='clickover' class='btn btn-xs btn-danger pull-right'>Cancel</button>&nbsp;&nbsp;
-                                                <a href='#' id='Department' data-dismiss='clickover' onclick='saveDepartment(this.id)' style='margin-right:10px;' class='btn btn-xs btn-success pull-right'>Save</a></div>
-                                                </div>
-                                                "   
-                                                ></i>
+<div class="card shadow-sm border-0">
+
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+
+        <h5 class="mb-0">
+            <i class="fa fa-sitemap me-2"></i>
+            List of Departments & Positions
         </h5>
+
+        <button class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#addDepartmentModal">
+            <i class="fa fa-plus"></i> Add Department
+        </button>
+
     </div>
 
-    <div class="panel-body">
-        <ol id="Department_ol">
-            <?php
-            foreach ($department as $dept) {
+
+    <div class="card-body">
+
+        <div class="accordion" id="departmentAccordion">
+
+            <?php foreach ($department as $dept):
                 $position = Modules::run('hr/getPositionbyDepartment', $dept->dept_id);
-                ?>
-                <div  style="border-bottom: thin solid lightgray; padding: 10px">
-                    <li class="parent" 
-                        id="<?php echo $dept->dept_id ?>_li"><?php echo $dept->department ?>
-                        <div id="<?php echo $dept->dept_id ?>_a">
-                            <a class="btn btn-sm btn-success help-inline pull-right" 
-                               rel="clickover" 
-                               data-content=" 
-                               <div style='width:100%;'>
-                               <h6>Add Position</h6>
-                               <input type='text' id='add<?php echo $dept->dept_id ?>' />
-                               <div style='margin:5px 0;'>
-                               <button data-dismiss='clickover' class='btn btn-xs btn-danger pull-right'>Cancel</button>&nbsp;&nbsp;
-                               <a href='#' id='<?php echo $dept->dept_id ?>' data-dismiss='clickover' table='profile_position' column='position' pk='position_id' retrieve='getPosition' onclick='saveNewValue(this.id)' style='margin-right:10px;' class='btn btn-xs btn-success pull-right'>Save</a></div>
-                               </div>
-                               "   
-                               data-toggle="modal" href="#"><i class="fa fa-plus"></i>   Add Position</a>
-                            <a class="btn btn-sm btn-primary help-inline pull-right" 
-                               rel="clickover" 
-                               data-content="
-                               <?php
-                               $data['action'] = 1;
-                               $data['dept'] = $dept->department;
-                               $data['position'] = $position;
-                               $this->load->view('deptPosition', $data);
-                               ?>
-                               "   
-                               data-toggle="modal" href="#"><i class="fa fa-edit"></i>   Edit Position</a>
-                            <a class="btn btn-sm btn-danger help-inline pull-right" 
-                               rel="clickover" 
-                               data-content="
-                               <?php
-                               $data['action'] = 2;
-                               $data['dept'] = $dept->department;
-                               $data['position'] = $position;
-                               $this->load->view('deptPosition', $data);
-                               ?>
-                               "   
-                               data-toggle="modal" href="#"><i class="fa fa-trash"></i>   Delete Position</a>
-                        </div>
-                    </li>
-                    <?php
-                    ?>
-                    <ol id="<?php echo $dept->dept_id ?>_ol" type="a">
-                        <?php
-                        foreach ($position as $pos) {
-                            ?>
-                            <li><?php echo $pos->position ?></li>
-                            <?php
-                        }
-                        ?>
-                    </ol>
-                </div>
-                <?php
-            }
             ?>
-        </ol>
-    </div>
 
+                <div class="accordion-item">
+
+                    <h2 class="accordion-header" id="heading<?= $dept->dept_id ?>">
+
+                        <button class="accordion-button collapsed"
+                            type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#collapse<?= $dept->dept_id ?>">
+
+                            <strong><?= $dept->department ?></strong>
+
+                        </button>
+
+                    </h2>
+
+
+                    <div id="collapse<?= $dept->dept_id ?>"
+                        class="accordion-collapse collapse"
+                        data-bs-parent="#departmentAccordion">
+
+                        <div class="accordion-body">
+
+                            <!-- ACTION BUTTONS -->
+                            <div class="mb-3">
+
+                                <button class="btn btn-sm btn-success"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#addPositionModal"
+                                    onclick="$('#dept_id').val('<?= $dept->dept_id ?>')">
+
+                                    <i class="fa fa-plus"></i> Add Position
+                                </button>
+
+                            </div>
+
+
+                            <!-- POSITION LIST -->
+                            <ul class="list-group" id="<?= $dept->dept_id ?>_ol">
+
+                                <?php foreach ($position as $pos): ?>
+
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+
+                                        <?= $pos->position ?>
+
+                                        <span>
+
+                                            <button class="btn btn-sm btn-outline-primary me-1" onclick="openPositionModal('edit','<?php echo $pos->position_id ?>','<?php echo $pos->position ?>','<?php echo $pos->position_dept_id ?>')">
+                                                <i class="fa fa-edit"></i>
+                                            </button>
+
+                                            <button class="btn btn-sm btn-outline-danger" onclick="openPositionModal('delete','<?php echo $pos->position_id ?>','<?php echo $pos->position ?>','<?php echo $pos->position_dept_id ?>')">
+                                                <i class="fa fa-trash"></i>
+                                            </button>
+
+                                        </span>
+
+                                    </li>
+
+                                <?php endforeach; ?>
+
+                            </ul>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            <?php endforeach; ?>
+
+        </div>
+
+    </div>
 
 </div>
 
 <style>
-    .popover{
+    .popover {
         width: 75%
     }
 </style>
 
 <script type="text/javascript">
-    $(function () {
+    $(function() {
         $('[rel="clickoverDept"]').clickover({
             placement: 'bottom',
             html: true
@@ -99,21 +114,26 @@
     })
 
 
-    function saveNewValue(table) {
-        var db_table = $('#' + table).attr('table')
-        var db_column = $('#' + table).attr('column')
-        var pk = $('#' + table).attr('pk')
-        var retrieve = $('#' + table).attr('retrieve')
-        var db_value = $('#add' + table).val()
-        var url = "<?php echo base_url() . 'hr/saveNewValue/' ?>"// the script where you handle the form input.
+    function saveNewValue() {
+        var input = $('#dept_id');
+        var data = {
+            db_table: input.data('tbl'),
+            db_column: input.data('column'),
+            pk: input.data('pk'),
+            retrieve: input.data('retrieve'),
+            dept_id: input.val()
+        }
+
+        var db_value = $('#position_name').val()
+        var url = "<?php echo base_url() . 'hr/saveNewValue/' ?>" // the script where you handle the form input.
 
         $.ajax({
             type: "POST",
             url: url,
-            data: "table=" + db_table + "&column=" + db_column + "&value=" + db_value + "&pk=" + pk + "&retrieve=" + retrieve + "&dept_id=" + table + '&csrf_test_name=' + $.cookie('csrf_cookie_name'), // serializes the form's elements.
-            success: function (data)
-            {
-                $('#' + table + '_ol').html(data)
+            data: "table=" + data.db_table + "&column=" + data.db_column + "&value=" + db_value + "&pk=" + data.pk + "&retrieve=" + data.retrieve + "&dept_id=" + data.dept_id + '&csrf_test_name=' + $.cookie('csrf_cookie_name'), // serializes the form's elements.
+            dataType: 'json',
+            success: function(data) {
+                showTopAlert(data.msg, data.status ? 'success' : 'danger', 'reload');
             }
         });
 
@@ -122,22 +142,31 @@
     }
 
     function saveDepartment(table) {
-        var department = $('#add' + table).val()
-        var customized_id = $('#id' + table).val()
 
-        var url = "<?php echo base_url() . 'hr/saveDepartment/' ?>";// the script where you handle the form input.
+        var department = $('#add' + table).val();
+        var customized_id = $('#id' + table).val();
+
+        var url = "<?php echo base_url() . 'hr/saveDepartment/' ?>";
 
         $.ajax({
             type: "POST",
             url: url,
-            data: "department=" + department + "&customized_id=" + customized_id + '&csrf_test_name=' + $.cookie('csrf_cookie_name'), // serializes the form's elements.
-            success: function (data)
-            {
-                location.reload()
+            data: {
+                department: department,
+                customized_id: customized_id,
+                csrf_test_name: $.cookie('csrf_cookie_name')
+            },
+            dataType: "json",
+            success: function(data) {
+                showTopAlert(data.msg, data.status ? 'success' : 'warning', 'reload');
+                // location.reload();
+            },
+            error: function(xhr) {
+                console.log(xhr.responseText);
+                showTopAlert('Error', 'danger');
             }
         });
 
         return false;
-
     }
 </script>

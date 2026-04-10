@@ -1,84 +1,110 @@
-<!--- crop and upload image modal -->
-<link rel="stylesheet" type="text/css" href="<?php echo base_url() . 'assets/imgCropper/cropper.min.css' ?>">
-<script type="text/javascript" src="<?php echo base_url() . 'assets/imgCropper/cropper.min.js' ?>"></script>
-<div class="modal fade" id="imgUpload" role="dialog" align="left">
+<!-- Cropper CSS/JS -->
+<link rel="stylesheet" href="<?php echo base_url() . 'assets/imgCropper/cropper.min.css' ?>">
+<script src="<?php echo base_url() . 'assets/imgCropper/cropper.min.js' ?>"></script>
+
+<!-- Modal -->
+<div class="modal fade" id="imgUpload" tabindex="-1" aria-labelledby="imgUploadLabel" aria-hidden="true">
     <?php
-    $attributes = array('class' => '', 'id' => 'importCSV', 'style' => 'margin-top:20px;');
+    $attributes = array('id' => 'importCSV', 'class' => '');
     echo form_open_multipart(base_url() . 'main/do_upload', $attributes);
     ?>
-    <div class="modal-dialog modal-lg-12" style="width: 60%">
-        <div class="modal-content col-md-12">
-            <div class="modal-header">
-                <h2>Upload picture, Crop and save!</h2>
-                <div id="testID"></div>
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content shadow-lg border-0 rounded-4">
+
+            <!-- Header -->
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-semibold" id="imgUploadLabel">
+                    <i class="fa fa-image me-2"></i> Upload, Crop & Save Picture
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
+
+            <!-- Body -->
             <div class="modal-body">
-                <div class="row">
-                    <div class="page">
-                        <!-- input file -->
-                        <div class="box">
-                            <input type="file" id="file-input">
-                        </div>
-                        <!-- leftbox -->
-                        <div class="box-2">
-                            <div class="result"></div>
-                        </div>
-                        <!--rightbox-->
-                        <div class="box-2 img-result hide">
-                            <!-- result of crop -->
-                            <img class="cropped" src="" alt="">
-                        </div>
-                        <!-- input file -->
-                        <div class="box">
-                            <div class="options hide">
-                                <div class="input-group input-group-sm mb-3">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text" id="inputGroup-sizing-sm"> Width</span>
+                <div class="container-fluid">
+                    <div class="row g-4">
+
+                        <!-- Upload & Crop -->
+                        <div class="col-lg-6">
+                            <div class="card border-0 shadow-sm rounded-3">
+                                <div class="card-body">
+                                    <label class="form-label fw-semibold">Select Image</label>
+                                    <input type="file" id="file-input" class="form-control mb-3">
+
+                                    <div class="result border rounded-3 p-2 bg-light text-center" style="min-height:300px">
+                                        <span class="text-muted small">Image preview will appear here</span>
                                     </div>
-                                    <input type="number" class="img-w form-control" aria-label="Small" aria-describedby="inputGroup-sizing-sm" value="300" min="300" max="350" >
+
+                                    <div class="options hide mt-3">
+                                        <label class="form-label small fw-semibold">Width (px)</label>
+                                        <input type="number" class="img-w form-control form-control-sm"
+                                            value="300" min="300" max="350">
+                                    </div>
+
+                                    <button class="btn btn-success mt-3 save hide">
+                                        <i class="fa fa-crop-alt me-1"></i> Crop Image
+                                    </button>
                                 </div>
                             </div>
-                            <!-- save btn -->
-                            <button class="btn save hide">Crop Image</button>
-                            <!-- download btn 
-                            <a class="btn download hide">Use Image</a>-->
                         </div>
+
+                        <!-- Cropped Result -->
+                        <div class="col-lg-6">
+                            <div class="card border-0 shadow-sm rounded-3">
+                                <div class="card-body text-center">
+                                    <h6 class="fw-semibold text-muted mb-3">Cropped Preview</h6>
+                                    <div class="img-result hide">
+                                        <img class="cropped img-fluid rounded shadow-sm" src="" alt="">
+                                    </div>
+                                    <div class="text-muted small">Preview after cropping</div>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             </div>
-            <div class="modal-footer">
-                <div id="croppedImg"></div>
-            <?php if($students->account_type == 5)
-                {
-                    $user_id = $user_id-2;
+
+            <!-- Footer -->
+            <div class="modal-footer bg-light">
+                <div id="croppedImg" class="me-auto"></div>
+
+                <?php if ($students->account_type == 5) {
+                    $user_id = $user_id - 2;
                 } ?>
+
                 <input type="hidden" id="picture_option" name="picture_option" />
-                <input type="hidden" name="id" id="stdUID" value="<?php echo $user_id; ?>" />
+                <input type="hidden" name="id" id="stdUID" />
                 <input type="hidden" name="location" value="<?php echo $this->uri->segment(1) . '/' . $this->uri->segment(2) . '/' . $this->uri->segment(3) . '/' . $this->uri->segment(4) ?>" />
-                <input type="hidden" id="syUpload" name="syUpload" value="<?php echo $this->uri->segment(5) ?>"/>
-                <button class="btn btn-primary download hide">Upload Cropped image</button>
+                <input type="hidden" id="syUpload" name="syUpload" value="<?php echo $this->uri->segment(5) ?>" />
+
+                <button class="btn btn-primary download hide">
+                    <i class="fa fa-upload me-1"></i> Upload Cropped Image
+                </button>
             </div>
+
         </div>
     </div>
-</form>
+    </form>
 </div>
+
 
 <!--- end crop and upload -->
 
 <script type="text/javascript">
     let result = document.querySelector('.result'),
-            img_result = document.querySelector('.img-result'),
-            img_w = document.querySelector('.img-w'),
-            img_h = document.querySelector('.img-h'),
-            options = document.querySelector('.options'),
-            save = document.querySelector('.save'),
-            cropped = document.querySelector('.cropped'),
-            dwn = document.querySelector('.download'),
-            upload = document.querySelector('#file-input'),
-            cropper = '';
+        img_result = document.querySelector('.img-result'),
+        img_w = document.querySelector('.img-w'),
+        img_h = document.querySelector('.img-h'),
+        options = document.querySelector('.options'),
+        save = document.querySelector('.save'),
+        cropped = document.querySelector('.cropped'),
+        dwn = document.querySelector('.download'),
+        upload = document.querySelector('#file-input'),
+        cropper = '';
 
 
-// on change show image with crop options
+    // on change show image with crop options
     upload.addEventListener('change', (e) => {
         if (e.target.files.length) {
             // start file reader
@@ -104,7 +130,7 @@
         }
     });
 
-// save on click
+    // save on click
     save.addEventListener('click', (e) => {
         e.preventDefault();
         // get result to data uri
@@ -125,11 +151,10 @@
         $('#croppedImg').prepend('<input type="hidden" style="height:35px;" class="btn-mini" name="userfile" value="' + profImg + '" /><input type="hidden" name="imgMime" id="imgMime" value="' + imgMimeType + '">')
     });
 
-    $('.download').click(function () {
-        $('#imgUpload').modal('hide');
+    $('.download').click(function() {
+        var modal = bootstrap.Modal.getInstance(document.getElementById('imgUpload'));
+        modal.hide();
     });
-
-
 </script>
 
 <style type="text/css">
@@ -144,35 +169,43 @@
         height: 100%;
     }
 
-    .box, .boxSign {
+    .box,
+    .boxSign {
         padding: 0.5em;
         width: 100%;
-        margin:0.5em;
+        margin: 0.5em;
     }
 
-    .box-2, .boxSign-2 {
+    .box-2,
+    .boxSign-2 {
         padding: 0.5em;
         width: calc(100%/2 - 1em);
     }
 
     .options label,
-    .options input{
-        width:4em;
-        padding:0.5em 1em;
-    }
-    .btn{
-        background:white;
-        color:black;
-        border:1px solid black;
+    .options input {
+        width: 4em;
         padding: 0.5em 1em;
-        text-decoration:none;
-        margin:0.8em 0.3em;
-        display:inline-block;
-        cursor:pointer;
+    }
+
+    .btn {
+        background: white;
+        color: black;
+        border: 1px solid black;
+        padding: 0.5em 1em;
+        text-decoration: none;
+        margin: 0.8em 0.3em;
+        display: inline-block;
+        cursor: pointer;
+    }
+
+    /* Cropper layout tweaks */
+    .result img {
+        max-width: 100%;
     }
 
     .hide {
-        display: none;
+        display: none !important;
     }
 
     img {

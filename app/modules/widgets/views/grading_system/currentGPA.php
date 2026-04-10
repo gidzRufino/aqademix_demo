@@ -1,5 +1,6 @@
 <?php
     $st_id = base64_decode($this->uri->segment(3));
+                                        echo $st_id;
     
     $section = Modules::run('registrar/getSectionById', $details['student']->section_id);
     $subject_ids = Modules::run('academic/getSpecificSubjectPerlevel', $section->grade_id);    

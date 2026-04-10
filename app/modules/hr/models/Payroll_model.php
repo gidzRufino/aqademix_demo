@@ -316,6 +316,29 @@ class Payroll_model extends CI_Model
         endif;
     }
 
+    function updatePayrollShift($data)
+    {
+        $id = $data['ps_id'];
+
+        $insert = [
+            'ps_id' => $id ? $id : $this->eskwela->codeCheck('payroll_shift', 'ps_id', $this->eskwela->code()),
+            'ps_department' => $data['ps_department'],
+            'ps_from' => $data['ps_from'],
+            'ps_to' => $data['ps_to'],
+            'ps_from_pm' => $data['ps_from_pm'],
+            'ps_to_pm' => $data['ps_to_pm'],
+        ];
+
+        if ($id) {
+            $this->db->where('ps_id', $id);
+            $result = $this->db->update('payroll_shift', $insert);
+        } else {
+            $result = $this->db->insert('payroll_shift', $insert);
+        }
+
+        return $result ? TRUE : FALSE;
+    }
+
     function getGroupId($shift_id)
     {
         $this->db->where('shift_id', $shift_id);
@@ -348,6 +371,12 @@ class Payroll_model extends CI_Model
         $this->db->where('user_id', $user_id);
         $q = $this->db->get('profile_employee');
         return $q->row();
+    }
+
+    function getPayrollShiftByID($id)
+    {
+        $this->db->where('ps_id', $id);
+        return $this->db->get('payroll_shift');
     }
 
     function saveShiftGroup($details, $user_id)
@@ -812,5 +841,39 @@ class Payroll_model extends CI_Model
         else:
             return false;
         endif;
+    }
+
+    function addDeduction($data)
+    {
+        $this->db->where('pc_profile_id', $data['pc_profile_id']);
+        $this->db->where('pc_code', $data['pc_code']);
+        $this->db->where('pc_item_id', $data['pc_item_id']);
+
+        $this->db->update('payroll_charges', $data);
+
+        if ($this->db->affected_rows() == 0) {
+
+            $data['pc_id'] = $this->eskwela->codeCheck(
+                'payroll_charges',
+                'pc_id',
+                $this->eskwela->code()
+            );
+
+            $this->db->insert('payroll_charges', $data);
+        }
+    }
+
+    function deletePayrollItem($id)
+    {
+        $this->db->where('esk_payroll_items_code', $id);
+        $q = $this->db->delete('payroll_items');
+        return $q ? TRUE : FALSE;
+    }
+
+    function updatePayrollItemValue($id, $value)
+    {
+        $this->db->where('esk_payroll_items_code', $id);
+        $q = $this->db->update('payroll_items', array('pi_default' => $value));
+        return $q ? TRUE : FALSE;
     }
 }

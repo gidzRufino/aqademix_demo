@@ -108,7 +108,7 @@ class f137_model extends CI_Model {
         $isTbl = $this->checkTableExist('profile_students_admission', $sy);
 
         if ($isTbl):
-            $q = $this->getSingleStudent($stid, $sy);
+            $q = $this->getSingleStudent($stid, $sy, null);
 //            print_r($q);
 
             if (count($q) > 0):
@@ -158,7 +158,7 @@ class f137_model extends CI_Model {
 
                 return $this->getSprRec($stid, $sy, NULL, $grade_level);
             else:
-                $q = $this->getSingleStudent($stid, $lastSYen);
+                $q = $this->getSingleStudent($stid, $lastSYen, null);
                 if (count($q) > 0):
                     $data = array(
                         'spr_id' => $this->eskwela->code(),
@@ -207,7 +207,7 @@ class f137_model extends CI_Model {
                 endif;
             endif;
         else:
-            $q = $this->getSingleStudent($stid, $lastSYen);
+            $q = $this->getSingleStudent($stid, $lastSYen, null);
 
             if (count($q) > 0):
                 $data = array(

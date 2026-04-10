@@ -7,7 +7,8 @@ echo '<head>';
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <?php
 
-echo link_tag('assets/css/bootstrap.min.css');
+echo link_tag('assets/bootstrap5/bootstrap.min.css');
+echo link_tag('assets/bootstrap5/bootstrap-icons.css');
 echo link_tag('assets/css/plugins/metisMenu/metisMenu.min.css');
 echo link_tag('assets/css/sb-admin-2.css');
 echo link_tag('assets/css/plugins/morris.css');
@@ -28,9 +29,10 @@ echo link_tag("assets/dist/css/AdminLTE.min.css");
 <link rel='manifest' href='<?php echo base_url() ?>manifest.json'>
 <link rel="stylesheet" type="text/css" href="<?php echo base_url() . 'assets/morris.js-0.5.1/morris.css' ?>">
 <link rel="stylesheet" type="text/css" href="<?php echo base_url('assets/css/'); ?>print.css" media="print" />
+
 <script src="<?php echo base_url('assets/js/jquery-1.11.0.js'); ?>"></script>
 <script src="https://kit.fontawesome.com/932eccec29.js" crossorigin="anonymous"></script>
-<script src="<?php echo base_url('assets/js/bootstrap.min.js'); ?>"></script>
+<script src="<?php echo base_url('assets/bootstrap5/bootstrap.min.js'); ?>"></script>
 <script src="<?php echo base_url('assets/js/plugins/bootstrap-clockpicker.min.js'); ?>"></script>
 <script src="<?php echo base_url('assets/js/plugins/bootstrap-datepicker.js'); ?>"></script>
 <script src="<?php echo base_url('assets/js/plugins/select2.min.js'); ?>"></script>
@@ -64,6 +66,41 @@ echo link_tag("assets/dist/css/AdminLTE.min.css");
         font-size: 1em;
         padding: 0.75em;
     }
+
+    .modal {
+        z-index: 1065 !important;
+    }
+
+    .modal {
+        pointer-events: auto !important;
+        z-index: 1055 !important;
+    }
+
+    .modal-backdrop {
+        z-index: 1050 !important;
+    }
+
+    .top-alert {
+        position: fixed;
+        top: -100px;
+        left: 50%;
+        transform: translateX(-50%);
+        min-width: 320px;
+        z-index: 2000;
+        transition: top 0.5s ease;
+    }
+
+    .top-alert.show-alert {
+        top: 20px;
+    }
+
+    /* .sidebar,
+.sidenav,
+#sidebar,
+.offcanvas,
+.mt-navbar-adjust {
+    z-index: 1040;
+} */
 </style>
 
 <script src="<?php echo base_url('assets/js/app.js'); ?>"></script>
@@ -160,6 +197,35 @@ echo link_tag("assets/dist/css/AdminLTE.min.css");
         $('#notif_audio')[0].play();
 
     }
+
+    /*----- Top alerts ----*/
+    function showTopAlert(message, type = 'success', reload = null) {
+        let alertBox = document.getElementById('topAlert');
+
+        alertBox.className = `top-alert alert alert-${type} alert-dismissible fade show`;
+        alertBox.innerHTML = `
+        <strong>${type.toUpperCase()}!</strong> ${message}
+        <button type="button" class="btn-close" onclick="hideTopAlert()"></button>
+    `;
+
+        setTimeout(() => {
+            alertBox.classList.add('show-alert');
+        }, 50);
+
+        setTimeout(() => {
+            hideTopAlert();
+        }, 2000);
+        if (reload != null) {
+            setTimeout(() => {
+                location.reload();
+            }, 2000);
+        }
+    }
+
+    function hideTopAlert() {
+        let alertBox = document.getElementById('topAlert');
+        alertBox.classList.remove('show-alert');
+    }
 </script>
 </head>
 
@@ -173,6 +239,10 @@ echo link_tag("assets/dist/css/AdminLTE.min.css");
         <button id="butInstall" type="button">
             Install
         </button>
+    </div>
+    <div id="topAlert" class="top-alert alert alert-success alert-dismissible fade show" role="alert">
+        <strong>Success!</strong> Data has been saved successfully.
+        <button type="button" class="btn-close" onclick="hideTopAlert()"></button>
     </div>
 
     <input type="hidden" id="e_session_id" value="<?php echo $this->session->employee_id ?>" />

@@ -224,7 +224,7 @@ class Finance_pisd extends MX_Controller {
         $data['school_year'] = $school_year;
         $data['name'] =  $this->post('name');
         $data['st_id'] =  $this->post('st_id');
-        $data['fin_items'] = $this->finance_model->getFinItems();
+        $data['fin_items'] = $this->finance_model->getFinItems($school_year);
         $data['transaction'] = $this->finance_model->loadFinanceTransaction($trans_id, $school_year);
         $this->load->view('fundTransfer', $data);
     }

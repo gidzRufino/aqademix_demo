@@ -114,7 +114,17 @@ class coursemanagement extends MX_Controller {
         
         echo Modules::run('templates/main_content', $data);
     }
-    
+
+    function getDeptByID($id)
+    {
+        return $this->coursemanagement_model->getDeptByID($id);
+    }
+
+    function getLevelByDept($id)
+    {
+        return $this->coursemanagement_model->getLevelByDept($id);
+    }
+
     function getCourses()
     {
         $course = $this->coursemanagement_model->getCourse();
@@ -154,13 +164,13 @@ class coursemanagement extends MX_Controller {
     
     function deleteSection($section_id)
     {
-        $this->coursemanagement_model->deleteSection($section_id);
-        return;
+        $r = $this->coursemanagement_model->deleteSection($section_id);
+        echo json_encode($r ? array('status' => TRUE, 'msg' => 'Section Deleted Successfuly') : array('status' => FALSE, 'msg' => 'Delete Section Failed'));
     }
     
     function editSection($section,$id){
         $result = $this->coursemanagement_model->editSection(urldecode(trim($section)),$id);
-        return $result;
+        echo json_encode($result ? array('status' => TRUE, 'msg' => 'Section Updated Successfuly') : array('status' => FALSE, 'msg' => 'Update Section Failed'));
     }
             
     function getDepartment()

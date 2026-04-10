@@ -1,233 +1,298 @@
-<div class="col-lg-12 no-padding">
-    <h3 style="margin:10px 0;" class="page-header">Create Payroll
-        <div class="btn-group pull-right" role="group" aria-label="">
-            <button type="button" class="btn btn-default" onclick="document.location='<?php echo base_url('hr/payroll') ?>'">Dashboard</button>
-            <button type="button" class="btn btn-default" onclick="$('#createPay').modal('show')">Set Payroll Period</button>
-            <button type="button" class="btn btn-default" onclick="document.location='<?php echo base_url('hr/payroll/settings') ?>'">Payroll Settings</button>
-            <button class="btn btn-default" onclick="printPayroll()"><i class="fa fa-print"></i></button>
-        </div>
-        <span id="notificationAlert" class="text-center alert alert-success small" style="padding: 8px 10px; margin: 0 15px; display: none;"></span>
-    </h3>
-</div>
-<div class="col-lg-12">
-    <div class="form-group pull-right">
-        <select onclick="generatePayroll(this.value)" tabindex="-1" id="payPeriod" name="payPeriod" style="width:300px;">
-            <option>Select Payroll Period</option>
-            <?php foreach ($payrollPeriod as $pp): ?>
-                <option id="option_<?php echo $pp->per_id ?>" from="<?php echo $pp->per_from ?>" to="<?php echo $pp->per_to ?>" value="<?php echo $pp->per_id ?>" <?php echo ($pc_code == $pp->per_id) ? 'selected' : ''; ?>><?php echo date('F d, Y', strtotime($pp->per_from)) . ' - ' . date('F d, Y', strtotime($pp->per_to)); ?></option>
-            <?php endforeach; ?>
-        </select>
-    </div>
-</div>
-<div id="consolidatedPayroll" class="col-lg-12">
-    <?php if ($pc_code != NULL):
-        echo Modules::run('hr/payroll/generatePayrollReport', $pc_code, $startDate, $endDate);
-    endif;
-    ?>
-</div>
+<style>
+    .summary-card {
+        border: none;
+        border-radius: 16px;
+        transition: all 0.25s ease;
+        background: #ffffff;
+        position: relative;
+        overflow: hidden;
+    }
 
-<div id="addCharges" style="margin: 50px auto;" class="modal fade col-lg-3" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-    <div class="panel panel-success" style="margin:0; padding-bottom: 10px;">
-        <div class="panel-heading">
-            <button type="button" class="close pull-right" data-dismiss="modal" aria-hidden="true">&times;</button>
-            <span id="addEdHisTitle">Add Additional Income / Deductions</span>
-        </div>
-        <form class="panel-body" id="updateDeductionForm">
-            <div class="col-lg-12">
-                <h4 class="pull-left">Gross Pay: <span class="text-danger" id="grossPay"></span></h4>
-                <button type="button" class="btn btn-xs btn-primary pull-right" style="margin-top: 10px;" onclick="$('#AddPayrollItem').modal('show')">Add Item</button>
+    .summary-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+    }
+
+    .summary-card.primary::before {
+        background: linear-gradient(90deg, #0d6efd, #4dabf7);
+    }
+
+    .summary-card.warning::before {
+        background: linear-gradient(90deg, #ffc107, #ffda6a);
+    }
+
+    .summary-card.danger::before {
+        background: linear-gradient(90deg, #dc3545, #ff6b81);
+    }
+
+    .summary-card.success::before {
+        background: linear-gradient(90deg, #198754, #51cf66);
+    }
+
+    .summary-card.info::before {
+        background: linear-gradient(90deg, #0dcaf0, #66d9ff);
+    }
+
+    .summary-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 25px rgba(0, 0, 0, 0.08);
+    }
+
+    .icon-wrapper {
+        width: 55px;
+        height: 55px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 14px;
+        font-size: 20px;
+    }
+
+    .bg-soft-primary {
+        background: rgba(13, 110, 253, 0.1);
+        color: #0d6efd;
+    }
+
+    .bg-soft-warning {
+        background: rgba(255, 193, 7, 0.15);
+        color: #ffc107;
+    }
+
+    .bg-soft-danger {
+        background: rgba(220, 53, 69, 0.12);
+        color: #dc3545;
+    }
+
+    .bg-soft-success {
+        background: rgba(25, 135, 84, 0.12);
+        color: #198754;
+    }
+
+    .bg-soft-info {
+        background: rgba(13, 202, 240, 0.12);
+        color: #0dcaf0;
+    }
+
+    .summary-label {
+        font-size: 13px;
+        color: #6c757d;
+        letter-spacing: .5px;
+    }
+
+    .summary-value {
+        font-size: 20px;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    @media (max-width: 576px) {
+        .summary-value {
+            font-size: 18px;
+        }
+    }
+</style>
+
+<div class="container-fluid py-3">
+
+    <!-- HEADER TOOLBAR -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3">
+            <div>
+                <h3 class="mb-0 fw-bold">Payroll System</h3>
+                <small class="text-muted">Generate payroll, manage periods, and review employee compensation</small>
             </div>
-            <hr class="col-lg-11 no-margin" />
-            <div id="payrollDeductionBody">
-            </div>
-            <input type="hidden" id="pc_profile_id" name="pc_profile_id" />
-            <input type="hidden" id="pc_code" name="pc_code" />
-        </form>
-        <div class="panel-footer clearfix">
-            <div class="control-group">
-                <h4 class="text-left col-lg-6">Net Pay: <span class="text-danger" id="netPay"></span></h4>
-                <button onclick="addDeduction()" class="btn btn-success pull-right">Update</button>
+
+            <div class="d-flex flex-wrap gap-2">
+                <button class="btn btn-primary"
+                    data-bs-toggle="modal" data-bs-target="#createPay">
+                    <i class="fa fa-calendar-plus me-1"></i> Set Payroll Period
+                </button>
+
+                <button class="btn btn-outline-secondary"
+                    onclick="document.location='<?php echo base_url('hr/payroll/settings') ?>'">
+                    <i class="fa fa-cog me-1"></i> Settings
+                </button>
+
+                <button class="btn btn-outline-dark" onclick="printPayroll()">
+                    <i class="fa fa-print"></i>
+                </button>
             </div>
         </div>
-    </div>
-</div>
 
+        <!-- PAYROLL SUMMARY CARDS -->
+        <div class="row g-4 px-3 py-2">
 
-<div id="AddPayrollItem" data-backdrop="static" style="margin: 50px auto;" class="modal fade col-lg-3" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-    <div class="panel panel-primary" style="margin:0; padding-bottom: 10px;">
-        <div class="panel-heading">
-            <button type="button" class="close pull-right" data-dismiss="modal" aria-hidden="true">&times;</button>
-            <span>Add Payroll Item</span>
-        </div>
-        <div class="panel-body">
-
-            <div class="control-group">
-                <label class="control-label" for="inputDate">Select Item to Be Added</label>
-                <div class="controls">
-                    <select id="payrollItems" style="width: 100%">
-                        <option>Select Item</option>
-                        <?php
-                        $items = Modules::run('hr/payroll/getPayrollItems');
-                        foreach ($items as $item):
-                        ?>
-                            <option value="<?php echo $item->pi_item_id ?>" item_type="<?php echo $item->pi_item_type ?>" item_cat="<?php echo $item->pi_item_cat ?>" id="<?php echo $item->pi_item_id ?>"><?php echo $item->pi_item_name ?></option>
-                        <?php
-                        endforeach;
-                        ?>
-                    </select>
+            <!-- Gross Pay -->
+            <div class="col-12 col-sm-6 col-lg-4 col-xl">
+                <div class="card summary-card primary shadow-sm h-100">
+                    <div class="card-body d-flex align-items-center gap-3">
+                        <div class="icon-wrapper bg-soft-primary">
+                            <i class="fa fa-money-bill-wave"></i>
+                        </div>
+                        <div>
+                            <div class="summary-label">Total Gross Pay</div>
+                            <p class="summary-value" id="summaryGross">₱0.00</p>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <br />
-            <div class="control-group">
-                <button type="button" class="btn btn-block btn-warning" onclick="addItem()">Add Item</button>
-            </div>
 
-
-        </div>
-    </div>
-</div>
-
-<div id="createPay" style="width:25%; margin: 50px auto;" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-    <div class="panel panel-success" style="margin:0; padding-bottom: 10px;">
-        <div class="panel-heading">
-            <button type="button" class="close pull-right" data-dismiss="modal" aria-hidden="true">&times;</button>
-            <span id="addEdHisTitle">Set Payroll Period</span>
-        </div>
-        <div class="panel-body">
-            <div class="control-group col-lg-6">
-                <label class="control-label" for="inputDate">From Date</label>
-                <div class="controls">
-                    <input name="fromDate" type="text" id="fromDate" data-date-format="yyyy-mm-dd" placeholder="Date" value="<?php echo date('Y-m-d'); ?>">
+            <!-- Additional Income -->
+            <div class="col-12 col-sm-6 col-lg-4 col-xl">
+                <div class="card summary-card warning shadow-sm h-100">
+                    <div class="card-body d-flex align-items-center gap-3">
+                        <div class="icon-wrapper bg-soft-warning">
+                            <i class="fa fa-plus-circle"></i>
+                        </div>
+                        <div>
+                            <div class="summary-label">Total Additional Income</div>
+                            <p class="summary-value" id="summaryAdditionalIncome">₱0.00</p>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="control-group col-lg-6">
-                <label class="control-label" for="inputDate">To Date</label>
-                <div class="controls">
-                    <input name="toDate" type="text" id="toDate" data-date-format="yyyy-mm-dd" placeholder="Date" value="<?php echo date('Y-m-d'); ?>">
+
+            <!-- Deductions -->
+            <div class="col-12 col-sm-6 col-lg-4 col-xl">
+                <div class="card summary-card danger shadow-sm h-100">
+                    <div class="card-body d-flex align-items-center gap-3">
+                        <div class="icon-wrapper bg-soft-danger">
+                            <i class="fa fa-minus-circle"></i>
+                        </div>
+                        <div>
+                            <div class="summary-label">Total Deductions</div>
+                            <p class="summary-value" id="summaryDeduction">₱0.00</p>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <input type="hidden" id="pc_code" />
+
+            <!-- Net Pay -->
+            <div class="col-12 col-sm-6 col-lg-4 col-xl">
+                <div class="card summary-card success shadow-sm h-100">
+                    <div class="card-body d-flex align-items-center gap-3">
+                        <div class="icon-wrapper bg-soft-success">
+                            <i class="fa fa-wallet"></i>
+                        </div>
+                        <div>
+                            <div class="summary-label">Total Net Pay</div>
+                            <p class="summary-value" id="summaryNet">₱0.00</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Employees -->
+            <div class="col-12 col-sm-6 col-lg-4 col-xl">
+                <div class="card summary-card info shadow-sm h-100">
+                    <div class="card-body d-flex align-items-center gap-3">
+                        <div class="icon-wrapper bg-soft-info">
+                            <i class="fa fa-users"></i>
+                        </div>
+                        <div>
+                            <div class="summary-label">Total Employees</div>
+                            <p class="summary-value" id="summaryEmployees">0</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
-        <div class="panel-footer">
-            <div class="control-group">
-                <button onmouseover="generateCode()" onclick="setPayRoll()" class="btn btn-block btn-success">Set</button>
+
+        <!-- FILTER / PERIOD SELECTION -->
+        <div class="row g-3 align-items-end mb-4 ms-4">
+            <div class="col-xl-4 col-lg-5 col-md-6">
+                <label class="form-label fw-semibold">Payroll Period</label>
+                <select onchange="generatePayroll(this.value)" id="payPeriod" name="payPeriod"
+                    class="form-select shadow-sm">
+                    <option>Select Payroll Period</option>
+                    <?php foreach ($payrollPeriod as $pp): ?>
+                        <option id="option_<?php echo $pp->per_id ?>"
+                            from="<?php echo $pp->per_from ?>"
+                            to="<?php echo $pp->per_to ?>"
+                            value="<?php echo $pp->per_id ?>"
+                            <?php echo ($pc_code == $pp->per_id) ? 'selected' : ''; ?> <?= $this->uri->segment(4) == $pp->per_id ? 'selected' : '' ?>>
+                            <?php echo date('F d, Y', strtotime($pp->per_from)) . ' - ' . date('F d, Y', strtotime($pp->per_to)); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
+            <div class="col">
+                <span id="notificationAlert" class="alert alert-success py-2 px-3 small d-none"></span>
+            </div>
+        </div>
+
+        <!-- PAYROLL REPORT -->
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                    <h5 class="mb-0 fw-semibold">Consolidated Payroll Report</h5>
+                    <small class="text-muted">Overview of employee payroll within selected period</small>
+                </div>
+
+                <div class="text-muted small">
+                    <i class="fa fa-info-circle me-1"></i>
+                    Select a payroll period to generate report
+                </div>
+            </div>
+
+            <div class="card-body" id="consolidatedPayroll">
+                <?php if ($pc_code != NULL):
+                    echo Modules::run('hr/payroll/generatePayrollReport', $pc_code, $startDate, $endDate);
+                endif; ?>
             </div>
         </div>
     </div>
 </div>
 
-<div id="AddPayrollItem" data-backdrop="static" style="margin: 50px auto;" class="modal fade col-lg-3" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-    <div class="panel panel-primary" style="margin:0; padding-bottom: 10px;">
-        <div class="panel-heading">
-            <button type="button" class="close pull-right" data-dismiss="modal" aria-hidden="true">&times;</button>
-            <span>AddItem</span>
-        </div>
-        <div class="panel-body">
+<!-- OT Requests Modal -->
+<div id="otRequest" class="modal fade" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content border-primary">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Overtime Requests</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
 
-        </div>
-    </div>
-</div>
-
-<div id="viewDTR" data-backdrop="static" style="width:50%; margin: 50px auto;" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-    <div class="panel panel-success" style="margin:0; padding-bottom: 10px;">
-        <div class="panel-heading">
-            <button type="button" class="close pull-right" data-dismiss="modal" aria-hidden="true">&times;</button>
-            <span id="viewDTR">Edit DTR</span>
-        </div>
-        <div class="panel-body" id="dtrBody">
-
-        </div>
-    </div>
-</div>
-
-<div id="editDTR" style="width:25%; margin: 10% auto;" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-    <div class="panel panel-primary" style="margin:0; padding-bottom: 10px;">
-        <div class="panel-heading">
-            <button type="button" class="close pull-right" data-dismiss="modal" aria-hidden="true">&times;</button>
-            <span>Enter Time to Edit</span>
-        </div>
-        <div class="panel-body" id="bodyid">
-            <div class='col-lg-12 form-group'>
-                <b>Select Time </b><br />
-                <div class="pull-left">
-                    <select id='hr' style='width:50px;'>
+            <div class="modal-body">
+                <table class="table table-bordered table-striped align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Name of Employee</th>
+                            <th class="text-center">Date</th>
+                            <th class="text-center"># of Hours OT</th>
+                            <th class="text-center">Details</th>
+                            <th class="text-center">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
                         <?php
-                        for ($i = 1; $i <= 12; $i++) {
-                            if ($i < 10) {
-                                $i = '0' . $i;
-                            }
-                        ?>
-                            <option value='<?php echo $i ?>'><?php echo $i ?></option>
-                        <?php } ?>
-                    </select> :
-                    <select id='min' style='width:50px;'>
-                        <?php
-                        for ($i = 0; $i <= 60; $i++) {
-                            if ($i < 10) {
-                                $i = '0' . $i;
-                            }
-                        ?>
-                            <option value='<?php echo $i ?>'><?php echo $i ?></option>
-                        <?php } ?>
-                    </select>
-                </div>
+                        if ($pc_code != NULL):
+                            $ot = Modules::run('hr/payroll/getOverTimeReq', $startDate, $endDate);
+                            foreach ($ot as $o): ?>
+                                <tr>
+                                    <td><?php echo $o[0]; ?></td>
+                                    <td class="text-center"><?php echo $o[2]; ?></td>
+                                    <td class="text-center"><?php echo Modules::run('hr/convertToHoursMins', $o[3]); ?></td>
+                                    <td><?php echo $o[4]; ?></td>
+                                    <td><?php echo $o[5]; ?></td>
+                                </tr>
+                        <?php endforeach;
+                        endif; ?>
+                    </tbody>
+                </table>
             </div>
-        </div>
-        <div class="panel-footer clearfix">
-            <div class='pull-right'>
-                <button data-dismiss='modal' class='btn btn-xs btn-danger pull-right'>Cancel</button>&nbsp;&nbsp;
-                <a href='#' data-dismiss='clickover' onclick='saveTimeData()' style='margin-right:10px;' class='btn btn-xs btn-success pull-right'>Save</a>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div id="otRequest" data-backdrop="static" style="width:50%; margin: 50px auto;" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-    <div class="panel panel-primary" style="margin:0; padding-bottom: 10px;">
-        <div class="panel-heading">
-            <button type="button" class="close pull-right" data-dismiss="modal" aria-hidden="true">&times;</button>
-            <span id="viewDTR">Overtime Requests</span>
-        </div>
-        <?php
-        ?>
-        <div class="panel-body" id="otBody">
-            <table class="table table-bordered">
-                <thead>
-                    <tr>
-                        <th>Name of Employee</th>
-                        <th class="text-center">Date</th>
-                        <th class="text-center"># of Hours OT</th>
-                        <th class="text-center">Details</th>
-                        <th class="text-center">Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php
-                    if ($pc_code != NULL):
-                        $ot = Modules::run('hr/payroll/getOverTimeReq', $startDate, $endDate);
-                        foreach ($ot as $o):
-                    ?>
-                            <tr>
-                                <td><?php echo $o[0]; ?></td>
-                                <td class="text-center"><?php echo $o[2]; ?></td>
-                                <td class="text-center"><?php echo Modules::run('hr/convertToHoursMins', $o[3]); ?></td>
-                                <td><?php echo $o[4]; ?></td>
-                                <td><?php echo $o[5]; ?></td>
-                            </tr>
-                    <?php
-                        endforeach;
-                    endif;
-                    ?>
-                </tbody>
-            </table>
         </div>
     </div>
 </div>
 
 <input type="hidden" id="att_id" />
 <input type="hidden" id="rowCol_id" />
-
-
 
 <script type="text/javascript">
     $(document).ready(function() {
@@ -299,67 +364,39 @@
         });
     }
 
-    function generatePayroll(pType) {
-        var from = $('#option_' + pType).attr('from');
-        var to = $('#option_' + pType).attr('to');
-        var url = "<?php echo base_url() . 'hr/payroll/create/' ?>" + pType + '/' + from + '/' + to; // the script where you handle the form input.
-        document.location = url;
-        //        $.ajax({
-        //           type: "POST",
-        //           url: url,
-        //            data: {
-        //            fromDate: fromdate,
-        //            toDate: todate,
-        //            csrf_test_name: $.cookie('csrf_cookie_name')
-        //           },
-        //            
-        //           beforeSend: function() {
-        //                $('#consolidatedPayroll').html('<b class="text-center">Please Wait while Payroll is generating...</b>')
-        //            },
-        //           success: function(data)
-        //           {
-        //               //$("form#quoteForm")[0].reset()
-        //               $('#consolidatedPayroll').html(data);
-        //               getTotal();
-        //           }
-        //         });
-        //
-        //        return false; // avoid to execute the actual submit of the form
-    }
+    function animateValue(id, start, end, duration, isCurrency = true) {
+        let obj = document.getElementById(id);
+        let startTime = null;
 
-    function generateCode() {
-        var fromdate = $('#fromDate').val();
-        var todate = $('#toDate').val();
+        function animation(currentTime) {
+            if (!startTime) startTime = currentTime;
+            const progress = Math.min((currentTime - startTime) / duration, 1);
+            const value = progress * (end - start) + start;
 
-        var d1 = fromdate.split('-');
-        var d2 = todate.split('-');
-
-        var pc_code = d1[2] + d2[2] + d1[0] + d2[1]
-        $('#pc_code').val(pc_code)
-    }
-
-
-    function setPayRoll() {
-        var fromdate = $('#fromDate').val();
-        var todate = $('#toDate').val();
-        var pc_code = $('#pc_code').val();
-
-        $.ajax({
-            type: 'POST',
-            url: '<?php echo base_url() . 'hr/payroll/setPayrollPeriod' ?>',
-            //dataType: 'json',
-            data: {
-                fromDate: fromdate,
-                toDate: todate,
-                pc_code: pc_code,
-                csrf_test_name: $.cookie('csrf_cookie_name')
-            },
-            success: function(response) {
-                alert(response);
-                $('#createPay').modal('hide');
-                location.reload();
+            if (isCurrency) {
+                obj.innerHTML = "₱" + value.toLocaleString('en-PH', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+            } else {
+                obj.innerHTML = Math.floor(value).toLocaleString();
             }
 
-        });
+            if (progress < 1) {
+                requestAnimationFrame(animation);
+            }
+        }
+
+        requestAnimationFrame(animation);
     }
+
+    document.addEventListener("DOMContentLoaded", function() {
+
+        animateValue("summaryGross", 0, <?php echo $totalGross; ?>, 1200, true);
+        animateValue("summaryAdditionalIncome", 0, <?php echo $totalAdditional; ?>, 1200, true);
+        animateValue("summaryDeduction", 0, <?php echo $totalDeduction; ?>, 1200, true);
+        animateValue("summaryNet", 0, <?php echo $totalNet; ?>, 1200, true);
+        animateValue("summaryEmployees", 0, <?php echo $totalEmployees; ?>, 1200, false);
+
+    });
 </script>

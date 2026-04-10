@@ -86,14 +86,18 @@ class hr extends MX_Controller
     public function editDeptPosition($pid, $newPosition, $action)
     {
         switch ($action):
-            case 1:
+            case 'edit':
                 if ($this->hr_model->editPositionName($pid, urldecode($newPosition))):
-                    echo 'Successfully Change';
+                    echo json_encode(array('status' => TRUE, 'msg' => 'Successfully Change'));
+                else:
+                    echo json_encode(array('status' => FALSE, 'msg' => 'Change Failed'));
                 endif;
                 break;
-            case 2:
+            case 'delete':
                 if ($this->hr_model->deletePosition($pid)):
-                    echo 'Successfully Deleted';
+                    echo json_encode(array('status' => TRUE, 'msg' => 'Successfully Deleted'));
+                else:
+                    echo json_encode(array('status' => FALSE, 'msg' => 'Delete Failed'));
                 endif;
                 break;
         endswitch;
@@ -278,8 +282,10 @@ class hr extends MX_Controller
         $user_id = $this->input->post('user_id');
         $mobile = $this->input->post('mobile_no');
         $column = $this->input->post('column');
+        $tbl_name = $this->input->post('tbl_name');
+        $field_id = $this->input->post('field_id');
         $sy = $this->input->post('sy');
-        $contact_id = $this->hr_model->saveContacts($user_id, $mobile, $column, $sy);
+        $contact_id = $this->hr_model->saveContacts($user_id, $mobile, $tbl_name, $column, $sy, $field_id);
         echo $contact_id;
     }
 
@@ -706,7 +712,7 @@ class hr extends MX_Controller
             if ($ampm == 'AM'):
 
                 $time = $hour . $min;
-                if ($inout == 'in'):
+                if ($inout == 'IN'):
                     $column = 'time_in';
 
                     Modules::run('attendance/saveTimeAttendance', $t_id, 1, $column, $time, $date, $uid);
@@ -716,7 +722,7 @@ class hr extends MX_Controller
                 endif;
             else:
                 $time = ($hour + 12) . $min;
-                if ($inout == 'in'):
+                if ($inout == 'IN'):
                     $column = 'time_in_pm';
 
                     Modules::run('attendance/saveTimeAttendance', $t_id, 1, $column, $time, $date, $uid);
@@ -730,7 +736,7 @@ class hr extends MX_Controller
             if ($ampm == 'AM'):
 
                 $time = $hour . $min;
-                if ($inout == 'in'):
+                if ($inout == 'IN'):
                     $column = 'time_in';
                     if ($exist->time_in != ""):
                         if ($exist->approved == 1):
@@ -766,7 +772,7 @@ class hr extends MX_Controller
                 if ($hour == 12):
                     $time = $hour . $min;
                 endif;
-                if ($inout == 'in'):
+                if ($inout == 'IN'):
                     $column = 'time_in_pm';
                     if ($exist->$column != ""):
                         if ($exist->approved == 1):
@@ -964,12 +970,31 @@ class hr extends MX_Controller
     }
 
 
-    function viewTeacherInfo($id)
+    function viewTeacherInfo($id, $user_id)
     {
+        $payDay = date('d');
+        $year   = date('Y');
+        $month  = date('m');
+        $lastDay = date('t'); // automatically handles Feb & leap years
 
-        $data['basicInfo'] = $this->hr_model->getBasicInfo(base64_decode($id));
-        $data['edHis'] = $this->getEducationHistory(base64_decode($id));
+        if ($payDay > 15) {
+            $from = "$year-$month-16";
+            $to   = "$year-$month-$lastDay";
+        } else {
+            $from = "$year-$month-01";
+            $to   = "$year-$month-15";
+        }
+
+        $employeeId = base64_decode($id);
+
+        $data['basicInfo'] = $this->hr_model->getBasicInfo($employeeId);
+        $data['edHis'] = $this->getEducationHistory($employeeId);
         $data['position']  = $this->hr_model->getDepartment();
+        // all positions (across departments) for this employee
+        $data['employeePositions'] = $this->hr_model->getEmployeePositions($employeeId);
+        $data['records'] = $this->hr_model->searchDtrbyDate($from, $to, base64_decode($user_id));
+        $data['dateFrom'] = $from;
+        $data['dateTo'] = $to;
         $data['main_content'] = 'teachersInfo';
         $data['modules'] = 'hr';
         echo Modules::run('templates/main_content', $data);
@@ -1034,26 +1059,54 @@ class hr extends MX_Controller
         $this->load->library('table');
 
         $result = $this->hr_model->getAllEmployee('', '', $option);
+
         $config['base_url'] = base_url('hr/getAllEmployee/' . $option);
         $config['total_rows'] = $result->num_rows();
         $config['per_page'] = 10;
         $config['num_links'] = 5;
-        $config['full_tag_open'] = '<ul class="pagination">';
-        $config['full_tag_close'] = '</ul>';
-        $config['first_tag_open'] = '<li>';
-        $config['first_tag_close'] = '</li>';
-        $config['prev_tag_open'] = '<li>';
-        $config['prev_tag_close'] = '</li>';
-        $config['next_tag_open'] = '<li>';
-        $config['next_tag_close'] = '</li>';
-        $config['last_tag_open'] = '<li>';
-        $config['last_tag_close'] = '</li>';
-        $config['num_tag_open'] = '<li>';
-        $config['num_tag_close'] = '</li>';
-        $config['cur_tag_open'] = '<li class="active"><a href="#">';
-        $config['cur_tag_close'] = '</a></li>';
 
+        // Full pagination wrapper
+        $config['full_tag_open'] = '<ul class="pagination justify-content-center flex-wrap">';
+        $config['full_tag_close'] = '</ul>';
+
+        // First link
+        $config['first_link'] = 'First';
+        $config['first_tag_open'] = '<li class="page-item">';
+        $config['first_tag_close'] = '</li>';
+
+        // Last link
+        $config['last_link'] = 'Last';
+        $config['last_tag_open'] = '<li class="page-item">';
+        $config['last_tag_close'] = '</li>';
+
+        // Next link
+        $config['next_link'] = '&raquo;';
+        $config['next_tag_open'] = '<li class="page-item">';
+        $config['next_tag_close'] = '</li>';
+
+        // Previous link
+        $config['prev_link'] = '&laquo;';
+        $config['prev_tag_open'] = '<li class="page-item">';
+        $config['prev_tag_close'] = '</li>';
+
+        // Numbered links
+        $config['num_tag_open'] = '<li class="page-item">';
+        $config['num_tag_close'] = '</li>';
+
+        // Current page
+        $config['cur_tag_open'] = '<li class="page-item active" aria-current="page"><span class="page-link">';
+        $config['cur_tag_close'] = '</span></li>';
+
+        // Disabled links (for first/prev on first page, last/next on last page)
+        $config['attributes'] = array('class' => 'page-link');
+        $config['disabled_link'] = 'disabled';
+
+        // Optional: add small shadow + rounded for modern look
+        $config['attributes'] = ['class' => 'page-link shadow-sm rounded'];
+
+        // Initialize pagination
         $this->pagination->initialize($config);
+
         $page = $this->hr_model->getAllEmployee($config['per_page'], $page, $option);
         $data['employee'] = $page->result();
         $data['option'] = ($option == NULL ? 1 : $option);
@@ -1063,6 +1116,94 @@ class hr extends MX_Controller
 
         $data['modules'] = 'hr';
         echo Modules::run('templates/main_content', $data);
+    }
+
+    /**
+     * Save multiple positions for an employee into mapping table.
+     * Expects POST: employee_id, user_id, positions (array or comma-separated string).
+     */
+    public function saveEmployeePositions()
+    {
+        $employee_id = $this->input->post('employee_id');
+        $user_id     = $this->input->post('user_id');
+        $positions   = $this->input->post('positions');
+
+        if (!is_array($positions)) {
+            $positions = explode(',', (string) $positions);
+        }
+
+        $positions = array_filter($positions, function ($pid) {
+            return (string) trim($pid) !== '';
+        });
+
+        $this->hr_model->saveEmployeePositions($employee_id, $user_id, $positions);
+
+        // Also update primary position in profile_employee table (first in list)
+        if (count($positions)) {
+            $primary = reset($positions);
+            $this->hr_model->updateEmployeePrimaryPosition($user_id, $primary);
+        }
+
+        echo json_encode(array('status' => TRUE));
+    }
+
+    public function updateEmployeePosition()
+    {
+        $employee_id = (int) $this->input->post('employee_id');
+        $user_id     = (int) $this->input->post('user_id');
+        $position_id = (int) $this->input->post('positions'); // rename for clarity
+        $department_id = (int) $this->input->post('department_id');
+
+        // Basic validation
+        if (!$employee_id || !$user_id || !$position_id) {
+            echo json_encode(['status' => false, 'message' => 'Invalid input']);
+            return;
+        }
+
+        // Optional: permission check
+        if ($this->session->userdata('user_id') != $user_id) {
+            echo json_encode(['status' => false, 'message' => 'Unauthorized']);
+            return;
+        }
+
+        // Run both model updates
+        $update1 = $this->hr_model->updateEmployeePosition($employee_id, $user_id, $position_id);
+        $update2 = $this->hr_model->updateEmployeePrimaryPosition($user_id, $position_id);
+
+        // Update session ONLY if BOTH succeeded
+        if ($update1 && $update2) {
+
+            // Update session only for current logged-in user
+            if ($this->session->userdata('user_id') == $user_id) {
+                $this->session->set_userdata(array(
+                    'position_id' => $position_id,
+                    'is_admin' => $department_id == 2 ? 1 : ''
+                ));
+            }
+
+            echo json_encode(['status' => true]);
+            return;
+        }
+
+        echo json_encode([
+            'status'  => false,
+            'message' => 'Failed to update employee position'
+        ]);
+    }
+
+
+    /**
+     * Delete a single employee-position mapping.
+     * Expects POST: employee_id, position_id.
+     */
+    public function deleteEmployeePosition()
+    {
+        $employee_id = $this->input->post('employee_id');
+        $position_id = $this->input->post('position_id');
+
+        $this->hr_model->deleteEmployeePosition($employee_id, $position_id);
+
+        echo json_encode(array('status' => TRUE));
     }
 
     public function addEmployee()
@@ -1136,10 +1277,18 @@ class hr extends MX_Controller
 
         //saves more profile info
 
+        $inputPosition = $this->input->post('inputPosition');
+        // allow array for future multi-position support, but keep single primary here
+        if (is_array($inputPosition)) {
+            $primaryPosition = reset($inputPosition);
+        } else {
+            $primaryPosition = $inputPosition;
+        }
+
         $profileInfo = array(
             'employee_id'       => $st_id,
             'user_id'           => $generatedCode,
-            'position_id'       => $this->input->post('inputPosition'),
+            'position_id'       => $primaryPosition,
             'awards_cert'       => 0,
             'sss'               => $this->input->post('inputSSS'),
             'phil_health'       => $this->input->post('inputPH'),
@@ -1155,6 +1304,10 @@ class hr extends MX_Controller
         );
 
         $this->hr_model->saveEmploymentDetails($profileInfo);
+
+        // Seed mapping table with at least the primary position
+        $positionsForMap = is_array($inputPosition) ? $inputPosition : array($primaryPosition);
+        $this->hr_model->saveEmployeePositions($st_id, $generatedCode, $positionsForMap);
 
 
         //saves the basic contact
@@ -1431,24 +1584,27 @@ class hr extends MX_Controller
         $dept_id = $this->input->post('dept_id');
 
         $nValue = array(
+            'position_id'       => $this->eskwela->codeCheck($table, $id, $this->eskwela->code()),
             $column             => $value,
             'position_dept_id'  => $dept_id
         );
 
         $position_id = $this->hr_model->saveNewValue($table, $nValue);
 
-        $userGroup_details = array(
-            'position_id' => $position_id
-        );
-        $this->hr_model->saveNewValue('stg_user_groups', $userGroup_details);
+        // $userGroup_details = array(
+        //     'position_id' => $position_id
+        // );
+        // $this->hr_model->saveNewValue('stg_user_groups', $userGroup_details);
 
-        $position = Modules::run('hr/getPositionbyDepartment', $dept_id);
+        // $position = Modules::run('hr/getPositionbyDepartment', $dept_id);
 
-        foreach ($position as $pos) {
+        // foreach ($position as $pos) {
         ?>
-            <li><?php echo $pos->position ?></li>
+        <!-- <li><?php // echo $pos->position 
+                    ?></li> -->
         <?php
-        }
+        // }
+        echo json_encode($position_id ? array('status' => TRUE, 'msg' => 'Updated Successfuly') : array('status' => FALSE, 'msg' => 'Update Failed'));
     }
 
     function saveDepartment()
@@ -1457,45 +1613,14 @@ class hr extends MX_Controller
         $customized_id = $this->input->post('customized_id');
 
         $nValue = array(
+            'dept_id' => $this->eskwela->codeCheck('department', 'dept_id', $this->eskwela->code()),
             'department' => $department,
             'customized_dept_id' => $customized_id
         );
 
         $dept_id = $this->hr_model->saveNewValue('department', $nValue);
 
-        $dept = $this->hr_model->getDepartment();
-        foreach ($dept as $dept) {
-        ?>
-            <li class="parent" onmouseout="$('#<?php echo $dept->dept_id ?>_a').hide()"
-                onmouseover="$('#<?php echo $dept->dept_id ?>_a').show()"
-                id="<?php echo $dept->dept_id ?>_li"><?php echo $dept->department ?>
-                <a style="display: none;" id="<?php echo $dept->dept_id ?>_a" class="help-inline pull-right"
-                    rel="clickover"
-                    data-content=" 
-                       <div style='width:100%;'>
-                       <h6>Add Position</h6>
-                       <input type='text' id='add<?php echo $dept->dept_id ?>' />
-                       <div style='margin:5px 0;'>
-                       <button data-dismiss='clickover' class='btn btn-small btn-danger pull-right'>Cancel</button>&nbsp;&nbsp;
-                       <a href='#' id='<?php echo $dept->dept_id ?>' data-dismiss='clickover' table='stg_profile_position' column='position' pk='position_id' retrieve='getPosition' onclick='saveNewValue(this.id)' style='margin-right:10px;' class='btn btn-small btn-success pull-right'>Save</a></div>
-                       </div>
-                        "
-                    class="btn" data-toggle="modal" href="#">Add Position</a>
-            </li>
-            <?php
-            $position = Modules::run('hr/getPositionbyDepartment', $dept->dept_id);
-            ?>
-            <ol id="<?php echo $dept->dept_id ?>_ol" type="a">
-                <?php
-                foreach ($position as $pos) {
-                ?>
-                    <li><?php echo $pos->position ?></li>
-                <?php
-                }
-                ?>
-            </ol>
-        <?php
-        }
+        echo json_encode($dept_id != null ? array('status' => TRUE, 'msg' => 'Department Successfuly Added') : array('status' => FALSE, 'msg' => 'Adding Department Unsuccessful'));
     }
 
     function getDepartment()
@@ -1504,7 +1629,7 @@ class hr extends MX_Controller
         return $dept;
     }
 
-    function dtr($id = NULL)
+    function dtr($id = NULL, $uid = null)
     {
         if (!$this->session->userdata('is_logged_in')) {
         ?>
@@ -1514,9 +1639,23 @@ class hr extends MX_Controller
         <?php
 
         } else {
+            $payDay = date('d');
+            $year   = date('Y');
+            $month  = date('m');
+            $lastDay = date('t'); // automatically handles Feb & leap years
+
+            if ($payDay > 15) {
+                $from = "$year-$month-16";
+                $to   = "$year-$month-$lastDay";
+            } else {
+                $from = "$year-$month-01";
+                $to   = "$year-$month-15";
+            }
             $data['info'] = $this->hr_model->getBasicInfo(base64_decode($id));
             $data['hrdb'] = Modules::load('hr/hrdbprocess/');
-            $data['records'] = $this->hr_model->getDTR($id);
+            // $data['records'] = $this->hr_model->getDTR(base64_decode($uid));
+            $data['records'] = $this->hr_model->searchDtrbyDate($from, $to, base64_decode($uid));
+            $data['userid'] = $uid;
             $this->load->view('payroll/myDTR', $data);
         }
     }
@@ -1892,6 +2031,38 @@ class hr extends MX_Controller
             else:
                 echo json_encode(array('status' => FALSE, 'msg' => 'Something Went Wrong. Please Try Again Later'));
             endif;
+        }
+
+        function cpPosition()
+        {
+            $this->db->select('employee_id, user_id, position_id');
+            $pe = $this->db->get('profile_employee')->result();
+            foreach ($pe as $e):
+
+
+                $this->db->where('employee_id', $e->employee_id);
+                $this->db->where('user_id', $e->user_id);
+                $this->db->where('position_id', $e->position_id);
+                $this->db->where('is_primary', 1);
+                $q = $this->db->get('profile_employee_position');
+
+                if ($q):
+                    $data = array(
+                        'employee_id' => $e->employee_id,
+                        'user_id' => $e->user_id,
+                        'position_id' => $e->position_id,
+                        'is_primary' => 1
+                    );
+
+                    $this->db->insert('profile_employee_position', $data);
+
+                    if ($this->db->affected_rows()):
+                        echo $e->employee_id . ' ' . $e->user_id . ' ' . $e->position_id . '<br>';
+                    else:
+                        echo '<br>';
+                    endif;
+                endif;
+            endforeach;
         }
     }
  

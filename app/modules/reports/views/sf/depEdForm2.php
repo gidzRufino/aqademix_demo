@@ -1,12 +1,14 @@
 <?php
 
-class MYPDF extends Pdf {
-
+class MYPDF extends Pdf
+{
     //Page header
-    public function Header() {
+    public function Header()
+    {
         // Logo
         // $this->SetTitle('School Form 2 (SF 2) Daily Attendance Report of Learners');
-//                $this->SetTopMargin(3);
+        //                $this->SetTopMargin(3);
+        $CI = &get_instance();
         $image_file = K_PATH_IMAGES . '/depEd_logo.jpg';
         $this->Image($image_file, 10, 15, 30, '', 'JPG', '', 'T', false, 300, '', false, false, 0, false, false, false);
         // Set font
@@ -18,12 +20,12 @@ class MYPDF extends Pdf {
 
         $this->SetFont('helvetica', 'n', 8);
         // Title
-//        $this->SetXY(37, 15);
+        //        $this->SetXY(37, 15);
         $this->Cell(0, 15, '(This replaces Form 1, Form 2 & STS Form 4 - Absenteeism and Dropout Profile)', 0, false, 'C', 0, '', 0, false, 'M', 'M');
 
         $settings = Modules::run('main/getSet');
         $nextYear = $settings->school_year + 1;
-        $section = Modules::run('registrar/getSectionById', segment_3);
+        $section = Modules::run('registrar/getSectionById', $CI->uri->segment(3));
 
         $this->SetFont('helvetica', 'B', 12);
         $this->SetXY(50, 35);
@@ -31,7 +33,7 @@ class MYPDF extends Pdf {
         $this->SetXY(140, 35);
         $this->Cell(0, 4.3, "School Year: " . $settings->school_year . '-' . $nextYear, 0, 0, 'L');
         $this->SetXY(210, 35);
-        $this->Cell(0, 4.3, "Report for the Month of : " . date("F", mktime(0, 0, 0, segment_4, 10)), 0, 0, 'L');
+        $this->Cell(0, 4.3, "Report for the Month of : " . date("F", mktime(0, 0, 0, $CI->uri->segment(4), 10)), 0, 0, 'L');
         $this->SetXY(43, 45);
         $this->Cell(0, 4.3, "School Name : " . $settings->set_school_name, 0, 0, 'L');
         $this->SetXY(200, 45);
@@ -41,7 +43,8 @@ class MYPDF extends Pdf {
     }
 
     // Page footer
-    public function Footer() {
+    public function Footer()
+    {
         // Position at 15 mm from bottom
 
         $this->SetY(-15);
@@ -59,24 +62,24 @@ $pdf->SetLeftMargin(3);
 $pdf->SetRightMargin(3);
 
 //constants
-$section = Modules::run('registrar/getSectionById', segment_3);
+$section = Modules::run('registrar/getSectionById', $CI->uri->segment(3));
 
-$month = date("F", mktime(0, 0, 0, segment_4, 10));
+$month = date("F", mktime(0, 0, 0, $CI->uri->segment(4), 10));
 $settings = Modules::run('main/getSet');
 $sy = $settings->school_year;
 
-if (abs(segment_4) < 6 && date('Y') > $sy):
+if (abs($CI->uri->segment(4)) < 6 && date('Y') > $sy):
     $year = $sy + 1;
 else:
     $year = $sy;
 endif;
 
-$firstDay = Modules::run('main/getFirstLastDay', date("F", mktime(0, 0, 0, segment_4, 10)), $year, 'first');
-$lastDay = Modules::run('main/getFirstLastDay', date("F", mktime(0, 0, 0, segment_4, 10)), $year, 'last');
-$firstDayName = date('D', strtotime('first Day of ' . date("F", mktime(0, 0, 0, segment_4, 10)) . ' ' . $year));
-$holiday = Modules::run('calendar/holidayExist', segment_4, $year);
-$schoolDays = Modules::run('main/getNumberOfSchoolDays', $firstDay, $lastDay, segment_4, $year);
-$tdays = date('t', strtotime($year . '-' . segment_4 . '-01'));
+$firstDay = Modules::run('main/getFirstLastDay', date("F", mktime(0, 0, 0, $CI->uri->segment(4), 10)), $year, 'first');
+$lastDay = Modules::run('main/getFirstLastDay', date("F", mktime(0, 0, 0, $CI->uri->segment(4), 10)), $year, 'last');
+$firstDayName = date('D', strtotime('first Day of ' . date("F", mktime(0, 0, 0, $CI->uri->segment(4), 10)) . ' ' . $year));
+$holiday = Modules::run('calendar/holidayExist', $CI->uri->segment(4), $year);
+$schoolDays = Modules::run('main/getNumberOfSchoolDays', $firstDay, $lastDay, $CI->uri->segment(4), $year);
+$tdays = date('t', strtotime($year . '-' . $CI->uri->segment(4) . '-01'));
 $columnCount = 0;
 $ctt = 0;
 $k = 0;
@@ -92,7 +95,8 @@ $femaleDailyTotalAttendance = 0;
 $dailyTotal = 0;
 $tardy = 0;
 
-function upperShades($pdf, $LoLe, $btmL, $UR, $h, $loRi, $btmR) {
+function upperShades($pdf, $LoLe, $btmL, $UR, $h, $loRi, $btmR)
+{
     $UL = $LoLe + 60;
     $bL = $btmL + 71.5;
     $uR = $UR + 53;
@@ -104,7 +108,8 @@ function upperShades($pdf, $LoLe, $btmL, $UR, $h, $loRi, $btmR) {
     return $pdf->Polygon(array($UL, $bL, $uR, $H, $LR, $bR), 'DF', array(222, 222, 222), array(0, 0, 0));
 }
 
-function lowerShades($pdf, $LoLe, $btmL, $UR, $h, $loRi, $btmR) {
+function lowerShades($pdf, $LoLe, $btmL, $UR, $h, $loRi, $btmR)
+{
     $LL = $LoLe + 53;
     $bL = $btmL + 86.5;
     $uR = $UR + 60;
@@ -117,7 +122,8 @@ function lowerShades($pdf, $LoLe, $btmL, $UR, $h, $loRi, $btmR) {
     return $pdf->Polygon(array($LL, $bL, $uR, $H, $LR, $bR), 'DF', array(222, 222, 222), array(0, 0, 0));
 }
 
-function absentLine1($pdf, $x, $y, $x1, $y1) {
+function absentLine1($pdf, $x, $y, $x1, $y1)
+{
     $x = $x + 60;
     $y = $y + 87;
     $x1 = $x1 + 53;
@@ -126,7 +132,8 @@ function absentLine1($pdf, $x, $y, $x1, $y1) {
     return $pdf->Line($x, $y, $x1, $y1, array('color' => array(255, 17, 17)));
 }
 
-function absentLine2($pdf, $x, $y, $x1, $y1) {
+function absentLine2($pdf, $x, $y, $x1, $y1)
+{
     $x = $x + 53;
     $y = $y + 87;
     $x1 = $x1 + 60;
@@ -135,7 +142,8 @@ function absentLine2($pdf, $x, $y, $x1, $y1) {
     return $pdf->Line($x, $y, $x1, $y1, array('color' => array(255, 17, 17)));
 }
 
-function whatDay($dd) {
+function whatDay($dd)
+{
     switch ($dd):
         case 1:
             return 'M';
@@ -151,7 +159,7 @@ function whatDay($dd) {
 }
 
 // set auto page breaks
-$pdf->SetAutoPageBreak(TRUE, 5);
+$pdf->SetAutoPageBreak(true, 5);
 
 // set image scale factor
 //$pdf->setImageScale(PDF_IMAGE_SCALE_RATIO);
@@ -161,8 +169,8 @@ $pdf->AddPage('L', $resolution);
 
 for ($x = $firstDay; $x <= $lastDay; $x++) {
 
-    $day = date('D', strtotime($year . '-' . segment_4 . '-' . $x));
-    $isClass = Modules::run('calendar/getSpecificDateEvent', date('Y-m-d', strtotime($year . '-' . segment_4 . '-' . $x)));
+    $day = date('D', strtotime($year . '-' . $CI->uri->segment(4) . '-' . $x));
+    $isClass = Modules::run('calendar/getSpecificDateEvent', date('Y-m-d', strtotime($year . '-' . $CI->uri->segment(4) . '-' . $x)));
 
     if ($day == 'Sat' || $day == 'Sun') {
         if ($isClass):
@@ -188,8 +196,8 @@ $pdf->SetXY(53, 60.5);
 
 for ($x = $firstDay; $x <= $lastDay; $x++) {
 
-    $day = date('D', strtotime($year . '-' . segment_4 . '-' . $x));
-    $isClass = Modules::run('calendar/getSpecificDateEvent', date('Y-m-d', strtotime($year . '-' . segment_4 . '-' . $x)));
+    $day = date('D', strtotime($year . '-' . $CI->uri->segment(4) . '-' . $x));
+    $isClass = Modules::run('calendar/getSpecificDateEvent', date('Y-m-d', strtotime($year . '-' . $CI->uri->segment(4) . '-' . $x)));
 
     if ($day == 'Sat' || $day == 'Sun') {
         if ($isClass):
@@ -205,8 +213,8 @@ for ($x = $firstDay; $x <= $lastDay; $x++) {
 $pdf->Ln();
 $pdf->SetXY(53, 66);
 for ($x = $firstDay; $x <= $lastDay; $x++) {
-    $isClass = Modules::run('calendar/getSpecificDateEvent', date('Y-m-d', strtotime($year . '-' . segment_4 . '-' . $x)));
-    $day = date('w', strtotime($year . '-' . segment_4 . '-' . $x));
+    $isClass = Modules::run('calendar/getSpecificDateEvent', date('Y-m-d', strtotime($year . '-' . $CI->uri->segment(4) . '-' . $x)));
+    $day = date('w', strtotime($year . '-' . $CI->uri->segment(4) . '-' . $x));
 
     $wd = whatDay($day);
 
@@ -239,7 +247,7 @@ foreach ($male->result() as $s) {
         $i++;
 
         if ($i == 1):
-            if (abs(segment_4 == 1)):
+            if (abs($CI->uri->segment(4) == 1)):
                 $con = 2;
             else:
                 $con = $columnCount;
@@ -247,9 +255,9 @@ foreach ($male->result() as $s) {
 
         endif;
 
-        $day = date('D', strtotime($year . '-' . segment_4 . '-' . $x));
-        $isClass = Modules::run('calendar/getSpecificDateEvent', date('Y-m-d', strtotime($year . '-' . segment_4 . '-' . $x)));
-        $isHoliday = Modules::run('calendar/isHoliday', date('Y-m-d', strtotime($year . '-' . segment_4 . '-' . $x)));
+        $day = date('D', strtotime($year . '-' . $CI->uri->segment(4) . '-' . $x));
+        $isClass = Modules::run('calendar/getSpecificDateEvent', date('Y-m-d', strtotime($year . '-' . $CI->uri->segment(4) . '-' . $x)));
+        $isHoliday = Modules::run('calendar/isHoliday', date('Y-m-d', strtotime($year . '-' . $CI->uri->segment(4) . '-' . $x)));
 
         if ($day == 'Sat' || $day == 'Sun') {
             if ($isClass):
@@ -274,16 +282,16 @@ foreach ($male->result() as $s) {
 
                 $r = $z * ($y - 1);
                 if ($this->session->userdata('attend_auto')):
-                    $ifPresent = Modules::run('attendance/ifPresent', $s->st_id, $x, segment_4, $year);
+                    $ifPresent = Modules::run('attendance/ifPresent', $s->st_id, $x, $CI->uri->segment(4), $year);
                 else:
-                    $ifPresent = Modules::run('attendance/ifPresent', $s->st_id, $x, segment_4, $year);
+                    $ifPresent = Modules::run('attendance/ifPresent', $s->st_id, $x, $CI->uri->segment(4), $year);
                 endif;
 
                 if ($ifPresent):
                     if ($this->session->userdata('attend_auto')):
-                        $remarks = Modules::run('attendance/getAttendanceRemark', $s->st_id, $year . '-' . segment_4 . '-' . $x);
+                        $remarks = Modules::run('attendance/getAttendanceRemark', $s->st_id, $year . '-' . $CI->uri->segment(4) . '-' . $x);
                     else:
-                        $remarks = Modules::run('attendance/getAttendanceRemark', $s->st_id, $year . '-' . segment_4 . '-' . $x);
+                        $remarks = Modules::run('attendance/getAttendanceRemark', $s->st_id, $year . '-' . $CI->uri->segment(4) . '-' . $x);
                     endif;
                     $pma += 1;
                     $pdf->MultiCell(7, 15, '', 1, 'C', 0, 0, '', '', true, 0, false, true, 15, 'M');
@@ -306,7 +314,7 @@ foreach ($male->result() as $s) {
                     $pdf->SetLineStyle(array('color' => array(0, 0, 0)));
                     $pdf->MultiCell(7, 15, '', 1, 'C', 0, 0, '', '', true, 0, false, true, 15, 'M');
                 endif;
-                switch (abs(segment_4)) {
+                switch (abs($CI->uri->segment(4))) {
                     case 04:
                     case 06:
                         // $conR = ($columnCount - 1) * 7;
@@ -317,7 +325,7 @@ foreach ($male->result() as $s) {
                     case 02:
                         $conR = ($columnCount - 1) * 7;
                         break;
-                    default :
+                    default:
                         $conR = ($columnCount - 2) * 7;
                         break;
                 }
@@ -353,9 +361,9 @@ foreach ($male->result() as $s) {
 
             $r = $z * ($y - 1);
             if ($this->session->userdata('attend_auto')):
-                $ifPresent = Modules::run('attendance/ifPresent', $s->st_id, $x, segment_4, $year);
+                $ifPresent = Modules::run('attendance/ifPresent', $s->st_id, $x, $CI->uri->segment(4), $year);
             else:
-                $ifPresent = Modules::run('attendance/ifPresent', $s->st_id, $x, segment_4, $year);
+                $ifPresent = Modules::run('attendance/ifPresent', $s->st_id, $x, $CI->uri->segment(4), $year);
             endif;
 
             if ($isHoliday):
@@ -363,9 +371,9 @@ foreach ($male->result() as $s) {
             else:
                 if ($ifPresent):
                     if ($this->session->userdata('attend_auto')):
-                        $remarks = Modules::run('attendance/getAttendanceRemark', $s->st_id, $year . '-' . segment_4 . '-' . $x);
+                        $remarks = Modules::run('attendance/getAttendanceRemark', $s->st_id, $year . '-' . $CI->uri->segment(4) . '-' . $x);
                     else:
-                        $remarks = Modules::run('attendance/getAttendanceRemark', $s->st_id, $year . '-' . segment_4 . '-' . $x);
+                        $remarks = Modules::run('attendance/getAttendanceRemark', $s->st_id, $year . '-' . $CI->uri->segment(4) . '-' . $x);
                     endif;
                     $pma += 1;
                     $pdf->MultiCell(7, 15, '', 1, 'C', 0, 0, '', '', true, 0, false, true, 15, 'M');
@@ -390,7 +398,7 @@ foreach ($male->result() as $s) {
                 endif;
             endif;
 
-            switch (abs(segment_4)) {
+            switch (abs($CI->uri->segment(4))) {
                 case 04:
                 case 06:
                     $conR = ($columnCount - 1) * 7;
@@ -401,7 +409,7 @@ foreach ($male->result() as $s) {
                 case 02:
                     $conR = ($columnCount - 1) * 7;
                     break;
-                default :
+                default:
                     $conR = ($columnCount - 2) * 7;
                     break;
             }
@@ -416,17 +424,17 @@ foreach ($male->result() as $s) {
         }
     }
 
-//absent
+    //absent
     $pdf->MultiCell(15, 15, $ma, 1, 'C', 0, 0, '', '', true, 0, false, true, 15, 'M');
-//tardy 
+    //tardy
     if ($this->session->userdata('attend_auto')):
-        $tardy = Modules::run('attendance/getTardy', $s->st_id, segment_4, $year);
+        $tardy = Modules::run('attendance/getTardy', $s->st_id, $CI->uri->segment(4), $year);
     else:
-        $tardy = Modules::run('attendance/getTardy', $s->st_id, segment_4, $year);
+        $tardy = Modules::run('attendance/getTardy', $s->st_id, $CI->uri->segment(4), $year);
     endif;
     $pdf->MultiCell(15, 15, (!empty($tardy) ? $tardy->num_rows() : 0), 1, 'C', 0, 0, '', '', true, 0, false, true, 15, 'M');
     //remarks
-    $rem = Modules::run('main/getAdmissionRemarks', $s->st_id, segment_4, $year);
+    $rem = Modules::run('main/getAdmissionRemarks', $s->st_id, $CI->uri->segment(4), $year);
     if ($rem->num_rows() > 0) {
         if ($rem->row()->code_indicator_id != 4):
             $remarks = $rem->row()->code . ' ' . $rem->row()->remarks . ' - ' . $rem->row()->remark_date;
@@ -462,8 +470,8 @@ foreach ($male->result() as $s) {
 
         for ($x = $firstDay; $x <= $lastDay; $x++) {
 
-            $day = date('D', strtotime($year . '-' . segment_4 . '-' . $x));
-            $isClass = Modules::run('calendar/getSpecificDateEvent', date('Y-m-d', strtotime($year . '-' . segment_4 . '-' . $x)));
+            $day = date('D', strtotime($year . '-' . $CI->uri->segment(4) . '-' . $x));
+            $isClass = Modules::run('calendar/getSpecificDateEvent', date('Y-m-d', strtotime($year . '-' . $CI->uri->segment(4) . '-' . $x)));
 
             if ($day == 'Sat' || $day == 'Sun') {
                 if ($isClass):
@@ -477,8 +485,8 @@ foreach ($male->result() as $s) {
         $pdf->Ln();
         $pdf->SetXY(53, 66);
         for ($x = $firstDay; $x <= $lastDay; $x++) {
-            $isClass = Modules::run('calendar/getSpecificDateEvent', date('Y-m-d', strtotime($year . '-' . segment_4 . '-' . $x)));
-            $day = date('w', strtotime($year . '-' . segment_4 . '-' . $x));
+            $isClass = Modules::run('calendar/getSpecificDateEvent', date('Y-m-d', strtotime($year . '-' . $CI->uri->segment(4) . '-' . $x)));
+            $day = date('w', strtotime($year . '-' . $CI->uri->segment(4) . '-' . $x));
 
             $wd = whatDay($day);
 
@@ -510,9 +518,9 @@ for ($blank = 1; $blank <= 2; $blank++) {
 
         for ($x = $firstDay; $x <= $lastDay; $x++) {
 
-            $day = date('D', strtotime($year . '-' . segment_4 . '-' . $x));
-            $isClass = Modules::run('calendar/getSpecificDateEvent', date('Y-m-d', strtotime($year . '-' . segment_4 . '-' . $x)));
-            $isHoliday = Modules::run('calendar/isHoliday', date('Y-m-d', strtotime($year . '-' . segment_4 . '-' . $x)));
+            $day = date('D', strtotime($year . '-' . $CI->uri->segment(4) . '-' . $x));
+            $isClass = Modules::run('calendar/getSpecificDateEvent', date('Y-m-d', strtotime($year . '-' . $CI->uri->segment(4) . '-' . $x)));
+            $isHoliday = Modules::run('calendar/isHoliday', date('Y-m-d', strtotime($year . '-' . $CI->uri->segment(4) . '-' . $x)));
 
             if ($day == 'Sat' || $day == 'Sun') {
                 if ($isClass):
@@ -522,7 +530,7 @@ for ($blank = 1; $blank <= 2; $blank++) {
                     else:
                         $date = $x;
                     endif;
-                    $maleTotal = Modules::run('attendance/getDailyTotalByGender', $year . '-' . segment_4 . '-' . $date, segment_3, 'Male', segment_5);
+                    $maleTotal = Modules::run('attendance/getDailyTotalByGender', $year . '-' . $CI->uri->segment(4) . '-' . $date, $CI->uri->segment(3), 'Male', $CI->uri->segment(5));
                     $maleDailyTotalAttendance += $maleTotal;
                     $pdf->MultiCell(7, 15, $maleTotal, 1, 'C', 0, 0, '', '', true, 0, false, true, 15, 'M');
                 endif;
@@ -536,7 +544,7 @@ for ($blank = 1; $blank <= 2; $blank++) {
                     else:
                         $date = $x;
                     endif;
-                    $maleTotal = Modules::run('attendance/getDailyTotalByGender', $year . '-' . segment_4 . '-' . $date, segment_3, 'Male', segment_5);
+                    $maleTotal = Modules::run('attendance/getDailyTotalByGender', $year . '-' . $CI->uri->segment(4) . '-' . $date, $CI->uri->segment(3), 'Male', $CI->uri->segment(5));
                     $maleDailyTotalAttendance += $maleTotal;
                     $pdf->MultiCell(7, 15, $maleTotal, 1, 'C', 0, 0, '', '', true, 0, false, true, 15, 'M');
                 endif;
@@ -558,7 +566,7 @@ for ($blank = 1; $blank <= 2; $blank++) {
 
         //absent
         $pdf->MultiCell(15, 15, '', 1, 'C', 0, 0, '', '', true, 0, false, true, 15, 'M');
-        //tardy 
+        //tardy
         $pdf->MultiCell(15, 15, '', 1, 'C', 0, 0, '', '', true, 0, false, true, 15, 'M');
         $pdf->MultiCell(70, 15, '', 1, 'C', 0, 0, '', '', true, 0, false, true, 16.5, 'M');
         $pdf->Ln();
@@ -568,9 +576,9 @@ for ($blank = 1; $blank <= 2; $blank++) {
 
         for ($x = $firstDay; $x <= $lastDay; $x++) {
 
-            $day = date('D', strtotime($year . '-' . segment_4 . '-' . $x));
-            $isClass = Modules::run('calendar/getSpecificDateEvent', date('Y-m-d', strtotime($year . '-' . segment_4 . '-' . $x)));
-            $isHoliday = Modules::run('calendar/isHoliday', date('Y-m-d', strtotime($year . '-' . segment_4 . '-' . $x)));
+            $day = date('D', strtotime($year . '-' . $CI->uri->segment(4) . '-' . $x));
+            $isClass = Modules::run('calendar/getSpecificDateEvent', date('Y-m-d', strtotime($year . '-' . $CI->uri->segment(4) . '-' . $x)));
+            $isHoliday = Modules::run('calendar/isHoliday', date('Y-m-d', strtotime($year . '-' . $CI->uri->segment(4) . '-' . $x)));
 
             if ($day == 'Sat' || $day == 'Sun') {
                 if ($isClass):
@@ -601,7 +609,7 @@ for ($blank = 1; $blank <= 2; $blank++) {
 
         //absent
         $pdf->MultiCell(15, 15, '', 1, 'C', 0, 0, '', '', true, 0, false, true, 15, 'M');
-        //tardy 
+        //tardy
         $pdf->MultiCell(15, 15, '', 1, 'C', 0, 0, '', '', true, 0, false, true, 15, 'M');
         $pdf->MultiCell(70, 15, '', 1, 'C', 0, 0, '', '', true, 0, false, true, 16.5, 'M');
         $pdf->Ln();
@@ -627,8 +635,8 @@ for ($blank = 1; $blank <= 2; $blank++) {
 
         for ($x = $firstDay; $x <= $lastDay; $x++) {
 
-            $day = date('D', strtotime($year . '-' . segment_4 . '-' . $x));
-            $isClass = Modules::run('calendar/getSpecificDateEvent', date('Y-m-d', strtotime($year . '-' . segment_4 . '-' . $x)));
+            $day = date('D', strtotime($year . '-' . $CI->uri->segment(4) . '-' . $x));
+            $isClass = Modules::run('calendar/getSpecificDateEvent', date('Y-m-d', strtotime($year . '-' . $CI->uri->segment(4) . '-' . $x)));
 
             if ($day == 'Sat' || $day == 'Sun') {
                 if ($isClass):
@@ -642,8 +650,8 @@ for ($blank = 1; $blank <= 2; $blank++) {
         $pdf->Ln();
         $pdf->SetXY(53, 66);
         for ($x = $firstDay; $x <= $lastDay; $x++) {
-            $isClass = Modules::run('calendar/getSpecificDateEvent', date('Y-m-d', strtotime($year . '-' . segment_4 . '-' . $x)));
-            $day = date('w', strtotime($year . '-' . segment_4 . '-' . $x));
+            $isClass = Modules::run('calendar/getSpecificDateEvent', date('Y-m-d', strtotime($year . '-' . $CI->uri->segment(4) . '-' . $x)));
+            $day = date('w', strtotime($year . '-' . $CI->uri->segment(4) . '-' . $x));
 
             $wd = whatDay($day);
 
@@ -681,9 +689,9 @@ foreach ($female->result() as $s) {
             $con = $columnCount;
         endif;
 
-        $day = date('D', strtotime($year . '-' . segment_4 . '-' . $x));
-        $isClass = Modules::run('calendar/getSpecificDateEvent', date('Y-m-d', strtotime($year . '-' . segment_4 . '-' . $x)));
-        $isHoliday = Modules::run('calendar/isHoliday', date('Y-m-d', strtotime($year . '-' . segment_4 . '-' . $x)));
+        $day = date('D', strtotime($year . '-' . $CI->uri->segment(4) . '-' . $x));
+        $isClass = Modules::run('calendar/getSpecificDateEvent', date('Y-m-d', strtotime($year . '-' . $CI->uri->segment(4) . '-' . $x)));
+        $isHoliday = Modules::run('calendar/isHoliday', date('Y-m-d', strtotime($year . '-' . $CI->uri->segment(4) . '-' . $x)));
 
         if ($day == 'Sat' || $day == 'Sun') {
             if ($isClass):
@@ -711,16 +719,16 @@ foreach ($female->result() as $s) {
 
                 $r = $z * ($y - 1);
                 if ($this->session->userdata('attend_auto')):
-                    $ifPresent = Modules::run('attendance/ifPresent', $s->st_id, $x, segment_4, $year);
+                    $ifPresent = Modules::run('attendance/ifPresent', $s->st_id, $x, $CI->uri->segment(4), $year);
                 else:
-                    $ifPresent = Modules::run('attendance/ifPresent', $s->st_id, $x, segment_4, $year);
+                    $ifPresent = Modules::run('attendance/ifPresent', $s->st_id, $x, $CI->uri->segment(4), $year);
                 endif;
 
                 if ($ifPresent):
                     if ($this->session->userdata('attend_auto')):
-                        $remarks = Modules::run('attendance/getAttendanceRemark', $s->st_id, $year . '-' . segment_4 . '-' . $x);
+                        $remarks = Modules::run('attendance/getAttendanceRemark', $s->st_id, $year . '-' . $CI->uri->segment(4) . '-' . $x);
                     else:
-                        $remarks = Modules::run('attendance/getAttendanceRemark', $s->st_id, $year . '-' . segment_4 . '-' . $x);
+                        $remarks = Modules::run('attendance/getAttendanceRemark', $s->st_id, $year . '-' . $CI->uri->segment(4) . '-' . $x);
                     endif;
                     $pma += 1;
                     $pdf->MultiCell(7, 15, '', 1, 'C', 0, 0, '', '', true, 0, false, true, 15, 'M');
@@ -743,7 +751,7 @@ foreach ($female->result() as $s) {
                     $pdf->SetLineStyle(array('color' => array(0, 0, 0)));
                     $pdf->MultiCell(7, 15, '', 1, 'C', 0, 0, '', '', true, 0, false, true, 15, 'M');
                 endif;
-                switch (abs(segment_4)) {
+                switch (abs($CI->uri->segment(4))) {
                     case 04:
                     case 06:
                         $conR = ($columnCount - 1) * 7;
@@ -754,7 +762,7 @@ foreach ($female->result() as $s) {
                     case 02:
                         $conR = ($columnCount - 1) * 7;
                         break;
-                    default :
+                    default:
                         $conR = ($columnCount - 2) * 7;
                         break;
                 }
@@ -790,9 +798,9 @@ foreach ($female->result() as $s) {
 
             $r = $z * ($y - 1);
             if ($this->session->userdata('attend_auto')):
-                $ifPresent = Modules::run('attendance/ifPresent', $s->st_id, $x, segment_4, $year);
+                $ifPresent = Modules::run('attendance/ifPresent', $s->st_id, $x, $CI->uri->segment(4), $year);
             else:
-                $ifPresent = Modules::run('attendance/ifPresent', $s->st_id, $x, segment_4, $year);
+                $ifPresent = Modules::run('attendance/ifPresent', $s->st_id, $x, $CI->uri->segment(4), $year);
             endif;
 
             if ($isHoliday):
@@ -800,9 +808,9 @@ foreach ($female->result() as $s) {
             else:
                 if ($ifPresent):
                     if ($this->session->userdata('attend_auto')):
-                        $remarks = Modules::run('attendance/getAttendanceRemark', $s->st_id, $year . '-' . segment_4 . '-' . $x);
+                        $remarks = Modules::run('attendance/getAttendanceRemark', $s->st_id, $year . '-' . $CI->uri->segment(4) . '-' . $x);
                     else:
-                        $remarks = Modules::run('attendance/getAttendanceRemark', $s->st_id, $year . '-' . segment_4 . '-' . $x);
+                        $remarks = Modules::run('attendance/getAttendanceRemark', $s->st_id, $year . '-' . $CI->uri->segment(4) . '-' . $x);
                     endif;
                     $pma += 1;
                     $pdf->MultiCell(7, 15, '', 1, 'C', 0, 0, '', '', true, 0, false, true, 15, 'M');
@@ -826,7 +834,7 @@ foreach ($female->result() as $s) {
                     $pdf->MultiCell(7, 15, '', 1, 'C', 0, 0, '', '', true, 0, false, true, 15, 'M');
                 endif;
             endif;
-            switch (abs(segment_4)) {
+            switch (abs($CI->uri->segment(4))) {
                 case 04:
                 case 06:
                     $conR = ($columnCount - 1) * 7;
@@ -837,7 +845,7 @@ foreach ($female->result() as $s) {
                 case 02:
                     $conR = ($columnCount - 1) * 7;
                     break;
-                default :
+                default:
                     $conR = ($columnCount - 2) * 7;
                     break;
             }
@@ -864,22 +872,22 @@ foreach ($female->result() as $s) {
             $columnCount = 24;
             break;
     }
-//    for ($cC = $columnCount; $cC <= 25; $cC++) {
-//        $pdf->MultiCell(7, 15, '', 1, 'C', 0, 0, '', '', true, 0, false, true, 15, 'M');
-//    }
-//absent
+    //    for ($cC = $columnCount; $cC <= 25; $cC++) {
+    //        $pdf->MultiCell(7, 15, '', 1, 'C', 0, 0, '', '', true, 0, false, true, 15, 'M');
+    //    }
+    //absent
     $pdf->MultiCell(15, 15, $fa, 1, 'C', 0, 0, '', '', true, 0, false, true, 15, 'M');
-//tardy 
+    //tardy
     if ($this->session->userdata('attend_auto')):
-        $tardy = Modules::run('attendance/getTardy', $s->st_id, segment_4, $year);
+        $tardy = Modules::run('attendance/getTardy', $s->st_id, $CI->uri->segment(4), $year);
     else:
-        $tardy = Modules::run('attendance/getTardy', $s->st_id, segment_4, $year);
+        $tardy = Modules::run('attendance/getTardy', $s->st_id, $CI->uri->segment(4), $year);
     endif;
 
     $pdf->MultiCell(15, 15, (!empty($tardy) ? $tardy->num_rows() : 0), 1, 'C', 0, 0, '', '', true, 0, false, true, 15, 'M');
 
     //remarks
-    $rem = Modules::run('main/getAdmissionRemarks', $s->st_id, segment_4, $year);
+    $rem = Modules::run('main/getAdmissionRemarks', $s->st_id, $CI->uri->segment(4), $year);
     if ($rem->num_rows() > 0) {
         if ($rem->row()->code_indicator_id != 4):
             $remarks = $rem->row()->code . ' ' . $rem->row()->remarks . ' - ' . $rem->row()->remark_date;
@@ -916,8 +924,8 @@ foreach ($female->result() as $s) {
 
         for ($x = $firstDay; $x <= $lastDay; $x++) {
 
-            $day = date('D', strtotime($year . '-' . segment_4 . '-' . $x));
-            $isClass = Modules::run('calendar/getSpecificDateEvent', date('Y-m-d', strtotime($year . '-' . segment_4 . '-' . $x)));
+            $day = date('D', strtotime($year . '-' . $CI->uri->segment(4) . '-' . $x));
+            $isClass = Modules::run('calendar/getSpecificDateEvent', date('Y-m-d', strtotime($year . '-' . $CI->uri->segment(4) . '-' . $x)));
 
             if ($day == 'Sat' || $day == 'Sun') {
                 if ($isClass):
@@ -931,8 +939,8 @@ foreach ($female->result() as $s) {
         $pdf->Ln();
         $pdf->SetXY(53, 66);
         for ($x = $firstDay; $x <= $lastDay; $x++) {
-            $isClass = Modules::run('calendar/getSpecificDateEvent', date('Y-m-d', strtotime($year . '-' . segment_4 . '-' . $x)));
-            $day = date('w', strtotime($year . '-' . segment_4 . '-' . $x));
+            $isClass = Modules::run('calendar/getSpecificDateEvent', date('Y-m-d', strtotime($year . '-' . $CI->uri->segment(4) . '-' . $x)));
+            $day = date('w', strtotime($year . '-' . $CI->uri->segment(4) . '-' . $x));
 
             $wd = whatDay($day);
 
@@ -966,9 +974,9 @@ for ($blank = 1; $blank <= 2; $blank++) {
 
         for ($x = $firstDay; $x <= $lastDay; $x++) {
 
-            $day = date('D', strtotime($year . '-' . segment_4 . '-' . $x));
-            $isClass = Modules::run('calendar/getSpecificDateEvent', date('Y-m-d', strtotime($year . '-' . segment_4 . '-' . $x)));
-            $isHoliday = Modules::run('calendar/isHoliday', date('Y-m-d', strtotime($year . '-' . segment_4 . '-' . $x)));
+            $day = date('D', strtotime($year . '-' . $CI->uri->segment(4) . '-' . $x));
+            $isClass = Modules::run('calendar/getSpecificDateEvent', date('Y-m-d', strtotime($year . '-' . $CI->uri->segment(4) . '-' . $x)));
+            $isHoliday = Modules::run('calendar/isHoliday', date('Y-m-d', strtotime($year . '-' . $CI->uri->segment(4) . '-' . $x)));
 
             if ($day == 'Sat' || $day == 'Sun') {
                 if ($isClass):
@@ -978,7 +986,7 @@ for ($blank = 1; $blank <= 2; $blank++) {
                     else:
                         $date = $x;
                     endif;
-                    $femaleTotal = Modules::run('attendance/getDailyTotalByGender', $year . '-' . segment_4 . '-' . $date, segment_3, 'Female', segment_5);
+                    $femaleTotal = Modules::run('attendance/getDailyTotalByGender', $year . '-' . $CI->uri->segment(4) . '-' . $date, $CI->uri->segment(3), 'Female', $CI->uri->segment(5));
                     $femaleDailyTotalAttendance += $femaleTotal;
                     $pdf->MultiCell(7, 12, $femaleTotal, 1, 'C', 0, 0, '', '', true, 0, false, true, 15, 'M');
                 endif;
@@ -992,7 +1000,7 @@ for ($blank = 1; $blank <= 2; $blank++) {
                     else:
                         $date = $x;
                     endif;
-                    $femaleTotal = Modules::run('attendance/getDailyTotalByGender', $year . '-' . segment_4 . '-' . $date, segment_3, 'Female', segment_5);
+                    $femaleTotal = Modules::run('attendance/getDailyTotalByGender', $year . '-' . $CI->uri->segment(4) . '-' . $date, $CI->uri->segment(3), 'Female', $CI->uri->segment(5));
                     $femaleDailyTotalAttendance += $femaleTotal;
                     $pdf->MultiCell(7, 12, $femaleTotal, 1, 'C', 0, 0, '', '', true, 0, false, true, 15, 'M');
                 endif;
@@ -1014,7 +1022,7 @@ for ($blank = 1; $blank <= 2; $blank++) {
 
         //absent
         $pdf->MultiCell(15, 12, '', 1, 'C', 0, 0, '', '', true, 0, false, true, 15, 'M');
-        //tardy 
+        //tardy
         $pdf->MultiCell(15, 12, '', 1, 'C', 0, 0, '', '', true, 0, false, true, 15, 'M');
         $pdf->MultiCell(70, 12, '', 1, 'C', 0, 0, '', '', true, 0, false, true, 16.5, 'M');
         $pdf->Ln();
@@ -1024,9 +1032,9 @@ for ($blank = 1; $blank <= 2; $blank++) {
 
         for ($x = $firstDay; $x <= $lastDay; $x++) {
 
-            $day = date('D', strtotime($year . '-' . segment_4 . '-' . $x));
-            $isClass = Modules::run('calendar/getSpecificDateEvent', date('Y-m-d', strtotime($year . '-' . segment_4 . '-' . $x)));
-            $isHoliday = Modules::run('calendar/isHoliday', date('Y-m-d', strtotime($year . '-' . segment_4 . '-' . $x)));
+            $day = date('D', strtotime($year . '-' . $CI->uri->segment(4) . '-' . $x));
+            $isClass = Modules::run('calendar/getSpecificDateEvent', date('Y-m-d', strtotime($year . '-' . $CI->uri->segment(4) . '-' . $x)));
+            $isHoliday = Modules::run('calendar/isHoliday', date('Y-m-d', strtotime($year . '-' . $CI->uri->segment(4) . '-' . $x)));
 
             if ($day == 'Sat' || $day == 'Sun') {
                 if ($isClass):
@@ -1061,7 +1069,7 @@ for ($blank = 1; $blank <= 2; $blank++) {
 
         //absent
         $pdf->MultiCell(15, 12, '', 1, 'C', 0, 0, '', '', true, 0, false, true, 15, 'M');
-        //tardy 
+        //tardy
         $pdf->MultiCell(15, 12, '', 1, 'C', 0, 0, '', '', true, 0, false, true, 15, 'M');
         $pdf->MultiCell(70, 12, '', 1, 'C', 0, 0, '', '', true, 0, false, true, 16.5, 'M');
         $pdf->Ln();
@@ -1086,9 +1094,9 @@ for ($blank = 1; $blank <= 2; $blank++) {
 
         for ($x = $firstDay; $x <= $lastDay; $x++) {
 
-            $day = date('D', strtotime($year . '-' . segment_4 . '-' . $x));
-            $isClass = Modules::run('calendar/getSpecificDateEvent', date('Y-m-d', strtotime($year . '-' . segment_4 . '-' . $x)));
-            $isHoliday = Modules::run('calendar/isHoliday', date('Y-m-d', strtotime($year . '-' . segment_4 . '-' . $x)));
+            $day = date('D', strtotime($year . '-' . $CI->uri->segment(4) . '-' . $x));
+            $isClass = Modules::run('calendar/getSpecificDateEvent', date('Y-m-d', strtotime($year . '-' . $CI->uri->segment(4) . '-' . $x)));
+            $isHoliday = Modules::run('calendar/isHoliday', date('Y-m-d', strtotime($year . '-' . $CI->uri->segment(4) . '-' . $x)));
 
             if ($day == 'Sat' || $day == 'Sun') {
                 if ($isClass):
@@ -1102,9 +1110,9 @@ for ($blank = 1; $blank <= 2; $blank++) {
         $pdf->Ln();
         $pdf->SetXY(53, 66);
         for ($x = $firstDay; $x <= $lastDay; $x++) {
-            $isClass = Modules::run('calendar/getSpecificDateEvent', date('Y-m-d', strtotime($year . '-' . segment_4 . '-' . $x)));
-            $isHoliday = Modules::run('calendar/isHoliday', date('Y-m-d', strtotime($year . '-' . segment_4 . '-' . $x)));
-            $day = date('w', strtotime($year . '-' . segment_4 . '-' . $x));
+            $isClass = Modules::run('calendar/getSpecificDateEvent', date('Y-m-d', strtotime($year . '-' . $CI->uri->segment(4) . '-' . $x)));
+            $isHoliday = Modules::run('calendar/isHoliday', date('Y-m-d', strtotime($year . '-' . $CI->uri->segment(4) . '-' . $x)));
+            $day = date('w', strtotime($year . '-' . $CI->uri->segment(4) . '-' . $x));
 
             $wd = whatDay($day);
 
@@ -1133,9 +1141,9 @@ $columnCount = 0;
 
 for ($x = $firstDay; $x <= $lastDay; $x++) {
 
-    $day = date('D', strtotime($year . '-' . segment_4 . '-' . $x));
-    $isClass = Modules::run('calendar/getSpecificDateEvent', date('Y-m-d', strtotime($year . '-' . segment_4 . '-' . $x)));
-    $isHoliday = Modules::run('calendar/isHoliday', date('Y-m-d', strtotime($year . '-' . segment_4 . '-' . $x)));
+    $day = date('D', strtotime($year . '-' . $CI->uri->segment(4) . '-' . $x));
+    $isClass = Modules::run('calendar/getSpecificDateEvent', date('Y-m-d', strtotime($year . '-' . $CI->uri->segment(4) . '-' . $x)));
+    $isHoliday = Modules::run('calendar/isHoliday', date('Y-m-d', strtotime($year . '-' . $CI->uri->segment(4) . '-' . $x)));
 
     if ($day == 'Sat' || $day == 'Sun') {
         if ($isClass):
@@ -1146,8 +1154,8 @@ for ($x = $firstDay; $x <= $lastDay; $x++) {
                 $date = $x;
             endif;
 
-            $maleTotal = Modules::run('attendance/getDailyTotalByGender', $year . '-' . segment_4 . '-' . $date, segment_3, 'Male', segment_5);
-            $femaleTotal = Modules::run('attendance/getDailyTotalByGender', $year . '-' . segment_4 . '-' . $date, segment_3, 'Female', segment_5);
+            $maleTotal = Modules::run('attendance/getDailyTotalByGender', $year . '-' . $CI->uri->segment(4) . '-' . $date, $CI->uri->segment(3), 'Male', $CI->uri->segment(5));
+            $femaleTotal = Modules::run('attendance/getDailyTotalByGender', $year . '-' . $CI->uri->segment(4) . '-' . $date, $CI->uri->segment(3), 'Female', $CI->uri->segment(5));
             $dT = $maleTotal + $femaleTotal;
             $dailyTotal += $dT;
             $pdf->MultiCell(7, 12, $maleTotal + $femaleTotal, 1, 'C', 0, 0, '', '', true, 0, false, true, 12, 'M');
@@ -1163,8 +1171,8 @@ for ($x = $firstDay; $x <= $lastDay; $x++) {
                 $date = $x;
             endif;
 
-            $maleTotal = Modules::run('attendance/getDailyTotalByGender', $year . '-' . segment_4 . '-' . $date, segment_3, 'Male', segment_5);
-            $femaleTotal = Modules::run('attendance/getDailyTotalByGender', $year . '-' . segment_4 . '-' . $date, segment_3, 'Female', segment_5);
+            $maleTotal = Modules::run('attendance/getDailyTotalByGender', $year . '-' . $CI->uri->segment(4) . '-' . $date, $CI->uri->segment(3), 'Male', $CI->uri->segment(5));
+            $femaleTotal = Modules::run('attendance/getDailyTotalByGender', $year . '-' . $CI->uri->segment(4) . '-' . $date, $CI->uri->segment(3), 'Female', $CI->uri->segment(5));
             $dT = $maleTotal + $femaleTotal;
             $dailyTotal += $dT;
             $pdf->MultiCell(7, 12, $maleTotal + $femaleTotal, 1, 'C', 0, 0, '', '', true, 0, false, true, 12, 'M');
@@ -1188,7 +1196,7 @@ switch ($columnCount) {
 
 //absent
 $pdf->MultiCell(15, 12, '', 1, 'C', 0, 0, '', '', true, 0, false, true, 12, 'M');
-//tardy 
+//tardy
 $pdf->MultiCell(15, 12, '', 1, 'C', 0, 0, '', '', true, 0, false, true, 12, 'M');
 $pdf->MultiCell(70, 12, '', 1, 'C', 0, 0, '', '', true, 0, false, true, 12, 'M');
 $pdf->Ln();
@@ -1209,9 +1217,9 @@ $pdf->SetXY(53, 60.5);
 
 for ($x = $firstDay; $x <= $lastDay; $x++) {
 
-    $day = date('D', strtotime($year . '-' . segment_4 . '-' . $x));
-    $isClass = Modules::run('calendar/getSpecificDateEvent', date('Y-m-d', strtotime($year . '-' . segment_4 . '-' . $x)));
-    $isHoliday = Modules::run('calendar/isHoliday', date('Y-m-d', strtotime($year . '-' . segment_4 . '-' . $x)));
+    $day = date('D', strtotime($year . '-' . $CI->uri->segment(4) . '-' . $x));
+    $isClass = Modules::run('calendar/getSpecificDateEvent', date('Y-m-d', strtotime($year . '-' . $CI->uri->segment(4) . '-' . $x)));
+    $isHoliday = Modules::run('calendar/isHoliday', date('Y-m-d', strtotime($year . '-' . $CI->uri->segment(4) . '-' . $x)));
 
     if ($day == 'Sat' || $day == 'Sun') {
         if ($isClass):
@@ -1225,9 +1233,9 @@ for ($x = $firstDay; $x <= $lastDay; $x++) {
 $pdf->Ln();
 $pdf->SetXY(53, 66);
 for ($x = $firstDay; $x <= $lastDay; $x++) {
-    $isClass = Modules::run('calendar/getSpecificDateEvent', date('Y-m-d', strtotime($year . '-' . segment_4 . '-' . $x)));
-    $isHoliday = Modules::run('calendar/isHoliday', date('Y-m-d', strtotime($year . '-' . segment_4 . '-' . $x)));
-    $day = date('w', strtotime($year . '-' . segment_4 . '-' . $x));
+    $isClass = Modules::run('calendar/getSpecificDateEvent', date('Y-m-d', strtotime($year . '-' . $CI->uri->segment(4) . '-' . $x)));
+    $isHoliday = Modules::run('calendar/isHoliday', date('Y-m-d', strtotime($year . '-' . $CI->uri->segment(4) . '-' . $x)));
+    $day = date('w', strtotime($year . '-' . $CI->uri->segment(4) . '-' . $x));
 
     $wd = whatDay($day);
 
@@ -1251,18 +1259,18 @@ $pdf->Ln();
 
 
 //footer
-$data['maleTransferredOut'] = Modules::run('registrar/getStudentStatus', 1, 'Male', segment_4, segment_3);
-$data['femaleTransferredOut'] = Modules::run('registrar/getStudentStatus', 1, 'Female', segment_4, segment_3);
-$data['maleTransferredIn'] = Modules::run('registrar/getStudentStatus', 2, 'Male', segment_4, segment_3);
-$data['femaleTransferredIn'] = Modules::run('registrar/getStudentStatus', 2, 'Female', segment_4, segment_3);
-$data['maleDroppedOut'] = Modules::run('registrar/getStudentStatus', 3, 'Male', segment_4, segment_3);
-$data['femaleDroppedOut'] = Modules::run('registrar/getStudentStatus', 3, 'Female', segment_4, segment_3);
+$data['maleTransferredOut'] = Modules::run('registrar/getStudentStatus', 1, 'Male', $CI->uri->segment(4), $CI->uri->segment(3));
+$data['femaleTransferredOut'] = Modules::run('registrar/getStudentStatus', 1, 'Female', $CI->uri->segment(4), $CI->uri->segment(3));
+$data['maleTransferredIn'] = Modules::run('registrar/getStudentStatus', 2, 'Male', $CI->uri->segment(4), $CI->uri->segment(3));
+$data['femaleTransferredIn'] = Modules::run('registrar/getStudentStatus', 2, 'Female', $CI->uri->segment(4), $CI->uri->segment(3));
+$data['maleDroppedOut'] = Modules::run('registrar/getStudentStatus', 3, 'Male', $CI->uri->segment(4), $CI->uri->segment(3));
+$data['femaleDroppedOut'] = Modules::run('registrar/getStudentStatus', 3, 'Female', $CI->uri->segment(4), $CI->uri->segment(3));
 $data['maleDailyTotalAttendance'] = $maleDailyTotalAttendance;
 $data['femaleDailyTotalAttendance'] = $femaleDailyTotalAttendance;
 $data['maleLateEnrollee'] = Modules::run('registrar/getLateEnrolleesByGender', 'Male');
 $data['femaleLateEnrollee'] = Modules::run('registrar/getLateEnrolleesByGender', 'Female');
 //if ($month != ""):
-//    $data['numberOfSchoolDays'] = Modules::run('main/getNumberOfSchoolDays', $firstDay, $lastDay, segment_4, $year);
+//    $data['numberOfSchoolDays'] = Modules::run('main/getNumberOfSchoolDays', $firstDay, $lastDay, $CI->uri->segment(4), $year);
 //else:
 //    $data['numberOfSchoolDays'] = Modules::run('main/getNumberOfSchoolDays', $firstDay, $lastDay);
 //endif;
@@ -1273,8 +1281,8 @@ $data['femaleStudents'] = $female->num_rows();
 $data['femaleEoSY'] = $femaleEoSY->num_rows();
 $data['maleEoSY'] = $maleEoSY->num_rows();
 $data['pdf'] = $pdf;
-$data['month'] = date("F", mktime(0, 0, 0, segment_4, 10));
-$data['adviser'] = Modules::run('academic/getAdvisory', '', segment_3);
+$data['month'] = date("F", mktime(0, 0, 0, $CI->uri->segment(4), 10));
+$data['adviser'] = Modules::run('academic/getAdvisory', '', $CI->uri->segment(3));
 $data['Principal'] = Modules::run('hr/getEmployeeByPosition', 'Principal - High School');
 $this->load->view('form2footer', $data);
 

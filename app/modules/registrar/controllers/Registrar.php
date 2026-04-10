@@ -21,6 +21,8 @@ class Registrar extends MX_Controller
         $this->load->model('get_registrar_model');
         $this->load->library('pagination');
         $this->load->library('Pdf');
+        $this->load->library(['upload', 'session']);
+        $this->load->helper(['url',]);
         $this->processAdmission = Modules::load('registrar/registrardbprocess/');
     }
 
@@ -1252,22 +1254,28 @@ class Registrar extends MX_Controller
             $config['base_url'] = base_url('registrar/getAllStudents');
             $config['total_rows'] = $result->num_rows();
             $config['per_page'] = 10;
-            $config['full_tag_open'] = '<ul class="pagination">';
-            $config['full_tag_close'] = '</ul>';
-            $config['first_tag_open'] = '<li>';
+            $config['full_tag_open'] = '<nav><ul class="pagination pagination-sm mb-0">';
+            $config['full_tag_close'] = '</ul></nav>';
+
+            $config['first_tag_open'] = '<li class="page-item">';
             $config['first_tag_close'] = '</li>';
-            $config['prev_tag_open'] = '<li>';
-            $config['prev_tag_close'] = '</li>';
-            $config['next_tag_open'] = '<li>';
-            $config['next_tag_close'] = '</li>';
-            $config['last_tag_open'] = '<li>';
+
+            $config['last_tag_open'] = '<li class="page-item">';
             $config['last_tag_close'] = '</li>';
-            $config['num_tag_open'] = '<li>';
+
+            $config['next_tag_open'] = '<li class="page-item">';
+            $config['next_tag_close'] = '</li>';
+
+            $config['prev_tag_open'] = '<li class="page-item">';
+            $config['prev_tag_close'] = '</li>';
+
+            $config['cur_tag_open'] = '<li class="page-item active"><span class="page-link">';
+            $config['cur_tag_close'] = '</span></li>';
+
+            $config['num_tag_open'] = '<li class="page-item">';
             $config['num_tag_close'] = '</li>';
-            $config['cur_tag_open'] = '<li class="active"><a href="#">';
-            $config['cur_tag_close'] = '</a></li>';
 
-
+            $config['attributes'] = array('class' => 'page-link');
             $this->pagination->initialize($config);
             $data['links'] = $this->pagination->create_links();
 
@@ -1497,8 +1505,8 @@ class Registrar extends MX_Controller
         $data['students'] = $this->get_registrar_model->getSingleStudent($id, $year, $semester);
         $data['f_educ'] = $this->registrar_model->getEducAttainByID($data['students']->f_educ);
         $data['m_educ'] = $this->registrar_model->getEducAttainByID($data['students']->m_educ);
-        $data['m'] = $this->get_registrar_model->getParentInfo($user_id, 'm');
-        $data['f'] = $this->get_registrar_model->getParentInfo($user_id, 'f');
+        // $data['m'] = $this->get_registrar_model->getParentInfo($user_id, 'm');
+        // $data['f'] = $this->get_registrar_model->getParentInfo($user_id, 'f');
         $data['medical'] = $this->get_registrar_model->getMedical($id);
         $data['date_admitted'] = $this->get_registrar_model->getDateEnrolled($students->u_id);
         $data['option'] = 'individual';
@@ -1507,6 +1515,16 @@ class Registrar extends MX_Controller
         $data['ethnicGroup'] = Modules::run('main/getEthnicGroup');
         $data['st_id'] = $id;
         $data['educ_attain'] = $this->registrar_model->getEducAttain();
+
+        // Load personal files for this student
+        if ($this->db->table_exists('esk_personal_files')) {
+            $this->db->where('st_id', $id);
+            $this->db->order_by('upload_date', 'DESC');
+            $files_query = $this->db->get('esk_personal_files');
+            $data['files'] = $files_query->result();
+        } else {
+            $data['files'] = array();
+        }
 
         if (Modules::run('main/isMobile')):
             $this->load->view('mobile/individualRecords', $data);
@@ -2200,8 +2218,7 @@ class Registrar extends MX_Controller
     {
         $section = $this->registrar_model->getSectionByLevel($grade);
     ?>
-        <option value="0">Select Section</option>
-        <option value="0">TBA</option>
+        <option value="">Select Section</option>
         <?php foreach ($section->result() as $row) { ?>
             <option sec="<?php echo $row->section ?>" value="<?php echo $row->s_id ?>"><?php echo $row->section ?></option>
         <?php
@@ -2663,5 +2680,595 @@ class Registrar extends MX_Controller
     {
         $uid = $this->session->employee_id;
         Modules::run('main/logActivity', $title, $msg, $uid);
+    }
+
+    //====================== Upload Personal Files ======================
+
+    function uploadPersonalFiles()
+    {
+        // Get student ID from POST data
+        $st_id = $this->input->post('st_id');
+
+        // Validate student ID
+        if (empty($st_id)) {
+            $this->session->set_flashdata('error', 'Student ID is required.');
+            $redirect_url = $this->input->post('redirect_url');
+            if (!empty($redirect_url)) {
+                redirect($redirect_url);
+            } else {
+                redirect('registrar/getAllStudents');
+            }
+            return;
+        }
+
+        // Check if files were uploaded
+        if (empty($_FILES['files']['name'][0])) {
+            $this->session->set_flashdata('error', 'Please select at least one file to upload.');
+            $redirect_url = $this->input->post('redirect_url');
+            if (!empty($redirect_url)) {
+                redirect($redirect_url);
+            } else {
+                redirect('registrar/viewDetails/' . base64_encode($st_id));
+            }
+            return;
+        }
+
+        $files = $_FILES['files'];
+        $fileCount = count($files['name']);
+
+        // Create upload directory if it doesn't exist
+        $upload_path = './uploads/personal_files/' . $st_id . '/';
+        if (!is_dir($upload_path)) {
+            if (!mkdir($upload_path, 0755, true)) {
+                $this->session->set_flashdata('error', 'Failed to create upload directory.');
+                $redirect_url = $this->input->post('redirect_url');
+                if (!empty($redirect_url)) {
+                    redirect($redirect_url);
+                } else {
+                    redirect('registrar/viewDetails/' . base64_encode($st_id));
+                }
+                return;
+            }
+        }
+
+        $config = array(
+            'upload_path' => $upload_path,
+            'allowed_types' => 'jpg|jpeg|png|gif|pdf|doc|docx|xls|xlsx|ppt|pptx',
+            'max_size' => 2048, // 2MB
+            'overwrite' => false,
+            'encrypt_name' => true
+        );
+
+        $success = [];
+        $error = [];
+        $uploaded_files = [];
+
+        for ($i = 0; $i < $fileCount; $i++) {
+            // Skip empty file inputs
+            if (empty($files['name'][$i])) {
+                continue;
+            }
+
+            $_FILES['userfile']['name'] = $files['name'][$i];
+            $_FILES['userfile']['type'] = $files['type'][$i];
+            $_FILES['userfile']['tmp_name'] = $files['tmp_name'][$i];
+            $_FILES['userfile']['error'] = $files['error'][$i];
+            $_FILES['userfile']['size'] = $files['size'][$i];
+
+            $this->upload->initialize($config);
+
+            if (!$this->upload->do_upload('userfile')) {
+                $error[] = $files['name'][$i] . ' - ' . strip_tags($this->upload->display_errors());
+            } else {
+                $upload_data = $this->upload->data();
+
+                // Get file extension
+                $extension = $upload_data['file_ext'];
+                if (empty($extension)) {
+                    $extension = '.' . pathinfo($upload_data['file_name'], PATHINFO_EXTENSION);
+                }
+
+                // Prepare file data for database
+                $file_data = array(
+                    'st_id' => $st_id,
+                    'file_name' => $upload_data['file_name'],
+                    'original_name' => $upload_data['orig_name'],
+                    'extension' => strtolower($extension),
+                    'file_size' => $upload_data['file_size'],
+                    'upload_date' => date('Y-m-d H:i:s'),
+                    'uploaded_by' => $this->session->userdata('employee_id') ? $this->session->userdata('employee_id') : $this->session->userdata('user_id')
+                );
+
+                // Save to database - check if table exists, if not create it
+                // First, try to detect if the table exists
+                if (!$this->db->table_exists('esk_personal_files')) {
+                    // Create table if it doesn't exist
+                    $this->db->query("CREATE TABLE IF NOT EXISTS `esk_personal_files` (
+                    `file_id` int(11) NOT NULL AUTO_INCREMENT,
+                    `st_id` varchar(50) NOT NULL,
+                    `file_name` varchar(255) NOT NULL,
+                    `original_name` varchar(255) NOT NULL,
+                    `extension` varchar(10) NOT NULL,
+                    `file_size` int(11) NOT NULL,
+                    `upload_date` datetime NOT NULL,
+                    `uploaded_by` int(11) DEFAULT NULL,
+                    PRIMARY KEY (`file_id`),
+                    KEY `st_id` (`st_id`)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8");
+                }
+
+                // Insert file record
+                if ($this->db->insert('esk_personal_files', $file_data)) {
+                    $success[] = $upload_data['orig_name'];
+                    $uploaded_files[] = $upload_data;
+                } else {
+                    // If database insert fails, delete the uploaded file
+                    @unlink($upload_data['full_path']);
+                    $error[] = $files['name'][$i] . ' - Failed to save file record.';
+                }
+            }
+        }
+
+        // Set flash messages
+        if (!empty($error)) {
+            $this->session->set_flashdata('error', implode('<br>', $error));
+        }
+
+        if (!empty($success)) {
+            $this->session->set_flashdata(
+                'success',
+                count($success) . ' file(s) uploaded successfully: ' . implode(', ', $success)
+            );
+        } else {
+            if (empty($success) && !empty($error)) {
+                $this->session->set_flashdata('error', 'No files were uploaded. ' . implode('<br>', $error));
+            }
+        }
+
+        // Redirect back to student info page
+        $redirect_url = $this->input->post('redirect_url');
+        if (!empty($redirect_url)) {
+            redirect($redirect_url);
+        } else {
+            redirect('registrar/viewDetails/' . base64_encode($st_id));
+        }
+    }
+
+    //====================== Download Personal Files ======================
+
+    function downloadPersonalFile($file_id = NULL)
+    {
+        // Load download helper
+        $this->load->helper('download');
+
+        // Get student ID from query string for redirect
+        $st_id = $this->input->get('st_id');
+
+        // Validate file ID
+        if (empty($file_id)) {
+            $this->session->set_flashdata('error', 'File ID is required.');
+            if (!empty($st_id)) {
+                redirect('registrar/viewDetails/' . base64_encode($st_id));
+            } else {
+                redirect('registrar/getAllStudents');
+            }
+            return;
+        }
+
+        // Decode file ID if it's base64 encoded
+        $decoded_id = @base64_decode($file_id, true);
+        if ($decoded_id !== false && is_numeric($decoded_id)) {
+            $file_id = $decoded_id;
+        } elseif (!is_numeric($file_id)) {
+            // Try to decode anyway if it's not numeric
+            $file_id = base64_decode($file_id);
+        }
+
+        // Validate decoded file ID is numeric
+        if (!is_numeric($file_id)) {
+            $this->session->set_flashdata('error', 'Invalid file ID format.');
+            if (!empty($st_id)) {
+                redirect('registrar/viewDetails/' . base64_encode($st_id));
+            } else {
+                redirect('registrar/getAllStudents');
+            }
+            return;
+        }
+
+        // Check if table exists
+        if (!$this->db->table_exists('esk_personal_files')) {
+            $this->session->set_flashdata('error', 'Files table does not exist.');
+            if (!empty($st_id)) {
+                redirect('registrar/viewDetails/' . base64_encode($st_id));
+            } else {
+                redirect('registrar/getAllStudents');
+            }
+            return;
+        }
+
+        // Get file information from database
+        $this->db->where('file_id', $file_id);
+        $file_query = $this->db->get('esk_personal_files');
+
+        if ($file_query->num_rows() == 0) {
+            $this->session->set_flashdata('error', 'File not found in database.');
+            if (!empty($st_id)) {
+                redirect('registrar/viewDetails/' . base64_encode($st_id));
+            } else {
+                redirect('registrar/getAllStudents');
+            }
+            return;
+        }
+
+        $file = $file_query->row();
+
+        // Build full file path (with student ID subdirectory)
+        $file_path = './uploads/personal_files/' . $file->st_id . '/' . $file->file_name;
+
+        // Check if file exists on disk
+        if (!file_exists($file_path)) {
+            $this->session->set_flashdata('error', 'File not found on server: ' . htmlspecialchars($file->file_name));
+            if (!empty($file->st_id)) {
+                redirect('registrar/viewDetails/' . base64_encode($file->st_id));
+            } elseif (!empty($st_id)) {
+                redirect('registrar/viewDetails/' . base64_encode($st_id));
+            } else {
+                redirect('registrar/getAllStudents');
+            }
+            return;
+        }
+
+        // Optional: Verify the user has permission to download this file
+        // Check if the file belongs to the student being viewed (if st_id is provided)
+        if (!empty($st_id) && $file->st_id != $st_id) {
+            $this->session->set_flashdata('error', 'You do not have permission to download this file.');
+            redirect('registrar/viewDetails/' . base64_encode($st_id));
+            return;
+        }
+
+        // Prepare original filename with proper extension
+        $original_filename = $file->original_name;
+
+        // Check if extension is already in the filename
+        if (!empty($file->extension)) {
+            $extension = ltrim($file->extension, '.'); // Remove leading dot for comparison
+            $filename_lower = strtolower($original_filename);
+            $extension_lower = strtolower($extension);
+
+            // Check if extension exists at the end of filename
+            if (substr($filename_lower, -strlen($extension_lower)) !== $extension_lower) {
+                // Add extension if not present
+                $original_filename = $original_filename . $file->extension;
+            }
+        }
+
+        // Clean filename for download (remove any path traversal attempts)
+        $original_filename = basename($original_filename);
+
+        // Read file content
+        $file_data = @file_get_contents($file_path);
+
+        if ($file_data === false) {
+            $this->session->set_flashdata('error', 'Unable to read file from server.');
+            if (!empty($file->st_id)) {
+                redirect('registrar/viewDetails/' . base64_encode($file->st_id));
+            } elseif (!empty($st_id)) {
+                redirect('registrar/viewDetails/' . base64_encode($st_id));
+            } else {
+                redirect('registrar/getAllStudents');
+            }
+            return;
+        }
+
+        // Force download using CodeIgniter's download helper
+        force_download($original_filename, $file_data);
+    }
+
+    //====================== Delete Personal Files ======================
+
+    function deletePersonalFile($file_id = NULL)
+    {
+        // Get student ID from query string for redirect
+        $st_id = $this->input->get('st_id');
+
+        // Validate file ID
+        if (empty($file_id)) {
+            $this->session->set_flashdata('error', 'File ID is required.');
+            if (!empty($st_id)) {
+                redirect('registrar/viewDetails/' . base64_encode($st_id));
+            } else {
+                redirect('registrar/getAllStudents');
+            }
+            return;
+        }
+
+        // Decode file ID if it's base64 encoded
+        $decoded_id = @base64_decode($file_id, true);
+        if ($decoded_id !== false && is_numeric($decoded_id)) {
+            $file_id = $decoded_id;
+        } elseif (!is_numeric($file_id)) {
+            // Try to decode anyway if it's not numeric
+            $file_id = base64_decode($file_id);
+        }
+
+        // Validate decoded file ID is numeric
+        if (!is_numeric($file_id)) {
+            $this->session->set_flashdata('error', 'Invalid file ID format.');
+            if (!empty($st_id)) {
+                redirect('registrar/viewDetails/' . base64_encode($st_id));
+            } else {
+                redirect('registrar/getAllStudents');
+            }
+            return;
+        }
+
+        // Check if table exists
+        if (!$this->db->table_exists('esk_personal_files')) {
+            $this->session->set_flashdata('error', 'Files table does not exist.');
+            if (!empty($st_id)) {
+                redirect('registrar/viewDetails/' . base64_encode($st_id));
+            } else {
+                redirect('registrar/getAllStudents');
+            }
+            return;
+        }
+
+        // Get file information from database
+        $this->db->where('file_id', $file_id);
+        $file_query = $this->db->get('esk_personal_files');
+
+        if ($file_query->num_rows() == 0) {
+            $this->session->set_flashdata('error', 'File not found in database.');
+            if (!empty($st_id)) {
+                redirect('registrar/viewDetails/' . base64_encode($st_id));
+            } else {
+                redirect('registrar/getAllStudents');
+            }
+            return;
+        }
+
+        $file = $file_query->row();
+
+        // Build full file path (with student ID subdirectory)
+        $file_path = './uploads/personal_files/' . $file->st_id . '/' . $file->file_name;
+
+        // Store file info for success message
+        $filename = $file->original_name;
+        $file_st_id = $file->st_id;
+
+        // Delete file from disk if it exists
+        $file_deleted = false;
+        if (file_exists($file_path)) {
+            if (@unlink($file_path)) {
+                $file_deleted = true;
+            }
+        } else {
+            // File doesn't exist on disk, but continue to delete from database
+            $file_deleted = true; // Consider it successful since file is already gone
+        }
+
+        // Delete record from database
+        $this->db->where('file_id', $file_id);
+        $db_deleted = $this->db->delete('esk_personal_files');
+
+        if ($db_deleted) {
+            // Check if the student's directory is now empty, and optionally remove it
+            $student_dir = './uploads/personal_files/' . $file_st_id;
+            if (is_dir($student_dir)) {
+                $files_in_dir = array_diff(scandir($student_dir), array('.', '..'));
+                if (empty($files_in_dir)) {
+                    // Directory is empty, remove it
+                    @rmdir($student_dir);
+                }
+            }
+
+            if ($file_deleted) {
+                $this->session->set_flashdata('success', 'File "' . htmlspecialchars($filename) . '" has been deleted successfully.');
+            } else {
+                $this->session->set_flashdata('success', 'File record deleted, but physical file may still exist: ' . htmlspecialchars($file->file_name));
+            }
+        } else {
+            $this->session->set_flashdata('error', 'Failed to delete file record from database.');
+            if (!empty($file_st_id)) {
+                redirect('registrar/viewDetails/' . base64_encode($file_st_id));
+            } elseif (!empty($st_id)) {
+                redirect('registrar/viewDetails/' . base64_encode($st_id));
+            } else {
+                redirect('registrar/getAllStudents');
+            }
+            return;
+        }
+
+        // Redirect back to student info page
+        if (!empty($file_st_id)) {
+            redirect('registrar/viewDetails/' . base64_encode($file_st_id));
+        } elseif (!empty($st_id)) {
+            redirect('registrar/viewDetails/' . base64_encode($st_id));
+        } else {
+            redirect('registrar/getAllStudents');
+        }
+    }
+
+    function updateParentsInfo()
+    {
+        $tbl  = $this->input->post('tbl_name');
+        $id   = $this->input->post('pk_id');
+        $key  = $this->input->post('key_id');
+        $card = $this->input->post('keyCard');
+
+        $data = $this->input->post();
+
+        // Remove system fields
+        unset($data['tbl_name'], $data['pk_id'], $data['key_id'], $data['keyCard']);
+
+        switch ($card) {
+
+            case 'focc':
+
+                if (!empty($data['f_occ'])) {
+                    $new_id = $this->registrar_model->saveOccupation($data['f_occ'], null);
+
+                    // 🔥 Replace value inside array
+                    $data['f_occ'] = $new_id;
+                }
+
+                break;
+
+            case 'mocc':
+
+                if (!empty($data['m_occ'])) {
+                    $new_id = $this->registrar_model->saveOccupation($data['m_occ'], null);
+
+                    // 🔥 Replace value inside array
+                    $data['m_occ'] = $new_id;
+                }
+
+                break;
+
+            default:
+                break;
+        }
+
+        $this->registrar_model->updateParentsInfo($data, $tbl, $id, $key);
+
+        echo json_encode([
+            'status'   => 'success',
+            'csrfHash' => $this->security->get_csrf_hash()
+        ]);
+    }
+
+
+    //====================== Rename Personal Files ======================
+
+    function renamePersonalFile()
+    {
+        // Get student ID from POST data for redirect
+        $st_id = $this->input->post('st_id');
+
+        // Get file ID from POST data
+        $file_id = $this->input->post('file_id');
+
+        // Get new name from POST data
+        $new_name = $this->input->post('new_name');
+
+        // Validate inputs
+        if (empty($file_id)) {
+            $this->session->set_flashdata('error', 'File ID is required.');
+            $redirect_url = $this->input->post('redirect_url');
+            if (!empty($redirect_url)) {
+                redirect($redirect_url);
+            } elseif (!empty($st_id)) {
+                redirect('registrar/viewDetails/' . base64_encode($st_id));
+            } else {
+                redirect('registrar/getAllStudents');
+            }
+            return;
+        }
+
+        if (empty($new_name)) {
+            $this->session->set_flashdata('error', 'New file name is required.');
+            $redirect_url = $this->input->post('redirect_url');
+            if (!empty($redirect_url)) {
+                redirect($redirect_url);
+            } elseif (!empty($st_id)) {
+                redirect('registrar/viewDetails/' . base64_encode($st_id));
+            } else {
+                redirect('registrar/getAllStudents');
+            }
+            return;
+        }
+
+        // Validate file ID is numeric
+        if (!is_numeric($file_id)) {
+            $this->session->set_flashdata('error', 'Invalid file ID format.');
+            $redirect_url = $this->input->post('redirect_url');
+            if (!empty($redirect_url)) {
+                redirect($redirect_url);
+            } elseif (!empty($st_id)) {
+                redirect('registrar/viewDetails/' . base64_encode($st_id));
+            } else {
+                redirect('registrar/getAllStudents');
+            }
+            return;
+        }
+
+        // Check if table exists
+        if (!$this->db->table_exists('esk_personal_files')) {
+            $this->session->set_flashdata('error', 'Files table does not exist.');
+            $redirect_url = $this->input->post('redirect_url');
+            if (!empty($redirect_url)) {
+                redirect($redirect_url);
+            } elseif (!empty($st_id)) {
+                redirect('registrar/viewDetails/' . base64_encode($st_id));
+            } else {
+                redirect('registrar/getAllStudents');
+            }
+            return;
+        }
+
+        // Get file information from database
+        $this->db->where('file_id', $file_id);
+        $file_query = $this->db->get('esk_personal_files');
+
+        if ($file_query->num_rows() == 0) {
+            $this->session->set_flashdata('error', 'File not found in database.');
+            $redirect_url = $this->input->post('redirect_url');
+            if (!empty($redirect_url)) {
+                redirect($redirect_url);
+            } elseif (!empty($st_id)) {
+                redirect('registrar/viewDetails/' . base64_encode($st_id));
+            } else {
+                redirect('registrar/getAllStudents');
+            }
+            return;
+        }
+
+        $file = $file_query->row();
+
+        // Clean the new name (remove any path traversal attempts)
+        $new_name = basename(trim($new_name));
+
+        // Sanitize filename - remove any dangerous characters
+        $new_name = preg_replace('/[^a-zA-Z0-9._-]/', '_', $new_name);
+
+        // Ensure the new name is not empty after sanitization
+        if (empty($new_name)) {
+            $this->session->set_flashdata('error', 'Invalid file name. Please use only letters, numbers, dots, dashes, and underscores.');
+            $redirect_url = $this->input->post('redirect_url');
+            if (!empty($redirect_url)) {
+                redirect($redirect_url);
+            } elseif (!empty($st_id)) {
+                redirect('registrar/viewDetails/' . base64_encode($st_id));
+            } else {
+                redirect('registrar/getAllStudents');
+            }
+            return;
+        }
+
+        // Update the original_name in database
+        $update_data = array(
+            'original_name' => $new_name
+        );
+
+        $this->db->where('file_id', $file_id);
+        $updated = $this->db->update('esk_personal_files', $update_data);
+
+        if ($updated) {
+            $this->session->set_flashdata('success', 'File renamed successfully to "' . htmlspecialchars($new_name) . '".');
+        } else {
+            $this->session->set_flashdata('error', 'Failed to rename file. Please try again.');
+        }
+
+        // Redirect back to student info page
+        $redirect_url = $this->input->post('redirect_url');
+        if (!empty($redirect_url)) {
+            redirect($redirect_url);
+        } elseif (!empty($file->st_id)) {
+            redirect('registrar/viewDetails/' . base64_encode($file->st_id));
+        } elseif (!empty($st_id)) {
+            redirect('registrar/viewDetails/' . base64_encode($st_id));
+        } else {
+            redirect('registrar/getAllStudents');
+        }
     }
 }

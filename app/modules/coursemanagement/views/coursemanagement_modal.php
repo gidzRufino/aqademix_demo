@@ -1,53 +1,63 @@
-<div id="addSection"  style="width:20%; margin: 0 auto;"  class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-    <div class="panel panel-primary" style='width:100%;'>
-        <div class="panel-heading">
-            <h6>Add Section</h6>
-        </div>
-        <div class="panel-body">
-            <input type='text' id='txtAddSection' placeholder="Section Name" />
-            <div style='margin:5px 0;'>
-                <a href='#' id='<?php echo $g->grade_id ?>' data-dismiss='modal' onclick='addSection()' style='margin-right:10px;' class='btn btn-xs btn-success pull-left'>Save</a>
-                <button data-dismiss='modal' class='btn btn-xs btn-danger pull-left'>Cancel</button>&nbsp;&nbsp;
+<!-- Add Section Modal -->
+<div id="addSection" class="modal fade" tabindex="-1" aria-labelledby="addSectionLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content rounded-4 shadow">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="addSectionLabel">Add Section</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-
-        </div>
-    </div>
-</div>
-<div id="addEditSection" style="width:20%; margin: 0 auto;"  class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-    <div class="panel panel-success" style="width:100%">
-        <div class="panel-heading">
-            <h6>Edit Section</h6>
-        </div>
-        <div class="panel-body">
-            <input type="text" id="eSec"/>
-        </div>
-        <div class="panel-footer">
-            <div style='margin:5px 0;'>
-                <a href='#' id='<?php echo $g->grade_id ?>' data-dismiss='modal' onclick='editSection()' style='margin-right:10px;' class='btn btn-xs btn-success pull-left'>Save</a>
-                <button data-dismiss='modal' class='btn btn-xs btn-danger pull-left'>Cancel</button>&nbsp;&nbsp;
+            <div class="modal-body">
+                <input type="text" id="txtAddSection" class="form-control" placeholder="Section Name">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" onclick="addSection()">Save</button>
+                <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cancel</button>
             </div>
         </div>
     </div>
 </div>
-<div id="addCourse"  style="width:20%; margin: 0 auto;"  class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-    <div class="panel panel-red" style='width:100%;'>
-        <div class="panel-heading">
-            <h6>Add Course</h6>
-        </div>
-        <div class="panel-body">
-            <div class="form-group">
-                <label class="control-label">Course:</label>
-                <input style="margin-bottom:0;" class="form-control"  name="inputCourse" type="text" id="inputCourse" placeholder="Course" required>
-            </div>
-            <div class="form-group">
-                <label class="control-label">Short Code:</label>
-                <input style="margin-bottom:0;" class="form-control"  name="inputShortCode" type="text" id="inputShortCode" placeholder="Short Code" required>
-            </div>
-            <div style='margin:5px 0;'>
-                <a href='#' id='<?php echo $g->grade_id ?>' data-dismiss='modal' onclick='addCourse()' style='margin-right:10px;' class='btn btn-xs btn-success pull-left'>Save</a>
-                <button data-dismiss='modal' class='btn btn-xs btn-danger pull-left'>Cancel</button>&nbsp;&nbsp;
-            </div>
 
+<!-- Edit Section Modal -->
+<div id="addEditSection" class="modal fade" tabindex="-1" aria-labelledby="editSectionLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content rounded-4 shadow">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="editSectionLabel">Edit Section</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="text" id="eSec" class="form-control" placeholder="Section Name">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="editSection()">Save</button>
+                <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Course Modal -->
+<div id="addCourse" class="modal fade" tabindex="-1" aria-labelledby="addCourseLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-md">
+        <div class="modal-content rounded-4 shadow">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="addCourseLabel">Add Course</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="inputCourse" class="form-label">Course</label>
+                    <input type="text" class="form-control" id="inputCourse" placeholder="Course" required>
+                </div>
+                <div class="mb-3">
+                    <label for="inputShortCode" class="form-label">Short Code</label>
+                    <input type="text" class="form-control" id="inputShortCode" placeholder="Short Code" required>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" onclick="addCourse()">Save</button>
+                <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cancel</button>
+            </div>
         </div>
     </div>
 </div>

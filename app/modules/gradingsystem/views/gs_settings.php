@@ -1,76 +1,270 @@
-<div class="col-lg-6">
-    <div class="col-lg-12 pull-left"><br />
-        <div class="panel panel-green">
-            <div class="panel-heading clearfix">
-                <h5>Raw Score Transmutation
-                    <!--<i onclick="saveTransmutation()" class="pull-right pointer fa fa-2x fa-save"></i>-->
-                </h5>
-            </div>
-            <div class="panel-body">
-                <p>Raw score are being transmuted this way:<br />
-                    <br />
-                    <b>Percentage Score(PS)</b> = ((Learner's Total RS / Highest Possible Score) * 100%);
-                </p>
-            </div>
-        </div>
-    </div>
-    <div class="col-lg-12 pull-left">
-        <div class="panel panel-red">
-            <div class="panel-heading clearfix">
-                <h5>Weight of Components for each Subject
-                    <i onclick="$('#addDOSubjects').modal('show')" class="pull-right pointer fa fa-2x fa-plus"></i>
-                </h5>
-            </div>
-            <div class="panel-body">
-                <div id="DO_Container1">
-                    <table class="table table-bordered">
-                        <tr>
-                            <th>Subjects</th>
-                            <?php foreach ($components as $c): ?>
-                                <th><?php echo $c->component ?></th>
-                            <?php endforeach; ?>
-                            <th style="width:75px;"></th>
-                        </tr>
-                        <?php
-                        foreach ($subjects as $sub):
-                            if ($sub->subject != ""):
-                        ?>
-                                <tr>
-                                    <td><?php echo $sub->subject; ?></td>
-                                    <?php foreach ($components as $cp): ?>
-                                        <td id="<?php echo $sub->subject_id . $cp->id ?>">
-                                            <?php
-                                            $cmp = Modules::run('gradingsystem/new_gs/componentPerSubject', $sub->subject_id, $cp->id);
-                                            if ($cmp):
-                                                echo ($cmp->weight == 0 ? "" : ($cmp->weight * 100) . ' %');
-                                            endif;
-                                            ?>
-                                        </td>
-                                    <?php endforeach; ?>
-                                    <td><button onclick="showEditAssessWeight('<?php echo $sub->subject_id; ?>', '<?php echo $this->session->userdata('school_year'); ?>', '<?php echo $sub->subject ?>', '<?php echo $sub->short_code ?>')" class="btn btn-xs btn-info"><i class="fa fa-edit"></i></button></td>
-                                </tr>
+<style>
+    .card {
+        border-radius: 14px;
+    }
 
-                        <?php
-                            endif;
-                        endforeach;
-                        ?>
-                    </table>
+    .table td,
+    .table th {
+        vertical-align: middle;
+    }
+
+    .badge {
+        font-weight: 500;
+        border-radius: 8px;
+    }
+
+    .card {
+        border-radius: 16px;
+    }
+
+    .btn-group .btn {
+        border-radius: 8px !important;
+    }
+
+    .btn-rounded {
+        border-radius: 50px;
+    }
+
+    .editable-weight {
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .editable-weight:hover {
+        background-color: #f8f9fa;
+        transform: scale(1.05);
+    }
+
+    #subjectSearch {
+        border-radius: 10px;
+        transition: all 0.2s ease;
+    }
+
+    #subjectSearch:focus {
+        box-shadow: 0 0 0 0.1rem rgba(220, 53, 69, 0.25);
+        border-color: #dc3545;
+    }
+
+    #clearSearch:hover {
+        color: #dc3545;
+    }
+
+    .input-group .btn {
+        border-left: 0;
+    }
+
+    .input-group-sm .form-control,
+    .input-group-sm .btn {
+        height: 38px;
+    }
+
+    .input-group .form-control {
+        border-right: 0;
+    }
+
+    .input-group .btn {
+        border-left: 0;
+    }
+
+    .input-group .form-control:focus {
+        box-shadow: none;
+        border-color: #dc3545;
+    }
+
+    .input-group .btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .search-group .form-control,
+    .search-group .btn {
+        height: 38px !important;
+        padding: 0.25rem 0.5rem;
+    }
+
+    .search-group .btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .search-group .form-control {
+        border-right: 0;
+    }
+
+    .search-group .btn {
+        border-left: 0;
+    }
+
+    .pointer {
+        cursor: pointer;
+    }
+
+    .toggle-icon {
+        transition: transform 0.3s ease;
+    }
+
+    /* Optional: rotate icon when collapsed/expanded */
+    .card-header[aria-expanded="true"] .toggle-icon {
+        transform: rotate(180deg);
+    }
+
+    .pagination .page-link {
+        border-radius: 8px;
+        margin: 0 2px;
+        color: #495057;
+        transition: all 0.2s ease;
+    }
+
+    .pagination .page-link:hover {
+        background-color: #f1f3f5;
+        color: #dc3545;
+    }
+
+    .pagination .page-item.active .page-link {
+        background-color: #dc3545;
+        border-color: #dc3545;
+        color: #fff;
+    }
+</style>
+
+<div class="row g-4">
+
+    <!-- ROW 1: Raw Score + Component Weights (Single Card) -->
+    <div class="col-12">
+        <div class="card shadow-sm border-0">
+
+            <!-- Card Header -->
+            <div class="card-header bg-white d-flex justify-content-between align-items-center pointer"
+                data-bs-toggle="collapse" data-bs-target="#collapseRawAndComponents" aria-expanded="true">
+                <div>
+                    <h5 class="mb-0 fw-semibold text-dark">
+                        <i class="fas fa-layer-group me-2 text-success"></i>
+                        Raw Score & Component Weights
+                    </h5>
+                    <small class="text-muted">Manage grading distribution and raw score transmutation</small>
                 </div>
-                <br />
+                <i class="fas fa-chevron-down toggle-icon"></i>
+            </div>
 
+            <!-- Card Body -->
+            <div id="collapseRawAndComponents" class="collapse show">
+                <div class="card-body pt-3">
+
+                    <!-- Section 1: Raw Score Transmutation -->
+                    <div class="mb-4">
+                        <h6 class="fw-semibold text-success mb-2">
+                            <i class="fas fa-calculator me-2"></i> Raw Score Transmutation
+                        </h6>
+                        <p class="mb-2 text-muted small">
+                            Raw scores are transmuted using the formula:
+                        </p>
+                        <div class="bg-light rounded p-3 border small">
+                            <strong>Percentage Score (PS)</strong> =
+                            ((Learner's Total RS / Highest Possible Score) × 100%)
+                        </div>
+                    </div>
+
+                    <!-- Section 2: Component Weights -->
+                    <div>
+                        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                            <!-- Search Input -->
+                            <div class="position-relative" style="max-width:300px;">
+                                <input type="text"
+                                    id="subjectSearch"
+                                    class="form-control form-control-sm ps-5 pe-5"
+                                    placeholder="Search subject...">
+                                <i class="fas fa-search position-absolute"
+                                    style="top: 50%; left: 12px; transform: translateY(-50%); color:#999; font-size: 13px;">
+                                </i>
+                                <i class="fas fa-times position-absolute d-none"
+                                    id="clearSearch"
+                                    style="top: 50%; right: 12px; transform: translateY(-50%); cursor:pointer; color:#999; font-size: 13px;">
+                                </i>
+                            </div>
+
+                            <button class="btn btn-sm btn-light border" id="btnReset">Reset</button>
+                        </div>
+                        <div class="d-flex justify-content-end mt-2" id="paginationWrapper">
+                            <?= $links ?>
+                        </div>
+
+                        <!-- Component Table -->
+                        <div class="table-responsive" id="subjectTableContainer">
+                            <table class="table align-middle mb-0" id="subjectsTable">
+                                <thead class="border-bottom">
+                                    <tr class="text-muted small text-uppercase">
+                                        <th>Subject</th>
+                                        <?php foreach ($components as $c): ?>
+                                            <th class="text-center"><?php echo $c->component ?></th>
+                                        <?php endforeach; ?>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php $ss = 0;
+                                    foreach ($subjects as $sub):
+                                        if ($sub->subject != ""): ?>
+                                            <tr>
+                                                <td>
+                                                    <div class="fw-semibold text-dark"><?php echo $sub->subject; ?></div>
+                                                    <small class="text-muted">Code: <?php echo $sub->short_code; ?></small>
+                                                </td>
+
+                                                <?php foreach ($components as $cp): ?>
+                                                    <td class="text-center"
+                                                        data-subject="<?php echo $sub->subject_id ?>"
+                                                        data-component="<?php echo $cp->id ?>">
+                                                        <?php
+                                                        $cmp = Modules::run('gradingsystem/new_gs/componentPerSubject', $sub->subject_id, $cp->id);
+                                                        $value = ($cmp && $cmp->weight != 0) ? ($cmp->weight * 100) : '';
+                                                        ?>
+                                                        <span class="editable-weight badge bg-light text-dark border px-3 py-2"
+                                                            data-value="<?php echo $value; ?>">
+                                                            <?php echo ($value === '' ? '-' : $value . '%'); ?>
+                                                        </span>
+                                                    </td>
+                                                <?php endforeach; ?>
+                                            </tr>
+                                    <?php endif;
+                                    endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-
     </div>
 
-</div>
+    <!-- ROW 2: Learner's Observed Values -->
+    <div class="col-12">
+        <div class="card shadow-sm border-0">
 
-<div class="col-lg-6 pull-right">
-    <b>Learner's Observed Values</b><br />
-    <!-- <input <?php echo $bhs0 ?> id="bhS0" name="behS" type="radio" onclick="saveGS('customized_beh_settings', this.value)"  value="0" /> Default &nbsp;
-    <input <?php echo $bhs1 ?> id="bhS1" name="behS" type="radio"  onclick="saveGS('customized_beh_settings', this.value)" value="1" /> Customized<br /><br /> -->
+            <!-- Header -->
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center pointer"
+                data-bs-toggle="collapse" data-bs-target="#collapseObserved" aria-expanded="true">
+                <h6 class="mb-0 fw-semibold">
+                    <i class="fas fa-user-check me-2"></i> Learner's Observed Values
+                </h6>
+                <i class="fas fa-chevron-down toggle-icon"></i>
+            </div>
 
-    <?php echo Modules::run('gradingsystem/behSettings') ?>
+            <!-- Body -->
+            <div id="collapseObserved" class="collapse show">
+                <div class="card-body">
+                    <div class="small text-muted mb-3">
+                        Configure learner behavior and observed value settings.
+                    </div>
+                    <div class="p-2">
+                        <?php echo Modules::run('gradingsystem/behSettings') ?>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
 </div>
 <?php $this->load->view('addAssessment'); ?>
 <?php $this->load->view('addDO8_subjects'); ?>
@@ -411,4 +605,243 @@
         }
 
     }
+
+    function deleteSubject(subject_id, tr) {
+        if (confirm("Are you sure you want to delete this subject?")) {
+            $.ajax({
+                url: "<?= base_url() . 'gradingsystem/deleteSubject' ?>", // update this
+                type: "POST",
+                data: {
+                    subject_id: subject_id,
+                    csrf_test_name: $.cookie('csrf_cookie_name')
+                },
+                dataType: 'json',
+                success: function(res) {
+                    showTopAlert(res.msg, res.status ? 'success' : 'danger');
+                    alert(tr)
+                    $('#tr_' + (tr - 1)).addClass('d-none');
+                },
+                error: function() {
+                    showTopAlert('An Error Occured', 'danger');
+                }
+            });
+        }
+    }
+
+    $(document).on('click', '.editable-weight', function() {
+        let span = $(this);
+        let currentValue = span.data('value');
+
+        // Prevent multiple inputs
+        if (span.closest('td').find('input').length) return;
+
+        let input = $(`
+        <input type="number"
+               class="form-control form-control-sm text-center"
+               style="width:80px; display:inline-block;"
+        />
+    `).val(currentValue);
+
+        // Replace span with input
+        span.replaceWith(input);
+
+        // 🔥 IMPORTANT: focus AFTER render
+        setTimeout(() => {
+            input.focus();
+            input.select(); // optional: auto-highlight value
+        }, 0);
+
+        // ENTER = save
+        input.on('keydown', function(e) {
+            if (e.key === 'Enter') {
+                let newValue = $(this).val();
+                let td = $(this).closest('td');
+
+                let subject_id = td.data('subject');
+                let component_id = td.data('component');
+
+                saveWeight(td, subject_id, component_id, newValue);
+            }
+
+            // ESC = cancel
+            if (e.key === 'Escape') {
+                cancelEdit($(this), currentValue);
+            }
+        });
+
+        // Blur = cancel
+        input.on('blur', function() {
+            cancelEdit($(this), currentValue);
+        });
+    });
+
+    function saveWeight(td, subject_id, component_id, value) {
+        let percent = value;
+
+        // Convert to decimal (e.g. 50 → 0.5)
+        let weight = percent / 100;
+
+        $.ajax({
+            url: "<?= base_url() . 'gradingsystem/new_gs/editSubjectWeight' ?>", // update this
+            type: "POST",
+            data: {
+                subject_id: subject_id,
+                assessment: component_id,
+                weight: weight,
+                csrf_test_name: $.cookie('csrf_cookie_name')
+            },
+            dataType: 'json',
+            success: function(res) {
+                showTopAlert(res.msg, res.status ? 'success' : 'danger')
+                let display = percent ? percent + '%' : '-';
+
+                td.html(`
+                <span class="editable-weight badge bg-light text-dark border px-3 py-2"
+                      data-value="${percent}">
+                    ${display}
+                </span>
+            `);
+            },
+            error: function() {
+                showTopAlert("Failed to save.", 'warning');
+            }
+        });
+    }
+
+    function cancelEdit(input, oldValue) {
+        let display = oldValue ? oldValue + '%' : '-';
+
+        input.replaceWith(`
+        <span class="editable-weight badge bg-light text-dark border px-3 py-2"
+              data-value="${oldValue}">
+            ${display}
+        </span>
+    `);
+    }
+
+    function filterSubjects() {
+        let keyword = $('#subjectSearch').val().toLowerCase();
+
+        $('tbody tr').each(function() {
+            let subject = $(this).find('td:first').text().toLowerCase();
+
+            if (subject.indexOf(keyword) > -1) {
+                $(this).show();
+            } else {
+                $(this).hide();
+            }
+        });
+    }
+
+    // Button click
+    $('#btnSearch').on('click', function() {
+        filterSubjects();
+    });
+
+    // Enter key trigger
+    $('#subjectSearch').on('keyup', function() {
+        let keyword = $(this).val();
+        loadSubjects(1, keyword); // page 1
+    });
+
+    function loadSubjects(page, keyword = '') {
+        $.get("<?= base_url('gradingsystem/gs_settings') ?>", {
+            page: page,
+            search: keyword
+        }, function(data) {
+            let html = $(data).find('#subjectTableContainer').html();
+            let pagination = $(data).find('#paginationWrapper').html();
+
+            $('#subjectTableContainer').html(html);
+            $('#paginationWrapper').html(pagination);
+        });
+    }
+
+    // Reset button
+    $('#btnReset').on('click', function() {
+        $('#subjectSearch').val('');
+        $('tbody tr').show();
+    });
+
+    // Toggle collapse icon
+    document.querySelectorAll('.collapse').forEach(function(collapseEl) {
+        collapseEl.addEventListener('show.bs.collapse', function() {
+            collapseEl.previousElementSibling.querySelector('.toggle-icon').style.transform = 'rotate(180deg)';
+        });
+        collapseEl.addEventListener('hide.bs.collapse', function() {
+            collapseEl.previousElementSibling.querySelector('.toggle-icon').style.transform = 'rotate(0deg)';
+        });
+    });
+
+    // Search + Clear button
+    function filterSubjects() {
+        let keyword = $('#subjectSearch').val().toLowerCase();
+        $('tbody tr').each(function() {
+            let text = $(this).text().toLowerCase();
+            $(this).toggle(text.includes(keyword));
+        });
+    }
+
+    $('#subjectSearch').on('keyup', function() {
+        filterSubjects();
+        $('#clearSearch').toggle($(this).val().length > 0);
+    });
+
+    $('#clearSearch').on('click', function() {
+        $('#subjectSearch').val('').focus();
+        $(this).addClass('d-none');
+        filterSubjects();
+    });
+
+    $('#btnReset').on('click', function() {
+        $('#subjectSearch').val('');
+        $('#clearSearch').addClass('d-none');
+        filterSubjects();
+    });
+
+    // 🔥 AJAX PAGINATION (LIKE YOUR OTHER MODULE)
+    let isLoading = false;
+
+    $(document).on('click', '.pagination a', function(e) {
+        e.preventDefault();
+
+        if (isLoading) return; // 🔥 prevent spam clicking
+
+        let url = $(this).attr('href');
+        if (!url) return;
+
+        isLoading = true;
+
+        $('#subjectTableContainer').html(`
+        <div class="text-center py-5">
+            <div class="spinner-border text-danger"></div>
+            <div class="mt-2 small text-muted">Loading...</div>
+        </div>
+    `);
+
+        $.get(url)
+            .done(function(data) {
+
+                let html = $(data).find('#subjectTableContainer').html();
+                let pagination = $(data).find('#paginationWrapper').html();
+
+                if (html) {
+                    $('#subjectTableContainer').html(html);
+                }
+
+                if (pagination) {
+                    $('#paginationWrapper').html(pagination);
+                }
+            })
+            .fail(function() {
+                $('#subjectTableContainer').html(`
+                <div class="text-danger text-center py-4">
+                    Failed to load data
+                </div>
+            `);
+            })
+            .always(function() {
+                isLoading = false; // 🔥 release lock
+            });
+    });
 </script>

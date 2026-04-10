@@ -686,145 +686,145 @@ class Enrollment extends MX_Controller
     }
 
     public function saveBasicEdAdmission()
-    {
+{
+    $school_year = $this->input->post('inputCSY');
+    $semester    = $this->input->post('inputSemester');
 
-        $school_year = $this->input->post('inputCSY');
-        $semester = $this->input->post('inputSemester');
+    // Normalize name for checking
+    $last   = trim(strtoupper($this->input->post('inputCLastName')));
+    $first  = trim(strtoupper($this->input->post('inputCFirstName')));
+    $middle = trim(strtoupper($this->input->post('inputCMiddleName')));
 
-        $userExist = $this->enrollment_model->checkName($this->input->post('inputCLastName'), $this->input->post('inputCFirstName'), $this->input->post('inputCMiddleName'), $school_year);
+    // 🔍 Proper duplicate check
+    $userExist = (int) $this->enrollment_model->checkName($last, $first, $middle, $school_year);
 
-        if (!$userExist) {
-            $idNumber = $this->generateID($school_year);
-
-            $st_id = $school_year . $semester . '1' . $idNumber;
-
-            $generatedCode = $this->eskwela->code();
-            $this->enrollment_model->saveTempID($st_id, $generatedCode, $school_year);
-
-            $barangay_id = $this->enrollment_model->setBarangay($this->input->post('inputBarangay'), $generatedCode, $school_year);
-
-            $add = array(
-                'street' => $this->input->post('inputStreet'),
-                'barangay_id' => $barangay_id,
-                'city_id' => $this->input->post('inputMunCity'),
-                'province_id' => $this->input->post('inputPID'),
-                'country' => 'Philippines',
-                'zip_code' => $this->input->post('inputPostal'),
-                'address_id' => $generatedCode
-            );
-
-            $this->enrollment_model->setAddress($add, $school_year);
-
-            $items = array(
-                'lastname' => $this->input->post('inputCLastName'),
-                'firstname' => $this->input->post('inputCFirstName'),
-                'middlename' => $this->input->post('inputCMiddleName'),
-                'add_id' => $generatedCode,
-                'sex' => $this->input->post('inputCGender'),
-                'rel_id' => $this->input->post('inputCReligion'),
-                'temp_bdate' => date('Y-m-d', strtotime($this->input->post('inputBdate'))),
-                'contact_id' => $generatedCode,
-                'nationality' => $this->input->post('inputCNationality'),
-                'account_type' => 5,
-                'occupation_id' => 1,
-                'user_id' => $generatedCode
-            );
-
-            $this->enrollment_model->saveProfile($items, $school_year);
-
-            //saves the basic contact
-            $this->enrollment_model->setContacts($this->input->post('inputPhone'), $this->input->post('inputEmail'), $generatedCode, $school_year);
-
-            $enDate = $this->input->post('inputCEdate');
-
-            //saves the basic info
-
-            $doCheck = 0;
-
-            do {
-                $idExist = $this->enrollment_model->checkIdIfExist($st_id);
-                if ($idExist):
-                    $st_id = $st_id + 1;
-                    $doCheck = 0;
-                else:
-                    $doCheck = 1;
-                endif;
-            } while ($doCheck == 0);
-
-            $section = $this->enrollment_model->getSectionByLevel($this->input->post('getLevel'), $school_year);
-
-            $this->enrollment_model->setBasicEdInfo($st_id, $generatedCode, $this->input->post('getLevel'), ($section->row() ? $section->row()->s_id : 0), $this->input->post('strand'), $enDate, $school_year, $this->input->post('inputSemester'), ($this->input->post('inputSLA') == "" ? "(No Entry)" : $this->input->post('inputSLA')), ($this->input->post('inputAddressSLA') == "" ? "" : $this->input->post('inputAddressSLA')), 3);
-
-
-            $f_occupation_id = $this->enrollment_model->saveOccupation($this->input->post('inputF_occ'), $school_year);
-            $m_occupation_id = $this->enrollment_model->saveOccupation($this->input->post('inputM_occ'), $school_year);
-
-            $parentDetails = array(
-                'p_id' => $this->eskwela->code(),
-                'u_id' => $generatedCode,
-                'f_lastname' => $this->input->post('inputFLName'),
-                'f_firstname' => $this->input->post('inputFName'),
-                'f_middlename' => $this->input->post('inputFMName'),
-                //                'f_bdate' => $this->input->post('f_inputBdate'),
-                'f_mobile' => $this->input->post('inputF_num'),
-                'f_occ' => $f_occupation_id,
-                'f_office_name' => $this->input->post('f_officeName'),
-                'm_lastname' => $this->input->post('inputMLName'),
-                'm_firstname' => $this->input->post('inputMother'),
-                'm_middlename' => $this->input->post('inputMMName'),
-                //                'm_bdate' => $this->input->post('m_inputBdate'),
-                'm_mobile' => $this->input->post('inputM_num'),
-                'm_occ' => $m_occupation_id,
-                'ice_name' => $this->input->post('inputInCaseName'),
-                'ice_contact' => $this->input->post('inputInCaseContact'),
-            );
-
-            $this->enrollment_model->saveParentDetails($parentDetails, $school_year);
-
-            //Medical information
-            //            $this->enrollment_model->saveMed(
-            //                $this->input->post('inputBType'), 
-            //                $this->input->post('inputAllergies'), 
-            //                $this->input->post('inputOtherMedInfo'), 
-            //                $this->input->post('inputFPhy'), 
-            //                $this->input->post('height'), 
-            //                $this->input->post('weight'), 
-            //                $generatedCode, $school_year );
-
-            $gradeName = $this->enrollment_model->getGradeLevelById($this->input->post('getLevel'), $school_year);
-
-
-            $remarks = 'A new ' . $gradeName->level . ' student name ' . strtoupper($this->input->post('inputCFirstName') . ' ' . $this->input->post('inputCMiddleName') . ". " . $this->input->post('inputCLastName')) . ' has enrolled online for the school year ' . $school_year . ' - ' . ($school_year + 1) . '.';
-            $name = ucwords(strtolower($this->input->post('inputCFirstName') . ' ' . $this->input->post('inputCLastName')));
-            Modules::run('notification_system/systemNotification', 5, $remarks);
-
-            Modules::run('main/logActivity', 'REGISTRAR', $remarks, $generatedCode);
-
-            $msg = 'Your Information is successfully submitted.  You can use this ID #: <b>' . $st_id . '</b> for <b>' . strtoupper($name) . '</b> to access the system. Login Now to upload the required documents';
-
-            $result = json_decode($this->sendConfirmation($this->post('inputInCaseContact'), $msg));
-            $resultStatus = $result->status;
-            $try = 0;
-            while ($resultStatus != 1):
-                $try++;
-                $result = json_decode($this->sendConfirmation($this->post('inputInCaseContact'), $msg));
-                if ($try == 10):
-
-                    break;
-                    exit();
-                endif;
-                $resultStatus = $result->status;
-            endwhile;
-
-            if ($resultStatus == 1):
-                echo 'Information Successfully Submitted';
-            else:
-                echo $msg;
-            endif;
-        } else {
-            echo 'Sorry failed to submit application, Name already Exist. Please contact the registrar for more information';
-        }
+    if ($userExist > 0) {
+        echo 'Sorry failed to submit application, Name already Exist. Please contact the registrar for more information';
+        return;
     }
+
+    // 🔐 START TRANSACTION (important)
+    $this->db->trans_start();
+
+    $idNumber = $this->generateID($school_year);
+    $st_id    = $school_year . $semester . '1' . $idNumber;
+
+    $generatedCode = $this->eskwela->code();
+
+    $this->enrollment_model->saveTempID($st_id, $generatedCode, $school_year);
+
+    // Address
+    $barangay_id = $this->enrollment_model->setBarangay(
+        $this->input->post('inputBarangay'),
+        $generatedCode,
+        $school_year
+    );
+
+    $add = [
+        'street'      => $this->input->post('inputStreet'),
+        'barangay_id' => $barangay_id,
+        'city_id'     => $this->input->post('inputMunCity'),
+        'province_id' => $this->input->post('inputPID'),
+        'country'     => 'Philippines',
+        'zip_code'    => $this->input->post('inputPostal'),
+        'address_id'  => $generatedCode
+    ];
+
+    $this->enrollment_model->setAddress($add, $school_year);
+
+    // Profile (SAVE ORIGINAL CASE, NOT UPPERCASE)
+    $items = [
+        'lastname'      => $this->input->post('inputCLastName'),
+        'firstname'     => $this->input->post('inputCFirstName'),
+        'middlename'    => $this->input->post('inputCMiddleName'),
+        'add_id'        => $generatedCode,
+        'sex'           => $this->input->post('inputCGender'),
+        'rel_id'        => $this->input->post('inputCReligion'),
+        'temp_bdate'    => date('Y-m-d', strtotime($this->input->post('inputBdate'))),
+        'contact_id'    => $generatedCode,
+        'nationality'   => $this->input->post('inputCNationality'),
+        'account_type'  => 5,
+        'occupation_id'=> 1,
+        'user_id'       => $generatedCode
+    ];
+
+    $this->enrollment_model->saveProfile($items, $school_year);
+
+    // Contacts
+    $this->enrollment_model->setContacts(
+        $this->input->post('inputPhone'),
+        $this->input->post('inputEmail'),
+        $generatedCode,
+        $school_year
+    );
+
+    // Ensure unique student ID
+    do {
+        $idExist = $this->enrollment_model->checkIdIfExist($st_id);
+        if ($idExist) {
+            $st_id++;
+        }
+    } while ($idExist);
+
+    // Basic Ed Info
+    $section = $this->enrollment_model->getSectionByLevel(
+        $this->input->post('getLevel'),
+        $school_year
+    );
+
+    $this->enrollment_model->setBasicEdInfo(
+        $st_id,
+        $generatedCode,
+        $this->input->post('getLevel'),
+        ($section->row() ? $section->row()->s_id : 0),
+        $this->input->post('strand'),
+        $this->input->post('inputCEdate'),
+        $school_year,
+        $semester,
+        ($this->input->post('inputSLA') ?: '(No Entry)'),
+        ($this->input->post('inputAddressSLA') ?: ''),
+        3
+    );
+
+    // Parents
+    $parentDetails = [
+        'p_id'         => $this->eskwela->code(),
+        'u_id'         => $generatedCode,
+        'f_lastname'   => $this->input->post('inputFLName'),
+        'f_firstname'  => $this->input->post('inputFName'),
+        'f_middlename' => $this->input->post('inputFMName'),
+        'f_mobile'     => $this->input->post('inputF_num'),
+        'f_occ'        => $this->enrollment_model->saveOccupation($this->input->post('inputF_occ'), $school_year),
+        'f_office_name'=> $this->input->post('f_officeName'),
+        'm_lastname'   => $this->input->post('inputMLName'),
+        'm_firstname'  => $this->input->post('inputMother'),
+        'm_middlename' => $this->input->post('inputMMName'),
+        'm_mobile'     => $this->input->post('inputM_num'),
+        'm_occ'        => $this->enrollment_model->saveOccupation($this->input->post('inputM_occ'), $school_year),
+        'ice_name'     => $this->input->post('inputInCaseName'),
+        'ice_contact'  => $this->input->post('inputInCaseContact')
+    ];
+
+    $this->enrollment_model->saveParentDetails($parentDetails, $school_year);
+
+    // 🔐 END TRANSACTION
+    $this->db->trans_complete();
+
+    if ($this->db->trans_status() === FALSE) {
+        echo 'Sorry failed to submit application. Please try again.';
+        return;
+    }
+
+    // Notifications
+    $name = ucwords(strtolower($this->input->post('inputCFirstName') . ' ' . $this->input->post('inputCLastName')));
+    $msg  = 'Your Information is successfully submitted. You can use this ID #: <b>' . $st_id . '</b> for <b>' . strtoupper($name) . '</b>.';
+
+    // ✅ FIXED post() BUG
+    $this->sendConfirmation($this->input->post('inputInCaseContact'), $msg);
+
+    echo 'Information Successfully Submitted';
+}
+
 
     public function saveAdmission()
     {

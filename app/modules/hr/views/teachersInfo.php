@@ -3,451 +3,879 @@ $hrdb = Modules::load('hr/hrdbprocess/');
 $leaveSpent = Modules::run('hr/payroll/getTotalLeaveSpent', $basicInfo->employee_id);
 $daysLCredited = Modules::run('hr/payroll/getLeaveCredited', $basicInfo->employee_id, null);
 $lcInHrs = ($basicInfo->leave_credits * 8) - $leaveSpent->totalLeaveSpent - $daysLCredited->leaveCredited;
+
+$officialTime = Modules::run('hr/hrdbprocess/getTimeShift', $basicInfo->time_group_id);
+$officialTimeInAm = ($officialTime ? $officialTime->ps_from : '08:00:00');
+$officialTimeOutAm = ($officialTime ? $officialTime->ps_to : '12:00:00');
+$totalTimeMorning = round(abs(strtotime($officialTimeInAm) - strtotime($officialTimeOutAm)) / 60, 2);
+
+$officialTimeInPm = ($officialTime ? $officialTime->ps_from_pm : '13:00:00');
+$officialTimeOutPm = ($officialTime ? $officialTime->ps_to_pm : '17:00:00');
+$totalTimeAfternoon = round(abs(strtotime($officialTimeInPm) - strtotime($officialTimeOutPm)) / 60, 2);
+
+$lunchBreak = round(abs(strtotime($officialTimeInPm) - strtotime($officialTimeOutAm)) / 60, 2);
+$totalHoursReq = $totalTimeMorning + $totalTimeAfternoon;
+$totalHoursReq = ($totalHoursReq >= 450 ? 480 : $totalHoursReq);
+
+$timeInCompute = 0;
+$timeOutCompute = 0;
+$timeInPMCompute = 0;
+$timeOutPMCompute = 0;
+$totalUndertimeTardy = 0;
+$totalUndertime = 0;
+$overtime = 0;
+$otID = 1;
+
+$totalMin = 0;
+$totalHours = 0;
+$under = 0;
+
+foreach ($records as $row) {
+    if ($row->time_in != "") {
+        if (mb_strlen($row->time_in) <= 3):
+            $time_in = date("g:i a", strtotime("0" . $row->time_in));
+            $forUnderIn = date("g:i:s", strtotime("0" . $row->time_in));
+        else:
+            $time_in = date("g:i a", strtotime($row->time_in));
+            $forUnderIn = date("g:i:s", strtotime($row->time_in));
+        endif;
+
+        $timeInCompute = $row->time_in;
+    } else {
+        $time_in = "";
+        $forUnderIn = "";
+    }
+
+    if ($row->time_out != "") {
+        if (mb_strlen($row->time_out) <= 3):
+            $time_out = date("g:i a", strtotime('0' . $row->time_out));
+        else:
+            $time_out = date("g:i a", strtotime($row->time_out));
+        endif;
+        $timeOutCompute = $row->time_out;
+    } else {
+        $time_out = "";
+    }
+
+    if ($row->time_in_pm != "") {
+        $time_in_pm = date("g:i a", strtotime($row->time_in_pm));
+        $timeInPMCompute = $row->time_in_pm;
+    } else {
+        $time_in_pm = "";
+    }
+    if ($row->time_out_pm != "") {
+        $time_out_pm = date("g:i a", strtotime($row->time_out_pm));
+        $timeOutPMCompute = $row->time_out_pm;
+        $forUnderPMOut = date("g:i:s", strtotime($row->time_out_pm));
+    } else {
+        $time_out_pm = "";
+        $forUnderPMOut = "";
+    }
+
+    if ($timeInCompute != 0): // In AM
+        $tardyAm = ((strtotime($time_in) - strtotime($officialTimeInAm))) <= 0 ? 0 : (strtotime($time_in) - strtotime($officialTimeInAm)) / 60;
+    else:
+        $tardyAm = $totalTimeMorning;
+    endif;
+
+    if ($timeOutCompute != 0):
+        if (strtotime($time_out) < strtotime($officialTimeInAm)):
+            if ($timeOutPMCompute == 0):
+                $totalUndertime = $totalTimeMorning;
+            else:
+                $totalUndertime = 0;
+            endif;
+        else:
+            $undertimeAm = ((strtotime($officialTimeOutAm) - strtotime($time_out))) <= 0 ? 0 : (strtotime($officialTimeOutAm) - strtotime($time_out)) / 60;
+            $totalUndertime = $tardyAm + $undertimeAm;
+        endif;
+    elseif ($timeOutPMCompute != 0):
+        $totalUndertime = $tardyAm;
+    else:
+        $totalUndertime = $totalTimeMorning;
+    endif;
+
+    //---------------- Afternoon --------------------------------------------------------///
+
+    if ($timeInPMCompute != 0):
+        if ($timeInCompute != 0):
+            $tardyPm = 0;
+        else:
+            $tardyPm = ((strtotime($time_in_pm) - strtotime($officialTimeInPm))) <= 0 ? 0 : (strtotime($time_in_pm) - strtotime($officialTimeInPm)) / 60;
+        endif;
+    elseif ($timeOutPMCompute != 0):
+        $tardyPm = 0;
+    else:
+        $tardyPm = $totalTimeAfternoon;
+    endif;
+
+    if ($timeOutPMCompute != 0):
+        $undertimePM =  (strtotime($officialTimeOutPm) - strtotime($time_out_pm)) <= 0 ? 0 : (strtotime($officialTimeOutPm) - strtotime($time_out_pm)) / 60;
+        $totalUndertimePm = $undertimePM + $tardyPm;
+    elseif ($timeInPMCompute != 0):
+        $totalUndertimePm = $totalTimeAfternoon;
+    else:
+        $totalUndertimePm = $tardyPm;
+    endif;
+
+    $totalRender = 0;
+    if ($timeInCompute != 0):
+        if ($timeOutPMCompute != 0):
+            if ($tardyAm == 0):
+                if ($undertimePM == 0):
+                    $totalRender = ((strtotime($officialTimeOutPm) - strtotime($officialTimeInAm)) / 60) - $lunchBreak;
+                    if (strtotime($time_out_pm) > strtotime($officialTimeOutPm)):
+                        $overtime = strtotime($time_out_pm) - strtotime($officialTimeOutPm);
+                    endif;
+                else:
+                    $totalRender = ((strtotime($time_out_pm) - strtotime($officialTimeInAm)) / 60) - $lunchBreak;
+                endif;
+            else:
+                if ($undertimePM == 0):
+                    $totalRender = ((strtotime($officialTimeOutPm) - strtotime($time_in)) / 60) - $tardyAm - $lunchBreak;
+                    if (strtotime($time_out_pm) > strtotime($officialTimeOutPm)):
+                        $overtime = strtotime($time_out_pm) - strtotime($officialTimeOutPm);
+                    endif;
+                else:
+                    $totalRender = ((strtotime($time_out_pm) - strtotime($time_in)) / 60) - $tardyAm - $lunchBreak;
+                endif;
+            endif;
+        elseif ($timeOutCompute != 0):
+            if ($tardyAm == 0):
+                if ($undertimeAm == 0):
+                    $totalRender = ((strtotime($officialTimeOutAm) - strtotime($officialTimeInAm)) / 60);
+                else:
+                    $totalRender = ((strtotime($time_out) - strtotime($officialTimeInAm)) / 60);
+                endif;
+            else:
+                if ($undertimeAm == 0):
+                    $totalRender = ((strtotime($officialTimeOutAm) - strtotime($time_in)) / 60);
+                else:
+                    $totalRender = ((strtotime($time_out) - strtotime($time_in)) / 60);
+                endif;
+            endif;
+        else:
+            $totalRender = 0;
+        endif;
+    elseif ($timeInPMCompute != 0):
+        if ($timeOutPMCompute != 0):
+            if ($tardyPm == 0):
+                if ($undertimePM == 0):
+                    $totalRender = ((strtotime($officialTimeOutPm) - strtotime($officialTimeInPm)) / 60);
+                else:
+                    $totalRender = ((strtotime($time_out_pm) - strtotime($officialTimeInPm)) / 60);
+                endif;
+            else:
+                if ($undertimePM == 0):
+                    $totalRender = ((strtotime($officialTimeOutPm) - strtotime($time_in_pm)) / 60);
+                else:
+                    $totalRender = ((strtotime($time_out_pm) - strtotime($time_in_pm)) / 60);
+                endif;
+            endif;
+        else:
+            $totalRender = 0;
+        endif;
+    endif;
+
+    $totalRender = ($totalRender >= 450 ? 480 : $totalRender);
+
+    if ($totalRender > 0):
+        $under = ($totalHoursReq - $totalRender <= 0 ? 0 : $totalHoursReq - $totalRender);
+        $totalRender = $totalRender;
+    else:
+        $under = 0;
+        $totalRender = 0;
+    endif;
+    // echo abs(date('H:i', mktime(0, $totalHoursReq))) . 'h ' . abs(date('i', mktime(0, $totalHoursReq))) . 'm';
+
+    //echo $totalUndertimePm+$tardyPm;
+    // $totalUndertimeTardy = ($tardyAm + $undertimeAm)+($tardyPm+$undertimePm);
+
+    if ($row->date != date('Y-m-d')):
+        $totalUndertimeTardy = $totalUndertime + $totalUndertimePm;
+        $overtime = ($totalUndertimeTardy > 0 ? 0 : ($overtime / 60));
+    endif;
+    $isOT = Modules::run('hr/payroll/getOverTimeByDate', base64_encode($info->employee_id), base64_encode($row->att_id));
+
+    $HoursAM = $hrdb->getManHours($time_in, $time_out, $row->date);
+    $HoursPM = $hrdb->getManHours($time_in_pm, $time_out_pm, $row->date);
+    $totaltimeAM = json_decode($HoursAM);
+    $totaltimePM = json_decode($HoursPM);
+
+    $totalAmH = $totaltimeAM->totalTime;
+    $totalPmH = $totaltimePM->totalTime;
+    if ($time_out == 0 && $time_out_pm != 0):
+        $totalAmH = 4;
+    endif;
+
+
+    $totalTimeH = $totalAmH + $totalPmH;
+    $totalTimeM = $totaltimeAM->minutes + $totaltimePM->minutes;
+
+    if ($row->date != date('Y-m-d')):
+        $totalH = (8 * 60) - $totalUndertimeTardy;
+    else:
+        $totalH = 0;
+    endif;
+
+    // echo abs(date('H:i', mktime(0, $totalRender))) . 'h ' . abs(date('i', mktime(0, $totalRender))) . 'm';
+    $renderTime = 0;
+
+    if ($totalRender > $totalHoursReq):
+        $renderTime = $totalHoursReq;
+    else:
+        $renderTime = $totalRender;
+    endif;
+
+    $totalHours += abs(date('H', mktime(0, $renderTime)));
+    $totalMin += date('i', mktime(0, $renderTime));
+    $overAllTardy += $totalUndertimeTardy;
+
+    unset($totalTimeH);
+    unset($totalTimeM);
+    unset($undertimeAm);
+    unset($undertimePM);
+    unset($totalUndertime);
+    unset($totalUndertimePm);
+    unset($totalUndertimeTardy);
+    $timeInCompute = 0;
+    $timeInPMCompute = 0;
+    $timeOutCompute = 0;
+    $timeOutPMCompute = 0;
+}
+$th = abs(date('H', mktime(0, $totalHoursReq)));
+$tm = abs(date('i', mktime(0, $totalHoursReq)));
+$tt = round(($tm / 60), 2) + $th;
+$hoursRequired = (Modules::run('hr/getNumberOfDaysWork', $dateFrom, $dateTo)) * $tt;
+$leaveDaysCredited = Modules::run('hr/payroll/getLeaveByDates', $dateFrom, $dateTo, $basicInfo->employee_id);
 ?>
-<div class="row">
-    <div class="col-lg-12">
-        <h3 style="margin:5px;" class="page-header text-center">Teacher's Information</h3>
-    </div>
 
-    <!-- /.col-lg-12 -->
-</div>
-<div class="well col-lg-12">
-    <input type="hidden" id="empUserID" value="<?php echo $basicInfo->uid ?>" />
-    <div class="col-lg-2">
-        <div onclick="imgSignUpload(this.id)" id="photo">
-            <?php if ($basicInfo->avatar != ''):
-                if (file_exists('uploads/' . $basicInfo->avatar)):
-            ?>
-                    <img class="img-circle" style="width:150px; border:5px solid #fff" src="<?php echo base_url() . 'uploads/' . $basicInfo->avatar  ?>" />
-                <?php else: ?>
-                    <img class="img-circle" style="width:150px; border:5px solid #fff" src="<?php echo base_url() . 'images/avatar/' . ($basicInfo->sex == 'Female' ? 'female.png' : 'male.png')  ?>" />
-                <?php endif; ?>
-            <?php else: ?>
-                <img class="img-circle" style="width:150px; border:5px solid #fff" src="<?php echo base_url() . 'images/avatar/' . ($basicInfo->sex == 'Female' ? 'female.png' : 'male.png')  ?>" />
-            <?php endif; ?>
-            <!-- <img class="img-circle img-responsive" style="width:150px; border:5px solid #fff" src="<?php
-                                                                                                        // if ($basicInfo->avatar != ""):echo base_url() . 'uploads/' . $basicInfo->avatar;
-                                                                                                        // else:echo base_url() . 'uploads/noImage.png';
-                                                                                                        // endif;
-                                                                                                        ?>" /> -->
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col-12">
+            <h3 class="text-center border-bottom pb-2">Teacher's Information</h3>
         </div>
     </div>
-    <div class="col-lg-6">
-        <h2 style="color:black; margin:3px 0;">
-            <span id="name">
-                <?php echo $basicInfo->firstname . ' ' . $basicInfo->lastname ?></span>
-            <small>
-                <i style="font-size:15px;" class="fa fa-pencil-square-o clickover pointer"
-                    rel="clickover"
-                    data-content=" 
-                   <?php
-                    $data['st_id'] = $basicInfo->uid;
-                    $data['firstname'] = $basicInfo->firstname;
-                    $data['middlename'] = $basicInfo->middlename;
-                    $data['lastname'] = $basicInfo->lastname;
-                    $this->load->view('basicInfo', $data)
-                    ?>
-                   "></i>
-            </small>
-        </h2>
-        <h3 style="color:black; margin:3px 0;">
-            <span style="color:#BB0000;" id="grade">
-                <?php echo $basicInfo->position ?> </span>
-            <?php if ($this->session->userdata('is_admin')): ?>
-                <small>
-                    <i style="font-size:15px;" class="fa fa-pencil-square-o clickover pointer  "
-                        rel="clickover"
-                        data-content=" 
-                       <?php
-                        $level['position'] = Modules::run('hr/getDepartment');
-                        $level['user_id'] = $basicInfo->user_id;
-                        $this->load->view('positions', $level)
-                        ?>
-                       "></i>
-                </small>
 
-            <?php endif; ?>
-        </h3>
-        <h3 style="color:black; margin:3px 0;">
-            <small>
-                <span>
-                    <?php echo $basicInfo->employee_id ?>
-                    <input type="hidden" id="em_id" value="<?php echo $basicInfo->employee_id ?>" />
-                </span>
-            </small>
-        </h3>
-        <h3 style="color:black; margin:3px 0;">
-            <small>
-                <span>
-                    Username: <?php echo $basicInfo->uname ?>
-                </span><br>
-                <span>
-                    Password: <em id="dotdot">* * * * * *</em>&nbsp;&nbsp;
-                    <i class="fa fa-pencil-square-o clickover pointer" id="ePass" rel="clickover"
-                        data-content="
-                       <?php
-                        $this->load->view('changePass');
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <input type="hidden" id="empUserID" value="<?= $basicInfo->uid ?>" />
+
+            <div class="row g-3 align-items-start">
+                <!-- Profile Photo -->
+                <div class="col-lg-2 text-center">
+                    <div onclick="imgSignUpload(this.id)" id="photo" class="cursor-pointer">
+                        <?php if ($basicInfo->avatar != '' && file_exists('uploads/' . $basicInfo->avatar)): ?>
+                            <img class="rounded-circle img-fluid border border-4 border-white shadow"
+                                style="width:150px;"
+                                src="<?= base_url() . 'uploads/' . $basicInfo->avatar ?>" />
+                        <?php else: ?>
+                            <img class="rounded-circle img-fluid border border-4 border-white shadow"
+                                style="width:150px;"
+                                src="<?= base_url() . 'images/avatar/' . ($basicInfo->sex == 'Female' ? 'female.png' : 'male.png') ?>" />
+                        <?php endif; ?>
+                    </div>
+                </div>
+
+                <!-- Basic Info -->
+                <div class="col-lg-6">
+                    <h2 class="mb-1">
+                        <span id="name"><?= $basicInfo->firstname . ' ' . $basicInfo->lastname ?></span>
+                        <?php if ($this->session->employee_id == $basicInfo->employee_id): ?>
+                            <small>
+                                <i class="fa fa-pencil-square-o text-muted pointer"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#basicInfoModal"
+                                    onclick="
+                                $('#firstname').val('<?= $basicInfo->firstname ?>'), 
+                                    $('#middlename').val('<?= $basicInfo->middlename ?>'), 
+                                    $('#lastname').val('<?= $basicInfo->lastname ?>'),
+                                    $('#pos').val('s'),
+                                    $('#st_user_id').val('<?= $basicInfo->uid ?>'),
+                                    $('#rowid').val('<?= $basicInfo->uid ?>'),
+                                    $('#name_id').val('name')"></i>
+                            </small>
+                        <?php endif; ?>
+                    </h2>
+
+                    <!-- Position -->
+                    <h5 class="mb-2">
+                        <span class="text-danger">Position:</span>
+                        <?php
+                        if (isset($employeePositions) && is_array($employeePositions) && count($employeePositions)) {
+                            $activePosition = null;
+                            $otherPositions = [];
+
+                            foreach ($employeePositions as $ep) {
+                                if ((int)$ep->is_primary === 1) $activePosition = $ep;
+                                else $otherPositions[] = $ep;
+                            }
+                            if (!$activePosition) $activePosition = $employeePositions[0];
                         ?>
-                       "></i>
-                </span>
-            </small>
-        </h3>
-    </div>
-    <div class="col-lg-4 no-padding no-margin pull-right panel panel-primary">
-        <div class="panel-heading" style="height:190px;">
-            <table style="font-size: 20px;">
-                <tr style="border:none;">
-                    <th style="padding:0 5px 2px 0; float: right;">Hours Required : </th>
-                    <th style="padding:0 5px 2px 0;"><span id="totalHoursRequired"></span> hrs</th>
-                </tr>
-                <tr>
-                    <th style="padding:0 5px 2px 0; float: right;">Hours Rendered : </th>
-                    <th style="padding:0 5px 2px 0;"><span id="hoursRendered"></span> hrs</th>
-                </tr>
-                <tr>
-                    <th style="padding:0 5px 2px 0; float: right;">Tardy/Undertime : </th>
-                    <th style="padding:0 5px 2px 0;"><span id="totalMinutesTardy"></span> hrs</th>
-                </tr>
-                <tr>
-                    <th style="padding:0 5px 2px 0; float: right;">Day/s Leave : </th>
-                    <th style="padding:0 5px 2px 0;"><span id="dlInHrs"></span> hrs or [<span id="totalDaysLeave"></span> days] </th>
-                </tr>
-                <tr>
-                    <th style="padding:0 5px 2px 0; float: right;">Day/s Absent : </th>
-                    <th style="padding:0 5px 2px 0;"><span id="daInHrs"></span> hrs or [<span id="totalDaysAbsent"></span> days] </th>
-                </tr>
-                <tr>
-                    <th style="padding:5px; float: right;">Leave Credits : </th>
-                    <th style="padding:5px;"><span id="LCredits"><?php echo $lcInHrs ?></span> hrs remaining</th>
-                </tr>
-            </table>
-        </div>
-    </div>
-    <div id="uploadSignature" style="width:20%; margin: 50px auto;" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-        <div class="panel panel-primary" style='width:100%;'>
-            <div class="panel-heading clearfix">
-                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                <h6>Upload Signature</h6>
+                            <span class="badge bg-success">
+                                <?= ($activePosition->department ? $activePosition->department . ' - ' : '') . $activePosition->position; ?>
+                                <small>[active]</small>
+                            </span>
+
+                            <?php if (!empty($otherPositions)): ?>
+                                <span class="badge bg-info text-dark pointer"
+                                    data-bs-toggle="popover"
+                                    data-bs-html="true"
+                                    data-bs-placement="bottom"
+                                    data-bs-content='
+                                      <div class="p-2">
+                                          <?php foreach ($otherPositions as $op): ?>
+                                              <div class="border-bottom mb-2 pb-2">
+                                                  <strong><?= ($op->department ? $op->department . " - " : "") . $op->position; ?></strong>
+                                                  <?php if ($this->session->employee_id == $basicInfo->employee_id): ?>
+                                                      <button class="btn btn-sm btn-success w-100 mt-1"
+                                                          onclick="activateEmployeePosition(<?= $basicInfo->employee_id ?>,<?= $op->position_id ?>,<?= $op->user_id ?>,<?= $op->dept_id ?>)">
+                                                          Activate
+                                                      </button>
+                                                  <?php endif; ?>
+
+                                                  <?php if ($this->session->userdata("is_admin")): ?>
+                                                      <button class="btn btn-sm btn-danger w-100 mt-1"
+                                                          onclick="deleteEmployeePosition(<?= $basicInfo->employee_id ?>,<?= $op->position_id ?>)">
+                                                          Remove
+                                                      </button>
+                                                  <?php endif; ?>
+                                              </div>
+                                          <?php endforeach; ?>
+                                      </div>'>
+                                    +<?= count($otherPositions) ?> more
+                                </span>
+                            <?php endif; ?>
+                        <?php } else {
+                            echo $basicInfo->position;
+                        } ?>
+                    </h5>
+
+                    <div class="mb-2">
+                        <small class="text-muted">
+                            ID: <?= $basicInfo->employee_id ?>
+                            <input type="hidden" id="em_id" value="<?= $basicInfo->employee_id ?>" />
+                        </small>
+                    </div>
+
+                    <div class="mb-2">
+                        <small>
+                            Username: <?= $basicInfo->uname ?><br>
+                            Password: <em id="dotdot">* * * * * *</em>
+                            <?php if ($this->session->employee_id == $basicInfo->employee_id): ?>
+                                <i class="fa fa-pencil-square-o text-muted pointer"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#passChangeModal"></i>
+                            <?php endif; ?>
+                        </small>
+                    </div>
+                </div>
+
+                <!-- Attendance Summary -->
+                <div class="col-lg-4">
+                    <div class="card border-primary shadow-sm">
+                        <div class="card-header bg-primary text-white">
+                            Work Summary
+                        </div>
+                        <div class="card-body p-2">
+                            <table class="table table-sm mb-0">
+                                <tr>
+                                    <th class="text-end">Hours Required :</th>
+                                    <td><span id="totalHoursRequired"><?= $hoursRequired ?></span> hrs</td>
+                                </tr>
+                                <tr>
+                                    <th class="text-end">Hours Rendered :</th>
+                                    <td><span id="hoursRendered"><?= round(($totalMin / 60), 2) + $totalHours ?></span> hrs</td>
+                                </tr>
+                                <tr>
+                                    <th class="text-end">Tardy/Undertime :</th>
+                                    <td><span id="totalMinutesTardy"><?= date('i', $under) ?></span> hrs</td>
+                                </tr>
+                                <tr>
+                                    <th class="text-end">Leave :</th>
+                                    <td>
+                                        <span id="dlInHrs"><?= ($dlCredited / 8) ?></span> hrs
+                                        [<span id="totalDaysLeave"><?= $dlCredited ?></span> days]
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <?php
+                                    $absent = $hoursRequired - (round(($totalMin / 60), 2) + $totalHours) - $dlCredited;
+                                    ?>
+                                    <th class="text-end">Absent :</th>
+                                    <td>
+                                        <span id="daInHrs"><?= number_format($absent, 2) ?></span> hrs
+                                        [<span id="totalDaysAbsent"><?= number_format($absent / 8, 2); ?></span> days]
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th class="text-end">Leave Credits :</th>
+                                    <td><span id="LCredits"><?= $lcInHrs ?></span> hrs remaining</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
 
             </div>
-            <div class="panel-body">
-
-                <form action="<?php echo base_url() . 'main/do_upload' ?>" enctype="multipart/form-data" method="post" id="submitSign">
-                    <input style="height:35px;" class="btn-mini" type="file" name="userfile" size="20" />
-                    <br /><br />
-
-                    <input type="hidden" name="picture_option" value="sign" />
-                    <input type="hidden" name="id" value="<?php echo $basicInfo->uid ?>" />
-                    <input type="hidden" name="location" value="<?php echo $this->uri->segment(1) . '/' . $this->uri->segment(2) . '/' . $this->uri->segment(3) ?>" />
-
-                    <input type="submit" value="upload" id="submitSign" class="btn-info" />
-
-                </form>
-            </div>
         </div>
     </div>
-</div>
 
-<div class="row">
-    <ul class="nav nav-tabs" role="tablist" id="profile_tab">
-        <li onclick="$('#acadADD').hide()" class="active"><a href="#PersonalInfo">Personal Information</a></li>
-        <li><a onclick="$('#acadADD').show()" href="#academicInformation">Academic Information</a></li>
-        <li><a onclick="$('#acadADD').hide()" href="#statutory">Salary / Benefits</a></li>
-        <li><a onclick="$('#acadADD').hide()" href="#dtr">Daily Time Record</a></li>
-        <li><a onclick="$('#acadADD').hide()" href="#od_info">Loans / Deductions</a></li>
-        <li class="pull-right pointer"><a onclick="imgSignUpload(this.id)" id="sign">Upload Signature</a></li>
-        <button data-toggle="modal" data-target="#addEdHis" id="acadADD" style="margin-top:10px; display: none;" class="btn btn-xs btn-success pull-right"><i class="fa fa-plus-circle"></i> ADD</button>
+    <!-- Tabs -->
+    <ul class="nav nav-tabs" id="profile_tab" role="tablist">
+        <li class="nav-item">
+            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#PersonalInfo">Personal Information</button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#academicInformation">Academic Information</button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#statutory">Salary / Benefits</button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#dtr">Daily Time Record</button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#od_info">Loans / Deductions</button>
+        </li>
+        <!-- <li class="ms-auto">
+            <button class="btn btn-sm btn-outline-primary" onclick="imgSignUpload('sign')">Upload Signature</button>
+        </li> -->
     </ul>
-    <div class="tab-content col-lg-12">
-        <div style="padding-top: 15px;" class="tab-pane active" id="PersonalInfo">
-            <div class="col-lg-6 pull-right">
-                <img class="img-square img-responsive pull-right" style="width:150px; border:5px solid #fff" src="<?php
-                                                                                                                    if ($basicInfo->uid != ""): echo base_url() . 'uploads/sign/' . $basicInfo->uid . '.png';
-                                                                                                                    else: echo base_url() . 'uploads/noImage.png';
-                                                                                                                    endif;
-                                                                                                                    ?>" />
-            </div>
-            <div class="col-lg-6">
-                <dl class="dl-horizontal" style="cursor: pointer; color:black;">
-                    <dt>
-                        Address:
-                    </dt>
-                    <dd>
-                        <span id="address_span"><?php echo $basicInfo->street . ', ' . $basicInfo->barangay . ' ' . $basicInfo->mun_city . ', ' . $basicInfo->province . ', ' . $basicInfo->zip_code; ?></span>
-                        <i style="font-size:15px; color:#777;" class="fa fa-pencil-square-o clickover pointer "
-                            rel="clickover" id="addClick"
-                            data-content="<?php
-                                            $data['cities'] = Modules::run('main/getCities');
-                                            $data['address_id'] = $basicInfo->address_id;
-                                            $data['st_id'] = $basicInfo->employee_id;
-                                            $data['street'] = $basicInfo->street;
-                                            $data['barangay'] = $basicInfo->barangay;
-                                            $data['city'] = $basicInfo->city_id;
-                                            $data['province'] = $basicInfo->province;
-                                            $data['pid'] = $basicInfo->province_id;
-                                            $data['zip_code'] = $basicInfo->zip_code;
-                                            $data['user_id'] = $basicInfo->user_id;
-                                            $this->load->view('addressInfo', $data)
-                                            ?>
-                           ">
-                        </i>
 
-                    </dd>
-                </dl>
-                <dl class="dl-horizontal">
-                    <dt>
-                        Telephone No:
-                    </dt>
-                    <dd>
-                        <span title="double click to edit" id="a_phone">
-                            <?php
-                            if ($basicInfo->cd_phone != "" && $basicInfo->cd_phone != '0'): echo $basicInfo->cd_phone;
-                            else: echo "[empty]";
-                            endif;
-                            ?>
-                        </span>
+    <div class="tab-content border border-top-0 p-3 bg-white">
+        <div class="tab-pane fade show active" id="PersonalInfo">
+            <div class="row g-4">
 
-                        <input style="display: none; width:300px" type="text" id="telephone" value="<?php echo $basicInfo->cd_phone; ?>"
-                            onkeypress="if (event.keyCode == 13) {
-                                       }"
-                            title="press enter to save your edit" />
-                        <i id="editTelephoneBtn" onclick="$('#a_telephone').hide(), $('#telephone').show(), $('#telephone').focus(), $(this).hide(), $('#saveTelephoneBtn').show(), $('#closeTelephoneBtn').show()" style="font-size:15px; color:#777;" class="fa fa-pencil-square-o clickover pointer "></i>
-                        <i id="saveTelephoneBtn" onclick="saveMobile('<?php echo $basicInfo->uid ?>', $('#telephone').val(), 'phone'), $('#a_telephone').show(), $('#telephone').hide(), $('#editTelephoneBtn').show(), $('#saveTelephoneBtn').hide(), $('#closeTelephoneBtn').hide()" style="font-size:15px; display: none; " class="fa fa-save clickover pointer"></i>
-                        <i id="closeTelephoneBtn" onclick="$('#a_telephone').show(), $('#telephone').hide(), $('#editTelephoneBtn').show(), $('#saveTelephoneBtn').hide(), $(this).hide()" style="font-size:15px; display: none; " class="fa fa-close clickover pointer text-danger"></i>
+                <!-- Left: Personal Details -->
+                <div class="col-lg-8">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-header bg-primary text-white">
+                            <h6 class="mb-0">Personal Information</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
 
-                    </dd>
-                </dl>
-                <dl class="dl-horizontal">
-                    <dt>
-                        Mobile No:
-                    </dt>
-                    <dd>
-                        <span title="double click to edit" id="a_mobile">
-                            <?php
-                            if ($basicInfo->cd_mobile != ""): echo $basicInfo->cd_mobile;
-                            else: echo "[empty]";
-                            endif;
-                            ?>
-                        </span>
-                        <input style="display: none; width:300px" type="text" id="mobile" value="<?php echo $basicInfo->cd_mobile; ?>"
-                            onkeypress="if (event.keyCode == 13) {
-                                           saveMobile('<?php echo $basicInfo->uid ?>', $('#mobile').val(), 'mobile')
-                                       }"
-                            title="press enter to save your edit" />
-                        <i id="editContactBtn" onclick="$('#a_mobile').hide(), $('#mobile').show(), $('#mobile').focus(), $(this).hide(), $('#saveContactBtn').show(), $('#closeContactBtn').show()" style="font-size:15px; color:#777;" class="fa fa-pencil-square-o clickover pointer "></i>
-                        <i id="saveContactBtn" onclick="saveMobile('<?php echo $basicInfo->uid ?>', $('#mobile').val(), 'mobile'), $('#a_mobile').show(), $('#mobile').hide(), $('#editContactBtn').show(), $('#saveContactBtn').hide(), $('#closeContactBtn').hide()" style="font-size:15px; display: none; " class="fa fa-save clickover pointer"></i>
-                        <i id="closeContactBtn" onclick="$('#a_mobile').show(), $('#mobile').hide(), $('#editContactBtn').show(), $('#saveContactBtn').hide(), $(this).hide()" style="font-size:15px; display: none; " class="fa fa-close clickover pointer text-danger"></i>
+                                <!-- ================= ADDRESS — FULL WIDTH ================= -->
+                                <div class="col-12">
+                                    <div class="border rounded-3 p-3 bg-light h-100 d-flex justify-content-between align-items-start info-card ie-card">
+                                        <div>
+                                            <div class="text-muted small mb-1">Address</div>
+                                            <div class="fw-semibold text-uppercase">
+                                                <span id="address_span">
+                                                    <?= strtoupper(
+                                                        $basicInfo->street . ', ' .
+                                                            $basicInfo->barangay . ' ' .
+                                                            $basicInfo->mun_city . ', ' .
+                                                            $basicInfo->province . ', ' .
+                                                            $basicInfo->zip_code
+                                                    ); ?>
+                                                </span>
+                                            </div>
+                                        </div>
 
-                    </dd>
-                </dl>
-                <dl class="dl-horizontal">
-                    <dt>
-                        Email:
-                    </dt>
-                    <dd>
-                        <span title="double click to edit" id="a_email">
-                            <?php
-                            if ($basicInfo->cd_email != ""): echo $basicInfo->cd_email;
-                            else: echo "[empty]";
-                            endif;
-                            ?>
+                                        <i class="fa fa-pencil text-primary pointer"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#addressInfoModal"
+                                            title="Edit Address"
+                                            onclick="
+                                            setCity('<?= $basicInfo->city_id ?>',
+                                            $('#street').val('<?= $basicInfo->street ?>'),
+                                            $('#barangay').val('<?= $basicInfo->barangay ?>'),
+                                            $('#city').val('<?= $basicInfo->city_id ?>'),
+                                            $('#inputProvince').val('<?= $basicInfo->province ?>'),
+                                            $('#zip_code').val('<?= $basicInfo->zip_code ?>'),
+                                            $('#address_id').val('<?= $basicInfo->address_id ?>'),
+                                            $('#address_user_id').val('<?= $basicInfo->user_id ?>'),
+                                            $('#inputPID').val('<?= $basicInfo->province_id ?>')
+                                            )"></i>
+                                    </div>
+                                </div>
 
-                        </span>
-                        <input style="display: none; width:300px" type="text" id="email" value="<?php echo $basicInfo->cd_email; ?>" />
-                        <i id="editEmailBtn" onclick="$('#a_email').hide(), $('#email').show(), $('#email').focus(), $(this).hide(), $('#saveEmailBtn').show(), $('#closeEmailBtn').show()" style="font-size:15px; color:#777;" class="fa fa-pencil-square-o clickover pointer "></i>
-                        <i id="saveEmailBtn" onclick="saveMobile('<?php echo $basicInfo->uid ?>', $('#email').val(), 'email'), $('#a_email').show(), $('#email').hide(), $('#editEmailBtn').show(), $('#saveEmailBtn').hide(), $('#closeEmailBtn').hide()" style="font-size:15px; display: none; " class="fa fa-save clickover pointer"></i>
-                        <i id="closeEmailBtn" onclick="$('#a_email').show(), $('#email').hide(), $('#editEmailBtn').show(), $('#saveEmailBtn').hide(), $(this).hide()" style="font-size:15px; display: none; " class="fa fa-close clickover pointer text-danger"></i>
+                                <!-- ================= CONTACT NO ================= -->
+                                <div class="col-md-6">
+                                    <div id="mobile_card" class="info-card ie-card">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div>
+                                                <div class="info-label">Contact No</div>
+                                                <div class="info-value" id="mobile_text">
+                                                    <?= ($basicInfo->cd_mobile != "" ? $basicInfo->cd_mobile : "[empty]"); ?>
+                                                </div>
 
-                    </dd>
-                </dl>
+                                                <div id="mobile_inputWrap" class="d-none">
+                                                    <input type="text" name="cd_mobile" id="mobile_input" class="form-control form-control-sm"
+                                                        value="<?= $basicInfo->cd_mobile ?>">
+                                                </div>
+                                            </div>
+                                            <button id="mobile_btn_edit" class="edit-chip" onclick="ieEdit('mobile')"><i class="fa fa-pencil"></i></button>
+                                        </div>
 
-                <dl class="dl-horizontal">
-                    <dt>
-                        Gender:
-                    </dt>
-                    <dd style="color:black;">
-                        <span id="st_sex">
-                            <?php echo $basicInfo->sex; ?>
-                        </span>
-                        <i style="font-size:15px; color:#777;" class="fa fa-pencil-square-o clickover pointer "
-                            rel="clickover"
-                            <?php if ($this->session->userdata('is_admin')): ?>
-                            data-content=" 
-                               <div class='col-lg-12 form-group' style='width:230px;'>
-                               <label class='control-label'>Gender</label>
-                               <div class='controls' id='AddedSection'>
-                               <select name='inputGender' id='inputGender' class='pull-left' required>
-                               <option>Select Gender</option>  
-                               <option value='Male'>Male</option>  
-                               <option value='Female'>Female</option>  
-                               </select>
-                               </div>
-                               </div>
-                               <div class'col-lg-12'>
-                               <button data-dismiss='clickover' class='btn btn-xs btn-danger'>Cancel</button>&nbsp;&nbsp;
-                               <a href='#' data-dismiss='clickover' onclick='saveGender()' style='margin-right:10px;' class='btn btn-xs btn-success pull-left'>Save</a>
-                               </div> 
-                               "
-                            <?php endif; ?>></i>
-                    </dd>
-                </dl>
+                                        <!-- Bottom Action Buttons -->
+                                        <div id="mobile_btn_group" class="d-none mt-auto d-flex justify-content-end">
+                                            <button class="icon-btn btn btn-success btn-sm d-flex align-items-center justify-content-center"
+                                                onclick="updateInformation('mobile', 'contact_id', 'profile_contact_details')">
+                                                <i class="fa fa-check"></i>
+                                            </button>
+                                            <button class="icon-btn btn btn-light btn-sm d-flex align-items-center justify-content-center"
+                                                onclick="ieCancel('mobile')">
+                                                <i class="fa fa-times"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
 
-                <dl class="dl-horizontal">
-                    <dt>
-                        Birthdate:
-                    </dt>
-                    <dd>
-                        <span onclick="$('#bdate').datepicker()" title="double click to edit" id="a_bdate" ondblclick="$('#a_bdate').hide(), $('#bdate').show(), $('#bdate').focus()">
-                            <?php echo $basicInfo->temp_bdate; ?>
-                        </span>
-                        <input style="display: none;" name="inputBdate" type="text" data-date-format="yyyy-mm-dd" id="bdate" value="<?php echo $basicInfo->temp_bdate; ?>" placeholder="Date of Birth"
-                            onkeypress="if (event.keyCode == 13) {
-                                           editBdate(this.value, '<?php echo $basicInfo->uid ?>')
-                                       }"
+                                <!-- ================= EMAIL ================= -->
+                                <div class="col-md-6">
+                                    <div id="email_card" class="info-card ie-card">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div>
+                                                <div class="info-label">Email</div>
+                                                <div class="info-value" id="email_text">
+                                                    <?= ($basicInfo->cd_email != "" ? $basicInfo->cd_email : "[empty]"); ?>
+                                                </div>
 
-                            required>
-                        <i id="editBdateBtn" onclick="$('#bdate').datepicker(), $('#a_bdate').hide(), $('#bdate').show(), $('#bdate').focus(), $('#closeBdateBtn').show(), $('#saveBdateBtn').show(), $(this).hide()" style="font-size:15px; color:#777;" class="fa fa-pencil-square-o clickover pointer "></i>
-                        <i id="saveBdateBtn" onclick="editBdate($('#bdate').val(), '<?php echo $basicInfo->uid ?>'), $('#a_bdate').show(), $('#bdate').hide(), $('#editBdateBtn').show(), $('#saveBdateBtn').hide(), $('#closeBdateBtn').hide()" style="font-size:15px; display: none; " class="fa fa-save clickover pointer"></i>
-                        <i id="closeBdateBtn" onclick="$('#a_bdate').show(), $('#bdate').hide(), $('#editBdateBtn').show(), $('#saveBdateBtn').hide(), $(this).hide()" style="font-size:15px; display: none; " class="fa fa-close clickover pointer text-danger"></i>
-                    </dd>
-                </dl>
+                                                <div id="email_inputWrap" class="d-none mt-3">
+                                                    <input type="text" name="cd_email" id="email_input" class="form-control form-control-sm"
+                                                        value="<?= $basicInfo->cd_email ?>">
+                                                </div>
+                                            </div>
+                                            <button id="email_btn_edit" class="edit-chip" onclick="ieEdit('email')"><i class="fa fa-pencil"></i></button>
+                                        </div>
 
-                <dl class="dl-horizontal">
-                    <dt>
-                        Blood Type:
-                    </dt>
-                    <dd>
-                        <span id="a_blood_type">
-                            <?php echo $basicInfo->blood_type ?>
-                        </span>
-                        <input style="display: none; width:250px" type="text" id="blood_type" value="<?php echo $basicInfo->blood_type ?>"
-                            onkeypress="if (event.keyCode == 13) {
-                                       }"
-                            title="press enter to save your edit" />
-                        <i id="editBtypeBtn" onclick="$('#a_blood_type').hide(), $('#blood_type').show(), $('#blood_type').focus(), $('#closeBtypeBtn').show(), $('#saveBtypeBtn').show(), $(this).hide()" style="font-size:15px; color:#777;" class="fa fa-pencil-square-o clickover pointer "></i>
-                        <i id="saveBtypeBtn" onclick="updateProfile('<?php echo base64_encode('user_id') ?>', '<?php echo base64_encode('esk_profile_medical') ?>',<?php echo $basicInfo->uid ?>, 'blood_type', $('#blood_type').val(), 'blood_type'), $('#a_blood_type').show(), $('#blood_type').hide(), $('#editBtypeBtn').show(), $('#saveBtypeBtn').hide()" style="font-size:15px; display: none; " class="fa fa-save clickover pointer"></i>
-                        <i id="closeBtypeBtn" onclick="$('#a_blood_type').show(), $('#blood_type').hide(), $('#editBtypeBtn').show(), $('#saveBtypeBtn').hide(), $(this).hide()" style="font-size:15px; display: none; " class="fa fa-close clickover pointer text-danger"></i>
-                    </dd>
-                </dl>
-                <dl class="dl-horizontal">
-                    <dt>
-                        Height:
-                    </dt>
-                    <dd>
-                        <span id="a_height">
-                            <?php echo $basicInfo->height ?>
-                        </span>
-                        <input style="display: none; width:250px" type="text" id="height" value="<?php echo $basicInfo->height ?>"
-                            onkeypress="if (event.keyCode == 13) {
-                                       }"
-                            title="press enter to save your edit" />
-                        <i id="editHeightBtn" onclick="$('#a_height').hide(), $('#height').show(), $('#blood_type').focus(), $('#closeHeightBtn').show(), $('#saveHeightBtn').show(), $(this).hide()" style="font-size:15px; color:#777;" class="fa fa-pencil-square-o clickover pointer "></i>
-                        <i id="saveHeightBtn" onclick="updateProfile('<?php echo base64_encode('user_id') ?>', '<?php echo base64_encode('esk_profile_medical') ?>',<?php echo $basicInfo->uid ?>, 'height', $('#height').val(), 'height'), $('#a_height').show(), $('#height').hide(), $('#editHeightBtn').show(), $('#saveHeightBtn').hide(), $('#closeHeightBtn').hide()" style="font-size:15px; display: none; " class="fa fa-save clickover pointer"></i>
-                        <i id="closeHeightBtn" onclick="$('#a_height').show(), $('#height').hide(), $('#editHeightBtn').show(), $('#saveHeightBtn').hide(), $(this).hide()" style="font-size:15px; display: none; " class="fa fa-close clickover pointer text-danger"></i>
-                    </dd>
-                </dl>
-                <dl class="dl-horizontal">
-                    <dt>
-                        Weight:
-                    </dt>
-                    <dd>
-                        <span id="a_weight">
-                            <?php echo $basicInfo->weight ?>
-                        </span>
-                        <input style="display: none; width:250px" type="text" id="weight" value="<?php echo $basicInfo->weight ?>"
-                            onkeypress="" />
-                        <i id="editWeightBtn" onclick="$('#a_weight').hide(), $('#weight').show(), $('#blood_type').focus(), $('#closeWeightBtn').show(), $('#saveWeightBtn').show(), $(this).hide()" style="font-size:15px; color:#777;" class="fa fa-pencil-square-o clickover pointer "></i>
-                        <i id="saveWeightBtn" onclick="updateProfile('<?php echo base64_encode('user_id') ?>', '<?php echo base64_encode('esk_profile_medical') ?>',<?php echo $basicInfo->uid ?>, 'weight', $('#weight').val(), 'weight'), $('#a_weight').show(), $('#weight').hide(), $('#editWeightBtn').show(), $('#saveWeightBtn').hide(), $('#closeWeightBtn').hide()" style="font-size:15px; display: none; " class="fa fa-save clickover pointer"></i>
-                        <i id="closeWeightBtn" onclick="$('#a_weight').show(), $('#weight').hide(), $('#editWeightBtn').show(), $('#saveWeightBtn').hide(), $(this).hide()" style="font-size:15px; display: none; " class="fa fa-close clickover pointer text-danger"></i>
-                    </dd>
-                </dl>
-            </div>
-            <div class="col-lg-12">
-                <hr style="margin:3px 0;" />
-                <h5>In Case of Emergency:</h5>
-                <hr style="margin:3px 0 15px;" />
-            </div>
-            <div class="col-lg-12">
-                <dl class="dl-horizontal">
-                    <dt>
-                        Name:
-                    </dt>
-                    <dd>
-                        <span id="a_incase_name">
-                            <?php echo $basicInfo->incase_name; ?>
+                                        <!-- Bottom Action Buttons -->
+                                        <div id="email_btn_group" class="d-none mt-auto d-flex justify-content-end">
+                                            <button class="icon-btn btn btn-success btn-sm d-flex align-items-center justify-content-center"
+                                                onclick="updateInformation('email', 'contact_id', 'profile_contact_details')">
+                                                <i class="fa fa-check"></i>
+                                            </button>
+                                            <button class="icon-btn btn btn-light btn-sm d-flex align-items-center justify-content-center"
+                                                onclick="ieCancel('email')">
+                                                <i class="fa fa-times"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
 
-                        </span>
-                        <input
-                            style="display: none;" id="incase_name"
-                            value="<?php echo $basicInfo->incase_name; ?>"
-                            placeholder="Name"
-                            onkeypress="if (event.keyCode == 13) {
-                                        updateProfile('<?php echo base64_encode('employee_id') ?>', '<?php echo base64_encode('esk_profile_employee') ?>', '<?php echo $basicInfo->employee_id ?>', 'incase_name', this.value, this.id)
-                                    }">
+                                <!-- ================= GENDER ================= -->
+                                <div class="col-md-6">
+                                    <div id="gender_card" class="info-card ie-card">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div>
+                                                <div class="info-label">Gender</div>
+                                                <div class="info-value" id="gender_text">
+                                                    <?= $basicInfo->sex != NULL ? $basicInfo->sex : '[empty]'; ?>
+                                                </div>
+                                                <div id="gender_inputWrap" class="d-none mt-3">
+                                                    <select name="sex" id="gender_input" class="form-select form-select-sm">
+                                                        <option value="Male" <?= $basicInfo->sex == 'Male' ? 'selected' : '' ?>>Male</option>
+                                                        <option value="Female" <?= $basicInfo->sex == 'Female' ? 'selected' : '' ?>>Female</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <button id="gender_btn_edit" class="edit-chip" onclick="ieEdit('gender')"><i class="fa fa-pencil"></i></button>
+                                        </div>
 
-                        <i id="editInCaseNameBtn" onclick="$('#a_incase_name').hide(), $('#incase_name').show(), $('#incase_name').focus(), $('#closeInCaseNameBtn').show(), $('#saveInCaseNameBtn').show(), $(this).hide()" style="font-size:15px; color:#777;" class="fa fa-pencil-square-o clickover pointer "></i>
-                        <i id="saveInCaseNameBtn" onclick="updateProfile('<?php echo base64_encode('employee_id') ?>', '<?php echo base64_encode('esk_profile_employee') ?>', '<?php echo $basicInfo->employee_id ?>', 'incase_name', $('#incase_name').val(), 'incase_name'), $('#a_incase_name').show(), $('#incase_name').hide(), $('#editInCaseNameBtn').show(), $('#saveInCaseNameBtn').hide(), $('#closeInCaseNameBtn').hide()" style="font-size:15px; display: none; " class="fa fa-save clickover pointer"></i>
-                        <i id="closeInCaseNameBtn" onclick="$('#a_incase_name').show(), $('#incase_name').hide(), $('#editInCaseNameBtn').show(), $('#saveInCaseNameBtn').hide(), $(this).hide()" style="font-size:15px; display: none; " class="fa fa-close clickover pointer text-danger"></i>
+                                        <!-- Bottom Action Buttons -->
+                                        <div id="gender_btn_group" class="d-none mt-auto d-flex justify-content-end">
+                                            <button class="icon-btn btn btn-success btn-sm d-flex align-items-center justify-content-center"
+                                                onclick="updateInformation('gender', 'user_id', 'profile')">
+                                                <i class="fa fa-check"></i>
+                                            </button>
+                                            <button class="icon-btn btn btn-light btn-sm d-flex align-items-center justify-content-center"
+                                                onclick="ieCancel('gender')">
+                                                <i class="fa fa-times"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
 
-                    </dd>
-                </dl>
-                <dl class="dl-horizontal">
-                    <dt>
-                        Contact:
-                    </dt>
-                    <dd>
-                        <span onclick="$('#bdate').datepicker()" title="double click to edit" id="a_incase_contact">
-                            <?php echo $basicInfo->incase_contact; ?>
-                        </span>
-                        <input id="incase_contact" style="display: none;" name="incase_contact" type="text" value="<?php echo $basicInfo->incase_contact; ?>" placeholder="Contact Number"
-                            onkeypress="if (event.keyCode == 13) {
-                                           updateProfile('<?php echo base64_encode('employee_id') ?>', '<?php echo base64_encode('esk_profile_employee') ?>', '<?php echo $basicInfo->employee_id ?>', 'incase_contact', this.value, this.id)
-                                       }">
+                                <!-- ================= BIRTHDATE ================= -->
+                                <div class="col-md-6">
+                                    <div id="bdate_card" class="info-card ie-card">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div>
+                                                <div class="info-label">Birthdate</div>
+                                                <div class="info-value" id="bdate_text">
+                                                    <?= $basicInfo->temp_bdate; ?>
+                                                </div>
+                                                <div id="bdate_inputWrap" class="d-none mt-3">
+                                                    <input name="temp_bdate" id="bdate_input" type="date" class="form-control form-control-sm" value="<?= ($basicInfo->temp_bdate != NULL || $basicInfo->temp_bdate != '0000-00-00' ? $basicInfo->temp_bdate : '[empty]') ?>">
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <button id="bdate_btn_edit" class="edit-chip" onclick="ieEdit('bdate')"><i class="fa fa-pencil"></i></button>
+                                            </div>
 
+                                            <!-- Bottom Action Buttons -->
+                                            <div id="bdate_btn_group" class="d-none mt-auto d-flex justify-content-end">
+                                                <button class="icon-btn btn btn-success btn-sm d-flex align-items-center justify-content-center"
+                                                    onclick="updateInformation('bdate', 'user_id', 'profile')">
+                                                    <i class="fa fa-check"></i>
+                                                </button>
+                                                <button class="icon-btn btn btn-light btn-sm d-flex align-items-center justify-content-center"
+                                                    onclick="ieCancel('bdate')">
+                                                    <i class="fa fa-times"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
 
-                        <i id="editInCaseConBtn" onclick="$('#a_incase_contact').hide(), $('#incase_contact').show(), $('#incase_contact').focus(), $(this).hide(), $('#saveInCaseConBtn').show(), $('#closeInCaseConBtn').show()" style="font-size:15px; color:#777;" class="fa fa-pencil-square-o clickover pointer "></i>
-                        <i id="saveInCaseConBtn" onclick="updateProfile('<?php echo base64_encode('employee_id') ?>', '<?php echo base64_encode('esk_profile_employee') ?>', '<?php echo $basicInfo->employee_id ?>', 'incase_contact', $('#incase_contact').val(), 'incase_contact'), $('#a_incase_contact').show(), $('#incase_contact').hide(), $('#editInCaseConBtn').show(), $('#saveInCaseConBtn').hide(), $('#closeInCaseConBtn').hide()" style="font-size:15px; display: none; " class="fa fa-save clickover pointer"></i>
-                        <i id="closeInCaseConBtn" onclick="$('#a_incase_contact').show(), $('#incase_contact').hide(), $('#editInCaseConBtn').show(), $('#saveInCaseConBtn').hide(), $(this).hide()" style="font-size:15px; display: none; " class="fa fa-close clickover pointer text-danger"></i>
+                                <!-- ================= BLOOD TYPE ================= -->
+                                <div class="col-md-4">
+                                    <div id="bloodType_card" class="info-card ie-card">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div>
+                                                <div class="info-label">Blood Type</div>
+                                                <div class="info-value" id="bloodType_text">
+                                                    <?= $basicInfo->blood_type; ?>
+                                                </div>
+                                                <div id="bloodType_inputWrap" class="d-none mt-3">
+                                                    <input name="blood_type" id="bloodType_input" type="text" class="form-control form-control-sm" value="<?= ($basicInfo->blood_type != NULL ? $basicInfo->blood_type : '[empty]') ?>">
+                                                </div>
+                                            </div>
+                                            <button id="bloodType_btn_edit" class="edit-chip" onclick="ieEdit('bloodType')"><i class="fa fa-pencil"></i></button>
+                                        </div>
 
-                    </dd>
-                </dl>
-                <dl class="dl-horizontal">
-                    <dt>
-                        Relation:
-                    </dt>
-                    <dd>
-                        <span title="double click to edit" id="a_incase_relation">
-                            <?php echo $basicInfo->incase_relation; ?>
-                        </span>
-                        <input style="display: none;" name="incase_name" type="text" id="incase_relation" value="<?php echo $basicInfo->incase_relation; ?>" placeholder="Relation"
-                            onkeypress="if (event.keyCode == 13) {
-                                            updateProfile('<?php echo base64_encode('employee_id') ?>', '<?php echo base64_encode('esk_profile_employee') ?>', '<?php echo $basicInfo->employee_id ?>', 'incase_relation', this.value, this.id)
-                                        }">
+                                        <!-- Bottom Action Buttons -->
+                                        <div id="bloodType_btn_group" class="d-none mt-auto d-flex justify-content-end">
+                                            <button class="icon-btn btn btn-success btn-sm d-flex align-items-center justify-content-center"
+                                                onclick="updateInformation('bloodType', 'user_id', 'profile_medical')">
+                                                <i class="fa fa-check"></i>
+                                            </button>
+                                            <button class="icon-btn btn btn-light btn-sm d-flex align-items-center justify-content-center"
+                                                onclick="ieCancel('bloodType')">
+                                                <i class="fa fa-times"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
 
+                                <!-- ================= HEIGHT ================= -->
+                                <div class="col-md-4">
+                                    <div id="height_card" class="info-card ie-card">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div>
+                                                <div class="info-label">Height</div>
+                                                <div class="info-value" id="height_text">
+                                                    <?= $basicInfo->height; ?>
+                                                </div>
+                                                <div id="height_inputWrap" class="d-none mt-3">
+                                                    <input name="height" id="height_input" type="text" class="form-control form-control-sm" value="<?= ($basicInfo->height != NULL ? $basicInfo->height : '[empty]') ?>">
+                                                </div>
+                                            </div>
+                                            <button id="height_btn_edit" class="edit-chip" onclick="ieEdit('height')"><i class="fa fa-pencil"></i></button>
+                                        </div>
 
-                        <i id="editInCaseRelBtn" onclick="$('#a_incase_relation').hide(), $('#incase_relation').show(), $('#incase_relation').focus(), $(this).hide(), $('#saveInCaseRelBtn').show(), $('#closeInCaseRelBtn').show()" style="font-size:15px; color:#777;" class="fa fa-pencil-square-o clickover pointer "></i>
-                        <i id="saveInCaseRelBtn" onclick="updateProfile('<?php echo base64_encode('employee_id') ?>', '<?php echo base64_encode('esk_profile_employee') ?>', '<?php echo $basicInfo->employee_id ?>', 'incase_relation', $('#incase_relation').val(), 'incase_relation'), $('#a_incase_relation').show(), $('#incase_relation').hide(), $('#editInCaseRelBtn').show(), $('#saveInCaseRelBtn').hide(), $('#closeInCaseRelBtn').hide()" style="font-size:15px; display: none; " class="fa fa-save clickover pointer"></i>
-                        <i id="closeInCaseRelBtn" onclick="$('#a_incase_relation').show(), $('#incase_relation').hide(), $('#editInCaseRelBtn').show(), $('#saveInCaseRelBtn').hide(), $(this).hide()" style="font-size:15px; display: none; " class="fa fa-close clickover pointer text-danger"></i>
+                                        <!-- Bottom Action Buttons -->
+                                        <div id="height_btn_group" class="d-none mt-auto d-flex justify-content-end">
+                                            <button class="icon-btn btn btn-success btn-sm d-flex align-items-center justify-content-center"
+                                                onclick="updateInformation('height', 'user_id', 'profile_medical')">
+                                                <i class="fa fa-check"></i>
+                                            </button>
+                                            <button class="icon-btn btn btn-light btn-sm d-flex align-items-center justify-content-center"
+                                                onclick="ieCancel('height')">
+                                                <i class="fa fa-times"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
 
-                    </dd>
-                </dl>
+                                <!-- ================= WEIGHT ================= -->
+                                <div class="col-md-4">
+                                    <div id="weight_card" class="info-card ie-card">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div>
+                                                <div class="info-label">Weight</div>
+                                                <div class="info-value" id="weight_text">
+                                                    <?= $basicInfo->weight; ?>
+                                                </div>
+                                                <div id="weight_inputWrap" class="d-none mt-3">
+                                                    <input name="weight" id="weight_input" type="text" class="form-control form-control-sm" value="<?= ($basicInfo->weight != NULL ? $basicInfo->weight : '[empty]') ?>">
+                                                </div>
+                                            </div>
+                                            <button id="weight_btn_edit" class="edit-chip" onclick="ieEdit('weight')"><i class="fa fa-pencil"></i></button>
+                                        </div>
+
+                                        <!-- Bottom Action Buttons -->
+                                        <div id="weight_btn_group" class="d-none mt-auto d-flex justify-content-end">
+                                            <button class="icon-btn btn btn-success btn-sm d-flex align-items-center justify-content-center"
+                                                onclick="updateInformation('weight', 'user_id', 'profile_medical')">
+                                                <i class="fa fa-check"></i>
+                                            </button>
+                                            <button class="icon-btn btn btn-light btn-sm d-flex align-items-center justify-content-center"
+                                                onclick="ieCancel('weight')">
+                                                <i class="fa fa-times"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Emergency -->
+                    <div class="card shadow-sm border-0 mt-4">
+                        <div class="card-header bg-danger text-white">
+                            <h6 class="mb-0">In Case of Emergency</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-4">
+                                <div class="col-md-4">
+                                    <div id="eName_card" class="info-card ie-card">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div>
+                                                <div class="info-label">Name</div>
+                                                <div class="info-value" id="eName_text">
+                                                    <?= $basicInfo->incase_name != null ? $basicInfo->incase_name : '[empty]'; ?>
+                                                </div>
+                                                <div id="eName_inputWrap" class="d-none mt-3">
+                                                    <input name="incase_name" id="eName_input" type="text" class="form-control form-control-sm" value="<?= ($basicInfo->incase_name != NULL ? $basicInfo->incase_name : '[empty]') ?>">
+                                                </div>
+                                            </div>
+                                            <button id="eName_btn_edit" class="edit-chip" onclick="ieEdit('eName')"><i class="fa fa-pencil"></i></button>
+                                        </div>
+
+                                        <!-- Bottom Action Buttons -->
+                                        <div id="eName_btn_group" class="d-none mt-auto d-flex justify-content-end">
+                                            <button class="icon-btn btn btn-success btn-sm d-flex align-items-center justify-content-center"
+                                                onclick="updateInformation('eName', 'user_id', 'profile_employee')">
+                                                <i class="fa fa-check"></i>
+                                            </button>
+                                            <button class="icon-btn btn btn-light btn-sm d-flex align-items-center justify-content-center"
+                                                onclick="ieCancel('eName')">
+                                                <i class="fa fa-times"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div id="eContact_card" class="info-card ie-card">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div>
+                                                <div class="info-label">Contact</div>
+                                                <div class="info-value" id="eContact_text">
+                                                    <?= $basicInfo->incase_contact != null ? $basicInfo->incase_contact : '[empty]'; ?>
+                                                </div>
+                                                <div id="eContact_inputWrap" class="d-none mt-3">
+                                                    <input name="incase_contact" id="eContact_input" type="text" class="form-control form-control-sm" value="<?= ($basicInfo->incase_contact != NULL ? $basicInfo->incase_contact : '[empty]') ?>">
+                                                </div>
+                                            </div>
+                                            <button id="eContact_btn_edit" class="edit-chip" onclick="ieEdit('eContact')"><i class="fa fa-pencil"></i></button>
+                                        </div>
+
+                                        <!-- Bottom Action Buttons -->
+                                        <div id="eContact_btn_group" class="d-none mt-auto d-flex justify-content-end">
+                                            <button class="icon-btn btn btn-success btn-sm d-flex align-items-center justify-content-center"
+                                                onclick="updateInformation('eContact', 'user_id', 'profile_employee')">
+                                                <i class="fa fa-check"></i>
+                                            </button>
+                                            <button class="icon-btn btn btn-light btn-sm d-flex align-items-center justify-content-center"
+                                                onclick="ieCancel('eContact')">
+                                                <i class="fa fa-times"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div id="eRelation_card" class="info-card ie-card h-100 d-flex flex-column">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div>
+                                                <div class="info-label">Relation</div>
+                                                <div class="info-value" id="eRelation_text">
+                                                    <?= $basicInfo->incase_relation != null ? $basicInfo->incase_relation : '[empty]'; ?>
+                                                </div>
+
+                                                <div id="eRelation_inputWrap" class="d-none mt-3">
+                                                    <input name="incase_relation" id="eRelation_input" type="text"
+                                                        class="form-control form-control-sm"
+                                                        value="<?= ($basicInfo->incase_relation != NULL ? $basicInfo->incase_relation : '[empty]') ?>">
+                                                </div>
+                                            </div>
+
+                                            <!-- Edit Button -->
+                                            <button id="eRelation_btn_edit" class="edit-chip"
+                                                onclick="ieEdit('eRelation')">
+                                                <i class="fa fa-pencil"></i>
+                                            </button>
+                                        </div>
+
+                                        <!-- Bottom Action Buttons -->
+                                        <div id="eRelation_btn_group" class="d-none mt-auto d-flex justify-content-end">
+                                            <button class="icon-btn btn btn-success btn-sm d-flex align-items-center justify-content-center"
+                                                onclick="updateInformation('eRelation', 'user_id', 'profile_employee')">
+                                                <i class="fa fa-check"></i>
+                                            </button>
+                                            <button class="icon-btn btn btn-light btn-sm d-flex align-items-center justify-content-center"
+                                                onclick="ieCancel('eRelation')">
+                                                <i class="fa fa-times"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Right: Signature -->
+                <div class="col-lg-4">
+                    <div class="card border-0 shadow-sm h-100">
+                        <!-- Header -->
+                        <div class="card-header bg-white border-0 py-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="fw-semibold text-secondary text-uppercase small">
+                                    <i class="fa fa-signature me-2 text-primary"></i>Signature
+                                </div>
+                                <button class="btn btn-sm btn-outline-success d-flex align-items-center gap-1"
+                                    onclick="imgSignUpload('sign')">
+                                    <i class="fa fa-upload"></i>
+                                    <span class="d-none d-sm-inline">Upload</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Body -->
+                        <div class="card-body p-2 text-center">
+                            <div class="bg-light rounded-3 p-2 border">
+                                <img class="img-fluid"
+                                    style="max-height:160px; object-fit:contain;"
+                                    src="<?php
+                                            if ($basicInfo->uid != ""):
+                                                echo base_url() . 'uploads/sign/' . $basicInfo->signature_img;
+                                            else:
+                                                echo base_url() . 'uploads/noImage.png';
+                                            endif;
+                                            ?>" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-        <div style="padding-top: 15px;" class="tab-pane" id="academicInformation">
+
+        <div class="tab-pane fade" id="academicInformation">
             <?php
             $data['basicInfo'] = $basicInfo;
             $data['edHis'] = $edHis;
             $this->load->view('academicInformation', $data);
             ?>
         </div>
-        <div style="padding-top: 15px;" class="tab-pane" id="statutory">
+
+        <div class="tab-pane fade" id="statutory">
             <?php
             $data['salaryType'] = Modules::run('hr/getSalaryType');
             $data['basicInfo'] = $basicInfo;
             $this->load->view('statutoryInformation', $data);
             ?>
         </div>
-        <div style="padding-top: 15px;" class="tab-pane" id="od_info">
+
+        <div class="tab-pane fade" id="dtr">
+            <?php echo Modules::run('hr/dtr', base64_encode($basicInfo->employee_id), base64_encode($basicInfo->uid)); ?>
+        </div>
+
+        <div class="tab-pane fade" id="od_info">
             <?php
             $data['basicInfo'] = $basicInfo;
             $data['deductions'] = Modules::run('hr/payroll/getOD_list');
@@ -456,23 +884,75 @@ $lcInHrs = ($basicInfo->leave_credits * 8) - $leaveSpent->totalLeaveSpent - $day
             $this->load->view('loans_deductions', $data);
             ?>
         </div>
-        <div style="padding-top: 15px;" class="tab-pane" id="dtr">
-            <?php echo Modules::run('hr/dtr', base64_encode($basicInfo->employee_id)); ?>
-        </div>
-
-
     </div>
 </div>
-<?php $this->load->view('registrar/imgCrop') ?>
-<?php
-$minmaj = Modules::run('hr/minMajSub');
-$data['basicInfo'] = $basicInfo;
-$data['edHis'] = $edHis;
-$this->load->view('addEdHis_modal', $data);
-?>
 
+<div id="ieToast" class="position-fixed bottom-0 end-0 p-3" style="z-index: 9999;">
+    <div class="toast align-items-center text-bg-success border-0" role="alert">
+        <div class="d-flex">
+            <div class="toast-body" id="ieToastBody">
+                Updated successfully.
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+
+<input type="hidden" id="employeeID" value="<?php echo $basicInfo->user_id ?>" />
+<input type="hidden" id="leaveDaysCredited" value="<?php echo $dlCredited ?>" />
+<input type="hidden" id="totalHoursRendered" value="<?php echo round(($totalMin / 60), 2) + $totalHours ?>" />
+<input type="hidden" id="hoursRequired" value="<?php echo $hoursRequired ?>" />
+<!--<input type="hidden" id="minutesTardy" value="<?php echo abs(date('H', mktime(0, $totalHours))) ?>" />-->
+<!-- <input type="hidden" id="minutesTardy" value="<?php // echo date('i', $overAllTardy) 
+                                                    ?>" /> -->
+<input type="hidden" id="minutesTardy" value="<?php echo date('i', $under) ?>" />
+<input type="hidden" id="otTime" />
 
 <script type="text/javascript">
+    const csrfName = "<?= $this->security->get_csrf_token_name(); ?>";
+    let csrfHash = "<?= $this->security->get_csrf_hash(); ?>";
+    const BASE_URL = "<?= base_url() ?>";
+
+    $(function() {
+
+        $('#totalHoursRequired').text($('#hoursRequired').val())
+
+        $('[data-toggle="popover"]').popover({
+            container: 'body',
+            html: true,
+            trigger: 'click',
+            content: function() {
+                const target = $(this).data('popover-target');
+                return $(target).html();
+            }
+        });
+
+        // Close on outside click
+        $(document).on('click', function(e) {
+            $('[data-toggle="popover"]').each(function() {
+                if (!$(this).is(e.target) && $(this).has(e.target).length === 0) {
+                    $(this).popover('hide');
+                }
+            });
+        });
+    });
+
+    // existing mapped positions for this employee (all departments)
+    var existingPositions = <?php
+                            $positionIds = array();
+                            $primaryPositionId = isset($basicInfo->position_id) ? (int) $basicInfo->position_id : 0;
+                            if (isset($employeePositions) && is_array($employeePositions)) {
+                                foreach ($employeePositions as $ep) {
+                                    $positionIds[] = (int) $ep->position_id;
+                                    if (isset($ep->is_primary) && (int) $ep->is_primary === 1) {
+                                        $primaryPositionId = (int) $ep->position_id;
+                                    }
+                                }
+                            }
+                            echo json_encode($positionIds);
+                            ?>;
+    var primaryPositionId = <?php echo (int) $primaryPositionId; ?>;
+
     $(document).ready(function() {
         $(".clickover").clickover({
             placement: 'right',
@@ -563,6 +1043,13 @@ $this->load->view('addEdHis_modal', $data);
         return false;
     }
 
+    function setCity(id) {
+        const sel = document.getElementById('city');
+        sel.value = id;
+
+        getProvince(id);
+    }
+
     function getProvince(value) {
         var url = "<?php echo base_url() . 'main/getProvince/' ?>" + value;
         $.ajax({
@@ -613,23 +1100,91 @@ $this->load->view('addEdHis_modal', $data);
     }
 
     function saveDepartment() {
-        var pk_id = '<?php echo $basicInfo->uid; ?>';
-        var value = $('#inputPosition').val();
-        var dept = $('#editDepartment').val()
-        var url = "<?php echo base_url() . 'users/editProfile/' ?>"; // the script where you handle the form input.
+        var userId = '<?php echo $basicInfo->uid; ?>';
+        var employeeId = '<?php echo $basicInfo->employee_id; ?>';
+        var selectedPositions = $('#inputPosition').val() || [];
+        // merge new selections with existing positions (so we don't drop those from other departments)
+        var combined = existingPositions.slice(0);
+        for (var i = 0; i < selectedPositions.length; i++) {
+            if (combined.indexOf(selectedPositions[i]) === -1) {
+                combined.push(selectedPositions[i]);
+            }
+        }
+        var dept = $('#editDepartment').val();
+
+        // Keep current primary if set; otherwise use first newly-selected
+        var primaryPosition = primaryPositionId ? primaryPositionId : (selectedPositions.length ? selectedPositions[0] : '');
+        var urlProfile = "<?php echo base_url() . 'users/editProfile/' ?>";
+
         $.ajax({
             type: "POST",
-            url: url,
+            url: urlProfile,
             dataType: 'json',
-            data: 'id=' + pk_id + '&csrf_test_name=' + $.cookie('csrf_cookie_name') + '&column=position_id&value=' + value + '&tbl=<?php echo base64_encode('esk_profile_employee') ?>&pk=<?php echo base64_encode('user_id') ?>', // serializes the form's elements.
+            data: 'id=' + userId +
+                '&csrf_test_name=' + $.cookie('csrf_cookie_name') +
+                '&column=position_id&value=' + primaryPosition +
+                '&tbl=<?php echo base64_encode('esk_profile_employee') ?>&pk=<?php echo base64_encode('user_id') ?>',
             success: function(data) {
-                //$("form#quoteForm")[0].reset()
-                updateAccountProfile(dept)
-
+                // After primary position is saved, persist full list into mapping table
+                var urlMap = "<?php echo base_url() . 'hr/saveEmployeePositions' ?>";
+                $.ajax({
+                    type: "POST",
+                    url: urlMap,
+                    dataType: 'json',
+                    data: {
+                        employee_id: employeeId,
+                        user_id: userId,
+                        positions: combined,
+                        csrf_test_name: $.cookie('csrf_cookie_name')
+                    },
+                    success: function(resp) {
+                        // refresh page to reflect updated positions
+                        location.reload();
+                    }
+                });
             }
         });
 
         return false; // avoid to execute the actual submit of the form.
+    }
+
+    function activateEmployeePosition(employee_id, position_id, user_id, dept_id) {
+        $.ajax({
+            type: 'POST',
+            url: '<?= base_url() . 'hr/updateEmployeePosition' ?>',
+            dataType: 'json',
+            data: {
+                employee_id: employee_id,
+                positions: position_id,
+                user_id: user_id,
+                department_id: dept_id,
+                csrf_test_name: $.cookie('csrf_cookie_name')
+            },
+            success: function(res) {
+                location.reload();
+            }
+        })
+    }
+
+    function deleteEmployeePosition(employeeId, positionId) {
+        if (!confirm('Are you sure you want to remove this position?')) {
+            return false;
+        }
+        var url = "<?php echo base_url() . 'hr/deleteEmployeePosition' ?>";
+        $.ajax({
+            type: "POST",
+            url: url,
+            dataType: 'json',
+            data: {
+                employee_id: employeeId,
+                position_id: positionId,
+                csrf_test_name: $.cookie('csrf_cookie_name')
+            },
+            success: function(resp) {
+                location.reload();
+            }
+        });
+        return false;
     }
 
     function updateAccountProfile(dept = NULL) {
@@ -672,23 +1227,50 @@ $this->load->view('addEdHis_modal', $data);
     }
 
 
-    function updateProfile(pk, table, pk_id, column, value, id) {
-        var url = "<?php echo base_url() . 'users/editProfile/' ?>"; // the script where you handle the form input.
+    function updateProfile(keyCard, pk, table, pk_id, column, value, id) {
+        var url = "<?php echo base_url() . 'users/editProfile/' ?>";
+        const card = document.getElementById(keyCard + '_card');
+        const textDiv = document.getElementById(keyCard + '_text');
+
         $.ajax({
             type: "POST",
             url: url,
             dataType: 'json',
             data: 'id=' + pk_id + '&column=' + column + '&value=' + value + '&tbl=' + table + '&pk=' + pk + '&csrf_test_name=' + $.cookie('csrf_cookie_name'), // serializes the form's elements.
             success: function(data) {
-                //$("form#quoteForm")[0].reset()
-                $('#a_' + id).show()
-                $('#' + id).hide()
-                $('#a_' + id).html(data.msg)
+                if (data.status) {
+
+                    // 🔹 Replace displayed value
+                    if (textDiv) {
+                        textDiv.textContent = value ? value : '[empty]';
+                    }
+
+                    // 🔹 Exit edit mode
+                    if (typeof ieCancel === 'function') {
+                        ieCancel(keyCard);
+                    }
+
+                    if (onSuccess) onSuccess(res);
+
+                } else {
+                    alert(res.message || 'Update failed.');
+                }
+
+                unlockCard(card);
 
             }
         });
 
         return false; // avoid to execute the actual submit of the form.
+    }
+
+    function saveBasicInfoModal() {
+        editBasicInfo(); // your existing function
+
+        const modal = bootstrap.Modal.getInstance(
+            document.getElementById('basicInfoModal')
+        );
+        modal.hide();
     }
 
     function editBasicInfo() {
@@ -697,7 +1279,7 @@ $this->load->view('addEdHis_modal', $data);
             type: "POST",
             url: url,
             //dataType: 'json',
-            data: 'lastname=' + $('#lastname').val() + '&firstname=' + $('#firstname').val() + '&middlename=' + $('#middlename').val() + '&rowid=' + $('#rowid').val() + '&csrf_test_name=' + $.cookie('csrf_cookie_name'), // serializes the form's elements.
+            data: 'lastname=' + $('#lastname').val() + '&firstname=' + $('#firstname').val() + '&middlename=' + $('#middlename').val() + '&rowid=' + $('#rowid').val() + '&user_id=' + $('#st_user_id').val() + '&pos=' + $('#pos').val() + '&csrf_test_name=' + $.cookie('csrf_cookie_name'), // serializes the form's elements.
             success: function(data) {
                 //$("form#quoteForm")[0].reset()
 
@@ -714,11 +1296,11 @@ $this->load->view('addEdHis_modal', $data);
             type: "POST",
             url: url,
             //dataType: 'json',
-            data: 'street=' + $('#street').val() + '&barangay=' + $('#barangay').val() + '&city=' + $('#city').val() + '&province=' + $('#inputPID').val() + '&address_id=' + $('#address_id').val() + '&zip_code=' + $('#zip_code').val() + '&user_id=' + $('#empUserID').val() + '&csrf_test_name=' + $.cookie('csrf_cookie_name'), // serializes the form's elements.
+            data: 'street=' + $('#street').val() + '&user_id=' + $('#address_user_id').val() + '&barangay=' + $('#barangay').val() + '&city=' + $('#city').val() + '&province=' + $('#inputPID').val() + '&address_id=' + '<?php echo $basicInfo->user_id ?>' + '&zip_code=' + $('#zip_code').val() + '&csrf_test_name=' + $.cookie('csrf_cookie_name'), // serializes the form's elements.
             success: function(data) {
                 //$("form#quoteForm")[0].reset()
 
-                $location.reload();
+                location.reload();
             }
         });
 
@@ -783,39 +1365,63 @@ $this->load->view('addEdHis_modal', $data);
         return false;
     }
 
-    function savePtype() {
+    function savePtype(keyCard) {
         var url = "<?php echo base_url() . 'hr/savePtype/' ?>"; // the script where you handle the form input.
-        var payType = $('#payType').val()
+        var payType = $('#ptype_input').val()
         var id = $('#em_id').val()
+
+        const card = document.getElementById(keyCard + '_card');
+        const textDiv = document.getElementById(keyCard + '_text');
+        const typeLabel = document.getElementById(keyCard + '_input');
+        const selected = typeLabel.options[typeLabel.selectedIndex].text;
         $.ajax({
             type: "POST",
             url: url,
             //dataType: 'json',
             data: 'em_id=' + id + '&payroll_type=' + payType + '&csrf_test_name=' + $.cookie('csrf_cookie_name'), // serializes the form's elements.
             success: function(data) {
-                //$("form#quoteForm")[0].reset()
+                if (textDiv) {
+                    textDiv.textContent = payType ? selected : '[empty]';
+                }
 
+                // 🔹 Exit edit mode
+                if (typeof ieCancel === 'function') {
+                    ieCancel(keyCard);
+                }
 
+                unlockCard(card)
             }
         });
 
         return false;
     }
 
-    function saveSG() {
+    function saveSG(keyCard) {
         var url = "<?php echo base_url() . 'hr/saveSG/' ?>"; // the script where you handle the form input.
-        var salary = $('#salaryGrade').val()
+        var salary = $('#' + keyCard + '_input').val()
         var id = $('#em_id').val()
+
+        const card = document.getElementById(keyCard + '_card');
+        const textDiv = document.getElementById(keyCard + '_text');
+        const typeLabel = document.getElementById(keyCard + '_input');
+        const selected = typeLabel.options[typeLabel.selectedIndex].text;
+
         $.ajax({
             type: "POST",
             url: url,
             //dataType: 'json',
             data: 'em_id=' + id + '&salary_grade=' + salary + '&csrf_test_name=' + $.cookie('csrf_cookie_name'), // serializes the form's elements.
             success: function(data) {
-                //$("form#quoteForm")[0].reset()
-                $('#a_sg').html($('#' + salary + '_sg').html())
+                if (textDiv) {
+                    textDiv.textContent = salary ? selected : '[empty]';
+                }
 
+                // 🔹 Exit edit mode
+                if (typeof ieCancel === 'function') {
+                    ieCancel(keyCard);
+                }
 
+                unlockCard(card)
             }
         });
 
@@ -939,6 +1545,195 @@ $this->load->view('addEdHis_modal', $data);
         $('#errorMsg').text(msg);
     }
 
+    function showToast(message) {
+        const toastBody = document.getElementById('ieToastBody');
+        toastBody.textContent = message;
+
+        const toastEl = document.querySelector('#ieToast .toast');
+        const toast = new bootstrap.Toast(toastEl);
+        toast.show();
+    }
+
+    function updateInformation(keyCard, uid, tbl, options = {}) {
+
+        const {
+            url = BASE_URL + "registrar/updateParentsInfo",
+                method = "POST",
+                successMessage = "Information successfully updated.",
+                onSuccess = null,
+                onError = null
+        } = options;
+
+        const payload = ieSerializeCard(keyCard);
+
+        const user_id = $('#employeeID').val();
+        payload.keyCard = keyCard;
+        payload.key_id = user_id;
+        payload.pk_id = uid;
+        payload.tbl_name = tbl;
+
+        // ✅ ADD CSRF TOKEN HERE
+        payload[csrfName] = csrfHash;
+
+        if (Object.keys(payload).length <= 4) {
+            console.warn('No editable fields found for card:', keyCard);
+            return;
+        }
+
+        const card = document.getElementById(keyCard + '_card');
+        const textDiv = document.getElementById(keyCard + '_text');
+
+        if (card) {
+            card.classList.add('updating');
+            card.querySelectorAll('button').forEach(b => b.disabled = true);
+        }
+
+        console.log(payload);
+
+        $.ajax({
+            url: url,
+            type: method,
+            data: payload,
+            dataType: "json",
+
+            success: function(res) {
+
+                if (res.status === 'success') {
+
+                    // 🔹 Update CSRF token
+                    if (res.csrfHash) csrfHash = res.csrfHash;
+
+                    // 🔹 Replace displayed value
+                    if (textDiv) {
+                        const newValue = buildDisplayValue(payload);
+                        textDiv.textContent = newValue ? newValue : '[empty]';
+                    }
+
+                    // 🔹 Exit edit mode
+                    if (typeof ieCancel === 'function') {
+                        ieCancel(keyCard);
+                    }
+
+                    // 🔹 Success prompt
+                    showToast(successMessage);
+                } else {
+                    alert('Update failed.');
+                }
+
+                unlockCard(card);
+            },
+
+            error: function(xhr) {
+                unlockCard(card);
+
+                if (onError) onError(xhr);
+                else alert('Update failed. Please try again.');
+            }
+        });
+    }
+
+    function unlockCard(card) {
+        if (!card) return;
+        card.classList.remove('updating');
+        card.querySelectorAll('button').forEach(b => b.disabled = false);
+    }
+
+    function buildDisplayValue(payload) {
+
+        // 🔹 Remove system fields (including CSRF automatically)
+        const ignoreKeys = ['key_id', 'pk_id', 'tbl_name', 'keyCard', csrfName];
+
+        // 🔹 Detect if this payload contains name fields
+        const firstNameKey = Object.keys(payload).find(k => k.includes('first'));
+        const lastNameKey = Object.keys(payload).find(k => k.includes('last'));
+
+        // ✅ If it's a name card → show only First + Last
+        if (firstNameKey && lastNameKey) {
+
+            const first = payload[firstNameKey] || '';
+            const last = payload[lastNameKey] || '';
+
+            return `${first} ${last}`.trim().toUpperCase() || '[empty]';
+        }
+
+        // 🔹 Otherwise process normally
+        const values = Object.keys(payload)
+            .filter(key => !ignoreKeys.includes(key))
+            .map(key => {
+
+                const field = document.querySelector(`[name="${key}"]`);
+
+                // Handle SELECT → use label instead of value
+                if (field && field.tagName === 'SELECT') {
+                    return field.options[field.selectedIndex].text;
+                }
+
+                return payload[key];
+            })
+            .filter(val => val && val !== '');
+
+        return values.length ? values.join(' ').toUpperCase() : '[empty]';
+    }
+
+    function ieSerializeCard(cardKey) {
+        const wrap = document.getElementById(cardKey + '_inputWrap');
+        if (!wrap || wrap.classList.contains('d-none')) return {};
+
+        const data = {};
+
+        wrap.querySelectorAll('input, select, textarea')
+            .forEach(field => {
+
+                // skip if no name or disabled
+                if (!field.name || field.disabled) return;
+
+                // skip hidden inputs unless they have class 'ie-include'
+                if (field.type === 'hidden' && !field.classList.contains('ie-include')) return;
+
+                // ✅ normal input, textarea, single select
+                data[field.name] = field.value.trim();
+            });
+
+        return data;
+    }
+
+    function ieLockOthers(activeName) {
+        $('.ie-card').addClass('edit-disabled');
+        $('#' + activeName + '_card').removeClass('edit-disabled').addClass('edit-active');
+    }
+
+    function ieUnlockAll() {
+        $('.ie-card')
+            .removeClass('edit-disabled')
+            .removeClass('edit-active');
+    }
+
+    function ieEdit(name) {
+        ieLockOthers(name);
+
+        const card = document.getElementById(name + '_card');
+        card.style.zIndex = 10; // keep on top
+
+        $('#' + name + '_text').hide();
+        $('#' + name + '_inputWrap').removeClass('d-none').addClass('ie-input-area');
+        $('#' + name + '_btn_edit').hide();
+        $('#' + name + '_btn_group').removeClass('d-none').addClass('ie-btn-area');
+
+        $('#' + name + '_inputWrap').find('input,select').first().focus();
+    }
+
+    function ieCancel(name) {
+        const card = document.getElementById(name + '_card');
+        card.style.zIndex = '';
+
+        $('#' + name + '_text').show();
+        $('#' + name + '_inputWrap').addClass('d-none').removeClass('ie-input-area');
+        $('#' + name + '_btn_edit').show();
+        $('#' + name + '_btn_group').addClass('d-none').removeClass('ie-btn-area');
+
+        ieUnlockAll();
+    }
+
     //========================================================= Overtime Pay ==========================================================================================//
 
     $(document).on("click", ".timeOvr", function() {
@@ -953,6 +1748,7 @@ $this->load->view('addEdHis_modal', $data);
                 removeItem(otID);
             } else {
                 $('#' + otID).addClass('highlight');
+                $('#' + otID).css('background', 'greenyellow');
                 time.push(otID);
                 $('#otTime').val(time);
             }
@@ -986,3 +1782,101 @@ $this->load->view('addEdHis_modal', $data);
         })
     }
 </script>
+<style>
+    .info-card {
+        background: #f8fafc;
+        border: 1px solid #e9ecef;
+        border-radius: 14px;
+        padding: 16px;
+        transition: .18s ease;
+        position: relative;
+        min-height: 120px;
+        /* adjust based on tallest non-edit state */
+    }
+
+    /* Prevent layout shift when editing */
+    .info-card .ie-input-area {
+        position: absolute;
+        left: 16px;
+        right: 16px;
+        top: 44px;
+        /* below label/value */
+        z-index: 5;
+    }
+
+    /* Ensure buttons stay aligned but not push layout */
+    .info-card .ie-btn-area {
+        position: absolute;
+        right: 0px;
+        top: 0px;
+        z-index: 6;
+    }
+
+    .info-card.edit-active {
+        background: #ffffff;
+        border: 2px solid #4f46e5;
+        box-shadow: 0 8px 22px rgba(79, 70, 229, .18);
+        transform: translateY(-2px);
+    }
+
+    .info-card.edit-disabled {
+        opacity: .45;
+        filter: grayscale(.2);
+        pointer-events: none;
+    }
+
+    .info-card:hover {
+        background: #ffffff;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, .06);
+        transform: translateY(-2px);
+    }
+
+    .info-label {
+        font-size: .78rem;
+        color: #6c757d;
+        letter-spacing: .3px;
+    }
+
+    .info-value {
+        font-weight: 600;
+        font-size: 1rem;
+    }
+
+    .edit-chip {
+        width: 32px;
+        height: 32px;
+        border: none;
+        background: #e9f2ff;
+        border-radius: 50%;
+        color: #4f46e5;
+        padding: 4px 10px;
+        font-size: .8rem;
+    }
+
+    .icon-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 25px;
+        /* consistent square buttons */
+        height: 25px;
+        padding: 0;
+        line-height: 1;
+    }
+
+    .icon-btn i {
+        font-size: 14px;
+        /* consistent icon size */
+    }
+
+    .info-card.updating {
+        opacity: .6;
+        pointer-events: none;
+        border: 2px solid #0d6efd;
+        transition: .2s;
+    }
+
+    .highlight {
+        background: greenyellow;
+    }
+</style>

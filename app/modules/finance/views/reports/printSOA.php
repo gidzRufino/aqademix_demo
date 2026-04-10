@@ -166,10 +166,10 @@ if ($charges != 0):
     $totalExtra = 0;
     $otherExtra = 0;
     $listXtra = [];
-    $extraCharges = Modules::run('finance/getExtraFinanceCharges', $user_id, 0, $student->school_year);
+    $extraCharges = Modules::run('finance/getExtraFinanceCharges', $student->uid, 0, $student->school_year);
     if ($extraCharges->num_rows() > 0):
         $pdf->SetFont('helvetica', 'B', 8);
-        $pdf->MultiCell(60, 0, 'Extra Charges`', 'LR', 'L', 0, 0, '', '', true, 0, false, true, 0, 'M');
+        $pdf->MultiCell(60, 0, 'Extra Charges', 'LR', 'L', 0, 0, '', '', true, 0, false, true, 0, 'M');
         $pdf->Ln(4);
 
         $pdf->SetFont('helvetica', 'R', 8);

@@ -133,7 +133,7 @@
 </div>
 
 <!-- SELECT NEW OPTION MODAL -->
-<div id="selectNewOption" class="modal fade" tabindex="-1">
+<!-- <div id="selectNewOption" class="modal fade" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content shadow-sm border-0 rounded-lg text-center p-4">
             <h5 class="mb-4">Please select an option to enroll</h5>
@@ -159,7 +159,7 @@
             <?php endswitch; ?>
         </div>
     </div>
-</div>
+</div> -->
 
 <!-- STYLES -->
 <style>

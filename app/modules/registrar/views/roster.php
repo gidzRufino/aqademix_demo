@@ -21,56 +21,66 @@ switch ($this->uri->segment(2)) {
         break;
 }
 ?>
-<div class="row">
-    <div class="col-lg-12">
-        <h3 style="margin-top: 20px;" class="page-header">List of Students <small id="num_students"> [ <?php echo $allStudents->num_rows . ' / ' . $num_of_students; ?> ] </small>
-            <input type="text" id="rfid" style="position: absolute; left:-1000px;" onchange="scanStudents(this.value)" onload="self.focus();" />
-            <input type="hidden" id="hiddenSection" value="<?php echo $this->uri->segment(3) ?>" />
-            <?php if ($this->session->userdata('position_id') == 1): ?>
-                <a href="#" class="btn btn-primary btn-sm pull-right" onclick="backupToExell()" title="backup Data to excell">
-                    <i class="fa fa-database"></i>
-                </a>
-                <a href="#importCsv" data-toggle="modal" id="uploadAssessment" class="btn btn-success btn-sm pull-right">
-                    <i class="fa fa-upload"></i>
-                </a>
-                <a href="#" onclick="deleteAllStudent()" class="btn btn-success btn-sm pull-right">
-                    <i class="fa fa-trash"></i>
-                </a>
-            <?php endif; ?>
-            <?php if ($this->session->userdata('is_admin') || $this->session->userdata('is_superAdmin')) { ?>
-                <a href="#printIdModal" style="margin-top:0;" data-toggle="modal" class="btn btn-sm btn-info pull-right">Print ID</a>
-                <a href="#" onclick="document.location='<?php echo base_url('search/exportStudentListToExcell/profile_students_admission.section_id/') ?>'+$('#inputSection').val()+'/'+$('#inputSY').val()" style="margin:0 5px;" class="btn btn-success btn-md pull-right">Export To Excel </a>
+<div class="container-fluid py-4">
 
-                <div class="form-group pull-right">
-                    <select onclick="getStudentByYear(this.value)" tabindex="-1" id="inputSY" style="width:200px; font-size: 15px;" class="populate select2-offscreen span2">
-                        <option>School Year</option>
-                        <?php
-                        foreach ($ro_year as $ro) {
-                            $roYears = $ro->ro_years + 1;
-                            if ($this->session->userdata('school_year') == $ro->ro_years):
-                                $selected = 'Selected';
-                            else:
-                                $selected = '';
-                            endif;
-                        ?>
-                            <option <?php echo $selected; ?> value="<?php echo $ro->ro_years; ?>"><?php echo $ro->ro_years . ' - ' . $roYears; ?></option>
-                        <?php } ?>
-                    </select>
-                </div>
-                <div class="form-group pull-right">
-                    <select style="width:200px; font-size: 15px;" id="sem" onchange="getStudentByTerm(this.value)" tabindex="-1" class="populate select2-offscreen span2">
-                        <option value="0">Regular Class</option>
-                        <option value="3">Summer Class</option>
-                    </select>
-                </div>
-            <?php } ?>
+    <!-- ====== HEADER & ACTIONS ====== -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+        <h3 class="mb-2">List of Students
+            <small id="num_students">[ <?= $allStudents->num_rows . ' / ' . $num_of_students ?> ]</small>
         </h3>
+
+        <div class="d-flex flex-wrap gap-2">
+            <!-- Only for position_id 1 -->
+            <?php if ($this->session->userdata('position_id') == 1): ?>
+                <button class="btn btn-primary btn-sm" onclick="backupToExell()" title="Backup Data">
+                    <i class="fa fa-database"></i>
+                </button>
+                <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#importCsv">
+                    <i class="fa fa-upload"></i>
+                </button>
+                <button class="btn btn-danger btn-sm" onclick="deleteAllStudent()">
+                    <i class="fa fa-trash"></i>
+                </button>
+            <?php endif; ?>
+
+            <!-- Admin/SuperAdmin Actions -->
+            <?php if ($this->session->userdata('is_admin') || $this->session->userdata('is_superAdmin')): ?>
+                <button class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#printIdModal">
+                    Print ID
+                </button>
+                <button class="btn btn-success btn-sm" onclick="document.location='<?= base_url('search/exportStudentListToExcell/profile_students_admission.section_id/') ?>' + $('#inputSection').val() + '/' + $('#inputSY').val()">
+                    Export To Excel
+                </button>
+
+                <!-- School Year & Term -->
+                <select id="inputSY" class="form-select form-select-sm ms-2" style="width:180px;" onchange="getStudentByYear(this.value)">
+                    <option>School Year</option>
+                    <?php foreach ($ro_year as $ro): ?>
+                        <option value="<?= $ro->ro_years ?>" <?= ($this->session->userdata('school_year') == $ro->ro_years ? 'selected' : '') ?>>
+                            <?= $ro->ro_years . ' - ' . ($ro->ro_years + 1) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+
+                <select id="sem" class="form-select form-select-sm ms-2" style="width:160px;" onchange="getStudentByTerm(this.value)">
+                    <option value="0">Regular Class</option>
+                    <option value="3">Summer Class</option>
+                </select>
+            <?php endif; ?>
+        </div>
     </div>
 </div>
 <div class="row" id="student-table">
 
-    <?php if ($this->session->userdata('is_adviser') || $this->session->userdata('is_admin') || $this->session->userdata('is_superAdmin') || $this->session->userdata('position') == 'Admin Officer'):
-        if (file_exists(APPPATH . 'modules/registrar/views/' . strtolower($settings->short_name) . '_studentTable.php')):
+    <?php
+    $user_is_allowed = $this->session->userdata('is_adviser')
+        || $this->session->userdata('is_admin')
+        || $this->session->userdata('is_superAdmin')
+        || $this->session->userdata('position') === 'Admin Officer';
+
+    if ($user_is_allowed):
+        $customTablePath = APPPATH . 'modules/registrar/views/' . strtolower($settings->short_name) . '_studentTable.php';
+        if (file_exists($customTablePath)):
             $this->load->view(strtolower($settings->short_name) . '_studentTable');
         else:
             $this->load->view('studentTable');
@@ -90,23 +100,6 @@ switch ($this->uri->segment(2)) {
                 <h4 class="modal-title" id="myModalLabel"> Print ID Card</h4>
             </div>
             <div class="modal-body">
-                <!--          <div class="form-group">
-              <select id="frontBack">
-                  <option value="printIdCard">Front</option>
-                  <option value="printIdCardBack">Back</option>
-
-              </select>
-
-              <select id="pageID">
-                  <option value="0">Page 1</option>
-                  <option value="8">Page 2</option>
-                  <option value="16">Page 3</option>
-                  <option value="24">Page 4</option>
-                  <option value="32">Page 5</option>
-                  <option value="40">Page 6</option>
-                  <option value="48">Page 7</option>
-              </select>              
-          </div>-->
                 <div class="form-group ">
                     <select onclick="$('#url_id').val('<?php echo base_url('registrar/exportForId'); ?>/'+this.value)" tabindex="-1" id="" style="width:200px; font-size: 15px;">
                         <option value="0">Search Grade level here</option>
@@ -192,128 +185,6 @@ switch ($this->uri->segment(2)) {
         ?>
     </div>
 
-</div>
-<!-- Modal -->
-<div class="modal fade" id="rollOver" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                <h4 id="myModalLabel">Roll Over to the Next Level</h4>
-            </div>
-            <div class="modal-body">
-                You are about to Roll Over <b id="stName"></b> from <b id="curr_lDesc"></b> to <b id="new_lDesc"></b><br />
-                Please click confirm button to proceed or tick the box to enroll to summer then proceed or close to terminate the process!
-                <!-- <div class="row">
-                    <div class="col-md-"
-                </div>
-                <div style="background:#C1FFF9; border:1px solid gray; padding: 10px; text-align: center; width: 50%" id="curr_lDesc"></div> -->
-                <!-- <table class="table table-striped">
-                    
-                    <tr><th>Grade Level</th></tr>
-                    <?php
-                    // $RO = $this->session->userdata('school_year') + 1;
-                    // foreach ($grade as $level){
-                    //     $section = Modules::run('registrar/getSectionByGradeId', $level->grade_id, $this->session->userdata('school_year') );
-                    //     if($section->num_rows() > 0):
-                    ?>
-                                <tr id="tr_<?php //echo $level->grade_id 
-                                            ?>">
-                                    <td><? php // echo $level->level 
-                                        ?></td>
-                                    <?php
-                                    // foreach ($section->result() as $s):
-                                    //     $studentsPerSection = Modules::run('registrar/getStudentPerRO',  $this->session->userdata('school_year'), $s->s_id, $this->session->userdata('school_year'));
-                                    ?>
-                                            <td id="td_<? php // echo $s->section_id 
-                                                        ?>" style="background:#C1FFF9; border:1px solid gray;" onclick="setRO('<?php echo $level->grade_id ?>','<?php echo $s->s_id ?>'), $('#ro_strand_id').val('<?php echo $s->str_id ?>')" class="pointer text-center"><?php echo $s->section ?> <span id="badge_<?php echo $s->s_id ?>" class="badge text-danger"><?php echo $studentsPerSection ?></span></td>
-                                        <?php
-                                        //endforeach;
-                                        ?>
-                                </tr>
-                            <?php //else: 
-                            ?>
-                                <tr id="tr_<? php // echo $level->grade_id 
-                                            ?>">
-                                    <td id="td_<? php // echo $level->grade_id 
-                                                ?>" style="background:#C1FFF9; border:1px solid gray;" onclick="setRO('<?php echo $level->grade_id ?>', 0)" class="pointer text-center"><?php echo $level->level ?></td>
-                                </tr>
-                            <?php //endif; 
-                            ?>                    
-                    <?php
-                    // }
-                    ?>
-                </table> -->
-            </div>
-            <div class="modal-footer">
-                <input type='hidden' id='ro_strand_id' />
-                <input type='hidden' id='curr_grade_id' />
-                <input type='hidden' id='ro_st_id' />
-                <input type='hidden' id='ro_grade_id' />
-                <input type='hidden' id='ro_section_id' />
-                <input type='hidden' id='ro_prev_sec_selected' />
-                <input type='hidden' id='ro_badgeIndicator' />
-                <div class="form-check pull-left">
-                    <input class="form-check-input" type="checkbox" id="semRoll">
-                    <label class="form-check-label" for="semRoll">
-                        Check to Enroll Summer
-                    </label>
-
-                </div>
-                <button class="btn btn-warning" onclick="location.reload()" data-dismiss="modal">Close</button>
-                <button onclick='saveRO()' class="btn btn-success">CONFIRM </button>
-                <div id="resultSection" class="help-block"></div>
-            </div>
-        </div>
-        <!-- <div class="modal-content">
-          <div class="modal-header">
-                <button type="button" class="close"  data-dismiss="modal"  aria-hidden="true">&times;</button>
-              <h4 id="myModalLabel">Roll Over to the Next Level</h4>
-            </div>
-            <div class="modal-body">
-                <table class="table table-striped">
-                    
-                    <tr><th>Grade Level</th></tr>
-                    <?php
-                    // $RO = $this->session->userdata('school_year') + 1;
-                    // foreach ($grade as $level)
-                    //            {
-                    ?>
-                    <tr id="tr_<?php // echo $level->grade_id 
-                                ?>">
-                        <td><?php // echo $level->level 
-                            ?></td>
-                        <?php
-                        //    $section = Modules::run('registrar/getSectionByGradeId', $level->grade_id, $this->session->userdata('school_year'));
-
-
-                        //   foreach ($section->result() as $s):
-                        //$studentsPerSection = Modules::run('registrar/getStudentPerRO',  $this->session->userdata('school_year'), $s->s_id, $this->session->userdata('school_year'));
-                        ?>
-                        <td id="td_<?php // echo $s->section_id 
-                                    ?>" style="background:#C1FFF9; border:1px solid gray;" onclick="setRO('<?php echo $level->grade_id ?>','<?php echo $s->s_id ?>')" class="pointer text-center"><?php echo $s->section ?> <span id="badge_<?php echo $s->s_id ?>" class="badge text-danger"><?php echo $studentsPerSection ?></span></td>
-                                <?php
-                                //        endforeach;
-                                ?>
-                    </tr>
-                    <?php
-                    //    }
-                    ?>
-                </table>
-            </div>
-            <div class="modal-footer">
-                <input type='hidden' id='curr_grade_id'  />
-                <input type='hidden' id='ro_st_id'  />
-                <input type='hidden' id='ro_grade_id' />
-                <input type='hidden' id='ro_section_id' />
-                <input type='hidden' id='ro_prev_sec_selected' />
-                <input type='hidden' id='ro_badgeIndicator' />
-              <button class="btn btn-warning" onclick="location.reload()"  data-dismiss="modal" >Close</button>
-              <button onclick='saveRO()' class="btn btn-success">CONFIRM </button>
-              <div id="resultSection" class="help-block" ></div>
-            </div>
-        </div> -->
-    </div>
 </div>
 
 <?php echo Modules::run('main/showAdminRemarksForm') ?>
@@ -421,6 +292,30 @@ switch ($this->uri->segment(2)) {
         $('#us_id').val(user_id);
     }
 
+    function submitRemarks() {
+        var url = "<?php echo base_url() . 'main/saveAdmissionRemarks/' ?>"; // the script where you handle the form input.
+        var st_id = $('#st_id').val()
+        var user_id = $('#us_id').val()
+        var code = $('#inputRemarks').val()
+        var info = $('#required_information').val()
+        $.ajax({
+            type: "POST",
+            url: url,
+            data: "codeIndicator_id=" + code + "&required_information=" + info + "&st_id=" + $('#st_id').val() + "&user_id=" + user_id + "&effectivity_date=" + $('#inputEffectivity').val() + '&csrf_test_name=' + $.cookie('csrf_cookie_name'), // serializes the form's elements.
+            success: function(data) {
+                $('#remarks_' + st_id + "_td").html(data);
+                if (code == 1 || code == 3) {
+                    $('#img_' + st_id + "_td img").attr("src", '<?php echo base_url(); ?>images/unofficial.png');
+                } else {
+                    $('#img_' + st_id + "_td img").attr("src", '<?php echo base_url(); ?>images/official.png');
+                }
+                location.reload();
+            }
+        });
+
+        return false;
+    }
+
     function getStudentBySection(id) {
         var url = "<?php echo base_url() . 'registrar/getAllStudentsBySection/' ?>" + id + '/' + $('#inputSY').val();
         document.location = url;
@@ -476,26 +371,27 @@ switch ($this->uri->segment(2)) {
 
     }
 
-    function showAddRFIDForm(id, st_id) {
-        $('#addId').show();
-        $('#secretContainer').html($('#addId').html())
-        $('#secretContainer').fadeIn(500)
-        $('#stud_id').val(id)
-        $("#inputCard").attr('placeholder', st_id);
-        $("#inputCard").val('')
-        window.setTimeout(function() {
-            document.getElementById("inputCard").focus()
-        }, 1);
-        $('#inputCard').blur(function() {
-            //alert('hey')
-            window.setTimeout(function() {
-                document.getElementById("inputCard").focus();
-            }, 0);
+    // function showAddRFIDForm(id, st_id, name) {
+    //     $('#addId').show();
+    //     $('#secretContainer').html($('#addId').html())
+    //     $('#secretContainer').fadeIn(500)
+    //     $('#stName').text(name)
+    //     $('#stud_id').val(id)
+    //     $("#inputCard").attr('placeholder', st_id);
+    //     $("#inputCard").val('')
+    //     window.setTimeout(function() {
+    //         document.getElementById("inputCard").focus()
+    //     }, 1);
+    //     $('#inputCard').blur(function() {
+    //         //alert('hey')
+    //         window.setTimeout(function() {
+    //             document.getElementById("inputCard").focus();
+    //         }, 0);
 
 
-        })
+    //     })
 
-    }
+    // }
 
     function updateProfile(pk, table, column) {
         var url = "<?php echo base_url() . 'users/editProfile/' ?>"; // the script where you handle the form input.

@@ -1,50 +1,120 @@
-<div class="row">
-    <div class="col-lg-12">
-        <h3 class="page-header" style="margin:0"><a href="<?php echo base_url(); ?>"><i class="fa fa-home fa-fw"></i></a> | School Settings
-            <a href="<?php echo base_url() ?>main/backup" class="btn btn-small btn-warning pull-right">Backup School Data</a>
+<div class="container-fluid py-3">
 
-        </h3>
-    </div>
-</div>
-<div class="row clearfix">
-    <div class="col-lg-12">
-        <div style="position:absolute; top:30%; left:50%;" class="alert alert-error hide" id="notify" data-dismiss="alert-message">
-            <h4></h4>
-        </div>
-        <div class="tabbable tabs-right">
-            <ul class="nav nav-tabs" id="settings_tab" role="tablist">
-                <li class="active"><a href="#generalSettings">General</a></li>
-                <li><a href="#subjectSettings">Subjects</a></li>
-                <li><a href="#GSSettings">Grading System</a></li>
-                <li><a href="#timeSettings">Time Settings</a></li>
-            </ul>
-            <div class="tab-content col-lg-12">
-                <div class="tab-pane active" style="padding-top: 15px;" id="generalSettings">
-                    <?php $this->load->view('schoolSettings') ?>
-                </div>
-                <div class="tab-pane" style="padding-top: 15px;" id="GSSettings">
-                    <?php echo Modules::run('gradingsystem/gs_settings') ?>
-                </div>
-                <div class="tab-pane" style="padding-top: 15px;" id="subjectSettings">
-                    <?php echo Modules::run('subjectmanagement') ?>
-                </div>
-                <div class="tab-pane" style="padding-top: 15px;" id="timeSettings">
-                    <?php $this->load->view('timeSettings') ?>
-                </div>
+    <!-- Header -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center flex-wrap">
+
+                <h4 class="fw-bold mb-2">
+                    <i class="fa fa-cogs me-2 text-primary"></i>
+                    School Settings
+                </h4>
+
+                <a href="<?php echo base_url() ?>main/backup"
+                    class="btn btn-warning shadow-sm">
+                    <i class="fa fa-database me-2"></i>
+                    Backup School Data
+                </a>
+
             </div>
         </div>
     </div>
-</div>
 
+    <!-- Settings Card -->
+    <div class="card shadow-lg border-0">
 
+        <!-- Tabs -->
+        <div class="card-header bg-white border-bottom">
 
+            <ul class="nav nav-tabs card-header-tabs" id="settings_tab" role="tablist">
 
+                <li class="nav-item">
+                    <button class="nav-link active"
+                        data-bs-toggle="tab"
+                        data-bs-target="#generalSettings"
+                        type="button">
+                        <i class="fa fa-cog me-2"></i>General
+                    </button>
+                </li>
+
+                <li class="nav-item">
+                    <button class="nav-link"
+                        data-bs-toggle="tab"
+                        data-bs-target="#subjectSettings"
+                        type="button">
+                        <i class="fa fa-book me-2"></i>Subjects
+                    </button>
+                </li>
+
+                <li class="nav-item">
+                    <button class="nav-link"
+                        data-bs-toggle="tab"
+                        data-bs-target="#GSSettings"
+                        type="button">
+                        <i class="fa fa-calculator me-2"></i>Grading System
+                    </button>
+                </li>
+
+                <li class="nav-item">
+                    <button class="nav-link"
+                        data-bs-toggle="tab"
+                        data-bs-target="#timeSettings"
+                        type="button">
+                        <i class="fa fa-clock me-2"></i>Time Settings
+                    </button>
+                </li>
+
+            </ul>
+
+        </div>
+
+        <!-- Content -->
+        <div class="card-body">
+
+            <div class="tab-content">
+
+                <div class="tab-pane fade show active"
+                    id="generalSettings">
+
+                    <?php $this->load->view('schoolSettings') ?>
+
+                </div>
+
+                <div class="tab-pane fade"
+                    id="GSSettings">
+
+                    <?php echo Modules::run('gradingsystem/gs_settings')
+                    ?>
+
+                </div>
+
+                <div class="tab-pane fade"
+                    id="subjectSettings">
+
+                    <?php echo Modules::run('subjectmanagement')
+                    ?>
+
+                </div>
+
+                <div class="tab-pane fade"
+                    id="timeSettings">
+
+                    <?php $this->load->view('timeSettings')
+                    ?>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
 
 </div>
 <script type="text/javascript">
     $(function() {
-        $(".editableTable td h5 span").dblclick(function() {
-            var OriginalContent = $(this).text();
+        $(document).on('click', '.editableTable span[id]', function() {
+            var OriginalContent = $(this).text().trim();
             var ID = $(this).attr('id');
 
             $(this).addClass("cellEditing");
@@ -65,10 +135,7 @@
                         data: dataString,
                         cache: false,
                         success: function(data) {
-
-                            //                  $('#success').html(data.msg);
-                            //                  $('#alert-info').fadeOut(5000);
-                            //                  $('#'+ID+'_result').html(data.equivalent)
+                            // inline edit success
                         }
                     });
 
@@ -80,9 +147,22 @@
                 $(this).parent().removeClass("cellEditing");
             });
         });
-        $('#settings_tab a').click(function(e) {
-            e.preventDefault()
-            $(this).tab('show')
+
+        // Load tab from URL hash
+        let hash = window.location.hash;
+        if (hash) {
+            let triggerEl = document.querySelector('[data-bs-target="' + hash + '"]');
+            if (triggerEl) {
+                new bootstrap.Tab(triggerEl).show();
+            }
+        }
+
+        // Update URL when tab changes
+        document.querySelectorAll('#settings_tab button[data-bs-toggle="tab"]').forEach(function(tabBtn) {
+            tabBtn.addEventListener('shown.bs.tab', function(event) {
+                let id = event.target.getAttribute('data-bs-target');
+                history.replaceState(null, null, id);
+            });
         });
 
         $(".setNumDays").dblclick(function() {

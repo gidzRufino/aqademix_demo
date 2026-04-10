@@ -1,0 +1,3 @@
+<button style='margin-top:15px;' id='genCardEnabled' onclick='printForm(<?php echo $sy ?>)' class='btn btn-small btn-danger'><i class='fa fa-file-pdf-o fa-fw'></i> PDF Form  </button>
+<br/>
+<button style='margin-top:15px;' id='genCardEnabled' onclick='xportExcel(<?php echo $this->session->school_year ?>)' class='btn btn-small btn-success'><i class='fa fa-file-excel-o fa-fw'></i> Excel Form  </button>

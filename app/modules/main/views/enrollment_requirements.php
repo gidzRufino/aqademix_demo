@@ -1,79 +1,240 @@
-<div class="row">
-    <div class="col-md-6">
-        <div class="panel panel-primary">
-            <div class="panel-heading">
-                <h5>Pre-School & Elementary Department</h5>
+<style>
+    .accordion-button {
+        font-size: 15px;
+        padding: 14px 18px;
+    }
+
+    .accordion-item {
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .accordion-body {
+        background: #fafafa;
+    }
+</style>
+
+<div class="container-fluid py-4">
+
+    <div class="accordion shadow-sm" id="deptAccordion">
+
+        <!-- Pre-School & Elementary -->
+        <div class="accordion-item border-0 mb-3">
+
+            <h2 class="accordion-header">
+
+                <button class="accordion-button collapsed fw-semibold"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#deptElem">
+
+                    <i class="fa fa-school text-primary me-2"></i>
+                    Pre-School & Elementary Department
+
+                </button>
+
+            </h2>
+
+            <div id="deptElem" class="accordion-collapse collapse"
+                data-bs-parent="#deptAccordion">
+
+                <div class="accordion-body">
+
+                    <!-- Elementary -->
+                    <div class="mb-4">
+
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+
+                            <strong>A. Incoming Grade 1 & Transferees</strong>
+
+                            <button class="btn btn-sm btn-outline-primary"
+                                data-bs-toggle="modal"
+                                data-bs-target="#insertReq"
+                                onclick="$('#dept_desc').text('Elementary Department'); $('#dept_id').val(2);">
+
+                                <i class="fa fa-plus"></i>
+
+                            </button>
+
+                        </div>
+
+                        <div id="elemList"></div>
+
+                    </div>
+
+
+                    <!-- Pre-School -->
+                    <div>
+
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+
+                            <strong>B. Pre-School</strong>
+
+                            <button class="btn btn-sm btn-outline-primary"
+                                data-bs-toggle="modal"
+                                data-bs-target="#insertReq"
+                                onclick="$('#dept_desc').text('Pre-School Department'); $('#dept_id').val(1);">
+
+                                <i class="fa fa-plus"></i>
+
+                            </button>
+
+                        </div>
+
+                        <div id="preSchoolList"></div>
+
+                    </div>
+
+                </div>
+
             </div>
-            <div class="panel panel-body">
-                <i class="fa fa-plus-circle pull-right fa-1x" style="cursor: pointer" data-toggle="modal" data-target="#insertReq" onclick="$('#dept_desc').text('Elementary Department'), $('#dept_id').val(2)"></i>
-                <span>A. Incoming Grade 1 & Transferees:</span>
-                <div id="elemList"></div>
-                <br/>
-                <i class="fa fa-plus-circle pull-right fa-1x" style="cursor: pointer" data-toggle="modal" data-target="#insertReq" onclick="$('#dept_desc').text('Pre-School Department'), $('#dept_id').val(1)"></i>
-                <span>B. Pre-School:</span>
-                <div id="preSchoolList"></div>
-            </div>
+
         </div>
-    </div>
-    <div class="col-md-6">
-        <div class="panel panel-green">
-            <div class="panel-heading">
-                <i class="fa fa-plus-circle pull-right fa-2x" style="cursor: pointer" data-toggle="modal" data-target="#insertReq" onclick="$('#dept_desc').text('Junior High School Department'), $('#dept_id').val(3)"></i>
-                <h5>Junior High School</h5>
+
+
+        <!-- Junior High -->
+        <div class="accordion-item border-0 mb-3">
+
+            <h2 class="accordion-header">
+
+                <button class="accordion-button collapsed fw-semibold"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#deptJHS">
+
+                    <i class="fa fa-graduation-cap text-success me-2"></i>
+                    Junior High School
+
+                </button>
+
+            </h2>
+
+            <div id="deptJHS" class="accordion-collapse collapse"
+                data-bs-parent="#deptAccordion">
+
+                <div class="accordion-body">
+
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+
+                        <strong>Requirements</strong>
+
+                        <button class="btn btn-sm btn-outline-success"
+                            data-bs-toggle="modal"
+                            data-bs-target="#insertReq"
+                            onclick="$('#dept_desc').text('Junior High School Department'); $('#dept_id').val(3);">
+
+                            <i class="fa fa-plus"></i>
+
+                        </button>
+
+                    </div>
+
+                    <div id="jhsList"></div>
+
+                </div>
+
             </div>
-            <div class="panel panel-body">
-                <div id="jhsList"></div>
-            </div>
+
         </div>
-    </div>
-    <div class="col-md-6">
-        <div class="panel panel-info">
-            <div class="panel-heading">
-                <i class="fa fa-plus-circle pull-right fa-2x" style="cursor: pointer" data-toggle="modal" data-target="#insertReq" onclick="$('#dept_desc').text('Senior High School Department'), $('#dept_id').val(4)"></i>
-                <h5>Senior High School</h5>
+
+
+        <!-- Senior High -->
+        <div class="accordion-item border-0 mb-3">
+
+            <h2 class="accordion-header">
+
+                <button class="accordion-button collapsed fw-semibold"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#deptSHS">
+
+                    <i class="fa fa-book text-info me-2"></i>
+                    Senior High School
+
+                </button>
+
+            </h2>
+
+            <div id="deptSHS" class="accordion-collapse collapse"
+                data-bs-parent="#deptAccordion">
+
+                <div class="accordion-body">
+
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+
+                        <strong>Requirements</strong>
+
+                        <button class="btn btn-sm btn-outline-info"
+                            data-bs-toggle="modal"
+                            data-bs-target="#insertReq"
+                            onclick="$('#dept_desc').text('Senior High School Department'); $('#dept_id').val(4);">
+
+                            <i class="fa fa-plus"></i>
+
+                        </button>
+
+                    </div>
+
+                    <div id="shsList"></div>
+
+                </div>
+
             </div>
-            <div class="panel panel-body">
-                <div id="shsList"></div>
-            </div>
+
         </div>
-    </div>
-    <div class="col-md-6">
-        <div class="panel panel-success">
-            <div class="panel-heading">
-                <i class="fa fa-plus-circle pull-right fa-2x" style="cursor: pointer" data-toggle="modal" data-target="#insertReq" onclick="$('#dept_desc').text('College Department'), $('#dept_id').val(5)"></i>
-                <h5>College Department</h5>
+
+
+        <!-- College -->
+        <div class="accordion-item border-0 mb-3">
+
+            <h2 class="accordion-header">
+
+                <button class="accordion-button collapsed fw-semibold"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#deptCollege">
+
+                    <i class="fa fa-university text-dark me-2"></i>
+                    College Department
+
+                </button>
+
+            </h2>
+
+            <div id="deptCollege" class="accordion-collapse collapse"
+                data-bs-parent="#deptAccordion">
+
+                <div class="accordion-body">
+
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+
+                        <strong>Requirements</strong>
+
+                        <button class="btn btn-sm btn-outline-dark"
+                            data-bs-toggle="modal"
+                            data-bs-target="#insertReq"
+                            onclick="$('#dept_desc').text('College Department'); $('#dept_id').val(5);">
+
+                            <i class="fa fa-plus"></i>
+
+                        </button>
+
+                    </div>
+
+                    <div id="collegeList"></div>
+
+                </div>
+
             </div>
-            <div class="panel panel-body">
-                <div id="collegeList"></div>
-            </div>
+
         </div>
+
     </div>
+
 </div>
 
-<div id="insertReq" class="modal fade" role="dialog" style="width: 25%; margin: 15% 0 0 35%">
-    <?php $reqList = Modules::run('main/listRequirements'); ?>
-    <div class="panel panel-danger">
-        <div class="panel-heading">
-            <input type="hidden" id="dept_id" name="dept_id" />
-            Insert Requirements for <span id="dept_desc"></span>
-            <i class="fa fa-times-circle pull-right fa-2x" style="cursor: pointer;" onclick="$('#insertReq').modal('hide')"></i>
-        </div>
-        <div class="panel panel-body">
-            <select id="reqSelect" name="reqSelect">
-                <option value="0">Select Requirements</option>
-                <?php foreach ($reqList as $r): ?>
-                    <option value="<?php echo $r->eReq_list_id ?>"><?php echo $r->eReq_desc ?></option>
-                <?php endforeach; ?>
-            </select>
-        </div>
-        <div class="panel panel-footer">
-            <button class="btn btn-sm btn-danger pull-right" id="addSelected">Save</button><br/>
-            <span id="alertMsg"></span>
-        </div>
-    </div>
-</div>
 <script type="text/javascript">
-    $(document).ready(function () {
+    $(document).ready(function() {
 
         checkPerDeptList(1);
         checkPerDeptList(2);
@@ -81,22 +242,22 @@
         checkPerDeptList(4);
         checkPerDeptList(5);
 
-        $('#addSelected').click(function () {
+        $('#addSelected').click(function() {
             var id = $('#reqSelect').val();
             var deptID = $('#dept_id').val();
             if (id != 0) {
                 $.ajax({
                     type: 'GET',
                     url: '<?php echo base_url() . 'main/checkForDuplicate/' ?>' + id + '/' + deptID,
-                    success: function (data) {
+                    success: function(data) {
                         if (data == 1) {
                             $('#alertMsg').append('<div class="alert alert-danger">' +
-                                    '<i class="fa fa-exclamation-triangle"></i>&nbsp;' +
-                                    'Requirement Selected Already Exist!' +
-                                    '</div>');
+                                '<i class="fa fa-exclamation-triangle"></i>&nbsp;' +
+                                'Requirement Selected Already Exist!' +
+                                '</div>');
 
-                            $('.alert-danger').delay(500).show(10, function () {
-                                $(this).delay(3000).hide(10, function () {
+                            $('.alert-danger').delay(500).show(10, function() {
+                                $(this).delay(3000).hide(10, function() {
                                     $(this).remove();
                                 });
                             });
@@ -104,14 +265,14 @@
                             $.ajax({
                                 type: 'GET',
                                 url: '<?php echo base_url() . 'main/insertListPerDept/' ?>' + id + '/' + deptID,
-                                success: function (info) {
+                                success: function(info) {
                                     $('#alertMsg').append('<div class="alert alert-success">' +
-                                            '<span class="glyphicon glyphicon-ok"></span>&nbsp;' +
-                                            'Successfuly Added!' +
-                                            '</div>');
+                                        '<span class="glyphicon glyphicon-ok"></span>&nbsp;' +
+                                        'Successfuly Added!' +
+                                        '</div>');
 
-                                    $('.alert-success').delay(1500).show(10, function () {
-                                        $(this).delay(3000).hide(10, function () {
+                                    $('.alert-success').delay(1500).show(10, function() {
+                                        $(this).delay(3000).hide(10, function() {
                                             $(this).remove();
                                         });
                                         $('#insertReq').modal('hide');
@@ -121,18 +282,18 @@
                             });
                         }
                     },
-                    error: function (data) {
+                    error: function(data) {
                         alert('error');
                     }
                 });
             } else {
                 $('#alertMsg').append('<div class="alert alert-danger">' +
-                        '<i class="fa fa-exclamation-triangle"></i>&nbsp;' +
-                        'Please Select Requirements!' +
-                        '</div>');
+                    '<i class="fa fa-exclamation-triangle"></i>&nbsp;' +
+                    'Please Select Requirements!' +
+                    '</div>');
 
-                $('.alert-danger').delay(500).show(10, function () {
-                    $(this).delay(3000).hide(10, function () {
+                $('.alert-danger').delay(500).show(10, function() {
+                    $(this).delay(3000).hide(10, function() {
                         $(this).remove();
                     });
                 });
@@ -146,7 +307,7 @@
         $.ajax({
             type: 'GET',
             url: url,
-            success: function (data) {
+            success: function(data) {
                 switch (id) {
                     case 1:
                         $('#preSchoolList').html(data);
@@ -175,7 +336,7 @@
             $.ajax({
                 type: 'GET',
                 url: url,
-                success: function (data) {
+                success: function(data) {
 
                 }
             });
@@ -185,27 +346,28 @@
         } else {
             alert('Operation Cancelled');
         }
-//        var url = '<?php // echo base_url() . 'main/deleteItem/' ?>' + id + '/' + dept;
-//        $.confirm({
-//            title: 'Confirmation Alert!',
-//            content: 'Are you sure you want to delete this requirement?',
-//            buttons: {
-//                confirm: function () {
-//                    $.ajax({
-//                        type: 'GET',
-//                        url: url,
-//                        success: function (data) {
-//
-//                        }
-//                    });
-//                    $('#viewList').modal('hide');
-//                    $.alert('Requirement Deleted Successfuly!');
-//                    location.reload();
-//                },
-//                cancel: function () {
-//                    $.alert('Canceled!');
-//                }
-//            }
-//        });
+        //        var url = '<?php // echo base_url() . 'main/deleteItem/' 
+                                ?>' + id + '/' + dept;
+        //        $.confirm({
+        //            title: 'Confirmation Alert!',
+        //            content: 'Are you sure you want to delete this requirement?',
+        //            buttons: {
+        //                confirm: function () {
+        //                    $.ajax({
+        //                        type: 'GET',
+        //                        url: url,
+        //                        success: function (data) {
+        //
+        //                        }
+        //                    });
+        //                    $('#viewList').modal('hide');
+        //                    $.alert('Requirement Deleted Successfuly!');
+        //                    location.reload();
+        //                },
+        //                cancel: function () {
+        //                    $.alert('Canceled!');
+        //                }
+        //            }
+        //        });
     }
 </script>

@@ -5,7 +5,8 @@ class MYPDF extends Pdf {
     //Page header
     public function Header() {
         // Logo
-        $section = Modules::run('registrar/getSectionById', segment_3);
+        $CI = &get_instance();
+        $section = Modules::run('registrar/getSectionById', $CI->uri->segment(3));
         $this->SetTitle('School Form 5 (SF 5) Report on Promotion & Level of Proficiency');
 //                $this->SetTopMargin(4);
         $image_file = K_PATH_IMAGES . '/depEd_logo.jpg';
@@ -23,7 +24,7 @@ class MYPDF extends Pdf {
         $this->Cell(0, 15, '(This replaces Forms 18-E1, 18-E2, 18A and List of Graduates)', 0, false, 'C', 0, '', 0, false, 'M', 'M');
 
         $settings = Modules::run('main/getSet');
-        $nextYear = segment_4 + 1;
+        $nextYear = $CI->uri->segment(4) + 1;
 
 
         $this->SetFont('helvetica', 'B', 12);
@@ -36,7 +37,7 @@ class MYPDF extends Pdf {
         $this->SetXY(50, 47);
         $this->Cell(0, 4.3, "School ID : " . $settings->school_id, 0, false, 'L', 0, '', 0, false, 'M', 'M');
         $this->SetY(47);
-        $this->Cell(0, 4.3, "School Year : " . segment_4 . '-' . $nextYear, 0, false, 'C', 0, '', 0, false, 'M', 'M');
+        $this->Cell(0, 4.3, "School Year : " . $CI->uri->segment(4) . '-' . $nextYear, 0, false, 'C', 0, '', 0, false, 'M', 'M');
         $this->SetXY(217, 47);
         $this->Cell(0, 4.3, "Curriculum: K - 12", 0, false, 'L', 0, '', 0, false, 'M', 'M');
         $this->SetXY(50, 52);
@@ -60,10 +61,12 @@ class MYPDF extends Pdf {
 
 }
 
+$CI = &get_instance();
+
 $pdf = new MYPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
 $pdf->SetLeftMargin(3);
 $pdf->SetRightMargin(3);
-$section = Modules::run('registrar/getSectionById', segment_3);
+$section = Modules::run('registrar/getSectionById', $CI->uri->segment(3));
 $settings = Modules::run('main/getSet');
 $num_of_pages = $pdf->getAliasNbPages();
 $currentPage = $pdf->getAliasNumPage();
@@ -100,8 +103,9 @@ function getStatus($score, $irr = NULL) {
     return $status;
 }
 
-function getSideNames($pdf) {
-    $adviser = Modules::run('academic/getAdvisory', NULL, segment_4, segment_3);
+function getSideNames($pdf, $CI)
+{
+    $adviser = Modules::run('academic/getAdvisory', NULL, $CI->uri->segment(4), $CI->uri->segment(3));
     $principal = Modules::run('hr/getEmployeeByPosition', 'Grade School Principal');
     $pdf->SetXY(240, 60);
     $pdf->SetFont('helvetica', 'N', 7);
@@ -198,8 +202,8 @@ $mPromoted = 0;
 $fPromoted = 0;
 foreach($male->result() as $s){
     $st_id = ($s->lrn==""?$s->st_id:$s->lrn);
-    $FA = Modules::run('gradingsystem/getFinalAverage',$s->st_id, segment_4);
-    $INC = Modules::run('reports/getINC', $s->st_id, segment_4);
+    $FA = Modules::run('gradingsystem/getFinalAverage', $s->st_id, $CI->uri->segment(4));
+    $INC = Modules::run('reports/getINC', $s->st_id, $CI->uri->segment(4));
     $maINC = json_decode($INC);
     if($FA>=75):
         $mPromoted += 1;
@@ -263,8 +267,8 @@ foreach($male->result() as $s){
     endif;
 }
 foreach($female->result() as $f){
-    $FA = Modules::run('gradingsystem/getFinalAverage',$f->st_id, segment_4);
-    $INC = Modules::run('reports/getINC', $f->st_id, segment_4);
+    $FA = Modules::run('gradingsystem/getFinalAverage', $f->st_id, $CI->uri->segment(4));
+    $INC = Modules::run('reports/getINC', $f->st_id, $CI->uri->segment(4));
     $finINC = json_decode($INC);
     if($FA>=75):
         $fPromoted += 1;
@@ -363,24 +367,24 @@ $pdf->MultiCell(20, 8, 'PROMOTED',1, 'C', 0, 0, '', '', true, 0, false, true, 8,
 $pdf->MultiCell(20, 8, ($mPromoted - ($mirregular)),1, 'C', 0, 0, '', '', true, 0, false, true, 8, 'M');
 $pdf->MultiCell(20, 8, ($fPromoted - ($firregular)),1, 'C', 0, 0, '', '', true, 0, false, true, 8, 'M');
 $pdf->MultiCell(20, 8, (($mPromoted+$fPromoted)-(($mirregular+$firregular))),1, 'C', 0, 0, '', '', true, 0, false, true, 8, 'M');
-    Modules::run('gradingsystem/savePromotion', $section->grade_level_id,segment_3, 'pro_m',($mPromoted - ($mirregular)), $settings->school_year);
-    Modules::run('gradingsystem/savePromotion', $section->grade_level_id,segment_3, 'pro_f',($fPromoted - ($firregular)), $settings->school_year);
+Modules::run('gradingsystem/savePromotion', $section->grade_level_id, $CI->uri->segment(3), 'pro_m', ($mPromoted - ($mirregular)), $settings->school_year);
+Modules::run('gradingsystem/savePromotion', $section->grade_level_id, $CI->uri->segment(3), 'pro_f', ($fPromoted - ($firregular)), $settings->school_year);
 $pdf->Ln();
 $pdf->SetX(240);
 $pdf->MultiCell(20, 8, 'IRREGULAR',1, 'C', 0, 0, '', '', true, 0, false, true, 8, 'M');
 $pdf->MultiCell(20, 8, $mirregular,1, 'C', 0, 0, '', '', true, 0, false, true, 8, 'M');
 $pdf->MultiCell(20, 8, $firregular,1, 'C', 0, 0, '', '', true, 0, false, true, 8, 'M');
 $pdf->MultiCell(20, 8, $mirregular+$firregular,1, 'C', 0, 0, '', '', true, 0, false, true, 8, 'M');
-    Modules::run('gradingsystem/savePromotion', $section->grade_level_id,segment_3, 'irr_m',$mirregular, $settings->school_year);
-    Modules::run('gradingsystem/savePromotion', $section->grade_level_id,segment_3, 'irr_f',$firregular, $settings->school_year);
+Modules::run('gradingsystem/savePromotion', $section->grade_level_id, $CI->uri->segment(3), 'irr_m', $mirregular, $settings->school_year);
+Modules::run('gradingsystem/savePromotion', $section->grade_level_id, $CI->uri->segment(3), 'irr_f', $firregular, $settings->school_year);
 $pdf->Ln();
 $pdf->SetX(240);
 $pdf->MultiCell(20, 8, 'RETAINED',1, 'C', 0, 0, '', '', true, 0, false, true, 8, 'M');
 $pdf->MultiCell(20, 8, $miretained,1, 'C', 0, 0, '', '', true, 0, false, true, 8, 'M');
 $pdf->MultiCell(20, 8, $firetained,1, 'C', 0, 0, '', '', true, 0, false, true, 8, 'M');
 $pdf->MultiCell(20, 8, $miretained+$firetained,1, 'C', 0, 0, '', '', true, 0, false, true, 8, 'M');
-    Modules::run('gradingsystem/savePromotion', $section->grade_level_id,segment_3, 're_m',$miretained, $settings->school_year);
-    Modules::run('gradingsystem/savePromotion', $section->grade_level_id,segment_3, 're_f',$firetained, $settings->school_year);
+Modules::run('gradingsystem/savePromotion', $section->grade_level_id, $CI->uri->segment(3), 're_m', $miretained, $settings->school_year);
+Modules::run('gradingsystem/savePromotion', $section->grade_level_id, $CI->uri->segment(3), 're_f', $firetained, $settings->school_year);
 $pdf->Ln(10);
 // Proficiency Table
 $pdf->SetX(240);
@@ -399,8 +403,8 @@ $pdf->MultiCell(20, 10, 'BEGINNNING
 $pdf->MultiCell(20, 10, $mbeg,1, 'C', 0, 0, '', '', true, 0, false, true, 10, 'M');
 $pdf->MultiCell(20, 10, $fbeg,1, 'C', 0, 0, '', '', true, 0, false, true, 10, 'M');
 $pdf->MultiCell(20, 10, $mbeg+$fbeg,1, 'C', 0, 0, '', '', true, 0, false, true, 10, 'M');
-    Modules::run('gradingsystem/savePromotion', $section->grade_level_id,segment_3, 'b_m',$mbeg, $settings->school_year);
-    Modules::run('gradingsystem/savePromotion', $section->grade_level_id,segment_3, 'b_f',$fbeg, $settings->school_year);
+Modules::run('gradingsystem/savePromotion', $section->grade_level_id, $CI->uri->segment(3), 'b_m', $mbeg, $settings->school_year);
+Modules::run('gradingsystem/savePromotion', $section->grade_level_id, $CI->uri->segment(3), 'b_f', $fbeg, $settings->school_year);
 $pdf->Ln();
 $pdf->SetX(240);
 $pdf->MultiCell(20, 10, 'DEVELOPING
@@ -408,8 +412,8 @@ $pdf->MultiCell(20, 10, 'DEVELOPING
 $pdf->MultiCell(20, 10, $mdev,1, 'C', 0, 0, '', '', true, 0, false, true, 10, 'M');
 $pdf->MultiCell(20, 10, $fdev,1, 'C', 0, 0, '', '', true, 0, false, true, 10, 'M');
 $pdf->MultiCell(20, 10, $mdev+$fdev,1, 'C', 0, 0, '', '', true, 0, false, true, 10, 'M');
-    Modules::run('gradingsystem/savePromotion', $section->grade_level_id,segment_3, 'd_m',$mdev, $settings->school_year);
-    Modules::run('gradingsystem/savePromotion', $section->grade_level_id,segment_3, 'd_f',$fdev, $settings->school_year);
+Modules::run('gradingsystem/savePromotion', $section->grade_level_id, $CI->uri->segment(3), 'd_m', $mdev, $settings->school_year);
+Modules::run('gradingsystem/savePromotion', $section->grade_level_id, $CI->uri->segment(3), 'd_f', $fdev, $settings->school_year);
 $pdf->Ln();
 $pdf->SetX(240);
 $pdf->MultiCell(20, 10, 'APPROACHING PROFICIENCY
@@ -426,8 +430,8 @@ $pdf->MultiCell(20, 10, 'PROFICIENT
 $pdf->MultiCell(20, 10, $mpr,1, 'C', 0, 0, '', '', true, 0, false, true, 10, 'M');
 $pdf->MultiCell(20, 10, $fpr,1, 'C', 0, 0, '', '', true, 0, false, true, 10, 'M');
 $pdf->MultiCell(20, 10, $mpr+$fpr,1, 'C', 0, 0, '', '', true, 0, false, true, 8, 'M');
-    Modules::run('gradingsystem/savePromotion', $section->grade_level_id,segment_3, 'p_m',$mpr, $settings->school_year);
-    Modules::run('gradingsystem/savePromotion', $section->grade_level_id,segment_3, 'p_f',$fpr, $settings->school_year);
+Modules::run('gradingsystem/savePromotion', $section->grade_level_id, $CI->uri->segment(3), 'p_m', $mpr, $settings->school_year);
+Modules::run('gradingsystem/savePromotion', $section->grade_level_id, $CI->uri->segment(3), 'p_f', $fpr, $settings->school_year);
 $pdf->Ln();
 $pdf->SetX(240);
 $pdf->MultiCell(20, 10, 'ADVANCED
@@ -435,8 +439,8 @@ $pdf->MultiCell(20, 10, 'ADVANCED
 $pdf->MultiCell(20, 10, $mad,1, 'C', 0, 0, '', '', true, 0, false, true, 10, 'M');
 $pdf->MultiCell(20, 10, $fad,1, 'C', 0, 0, '', '', true, 0, false, true, 10, 'M');
 $pdf->MultiCell(20, 10, $mad+$fad,1, 'C', 0, 0, '', '', true, 0, false, true, 10, 'M');
-    Modules::run('gradingsystem/savePromotion', $section->grade_level_id,segment_3, 'a_m',$mad, $settings->school_year);
-    Modules::run('gradingsystem/savePromotion', $section->grade_level_id,segment_3, 'a_f',$fad, $settings->school_year);
+Modules::run('gradingsystem/savePromotion', $section->grade_level_id, $CI->uri->segment(3), 'a_m', $mad, $settings->school_year);
+Modules::run('gradingsystem/savePromotion', $section->grade_level_id, $CI->uri->segment(3), 'a_f', $fad, $settings->school_year);
 
 // end of Level of Proficiency
 
@@ -472,9 +476,9 @@ $pdf->Ln();
 $y = 0;
 $totalColumn = 0;
 foreach($male->result() as $s){
-    $FA = Modules::run('gradingsystem/getFinalAverage',$s->st_id, segment_4);
+    $FA = Modules::run('gradingsystem/getFinalAverage', $s->st_id, $CI->uri->segment(4));
     $FC = NULL;
-    $INC = Modules::run('reports/getINC', $s->st_id, segment_4);
+    $INC = Modules::run('reports/getINC', $s->st_id, $CI->uri->segment(4));
     $maINC = json_decode($INC);
     if($maINC->bsp>0 || $maINC->bs>0):
         $FC = 'inc';
@@ -495,8 +499,8 @@ foreach($male->result() as $s){
     $pdf->MultiCell(40, 8, $maINC->backSubp,1, 'C', 0, 0, '', '', true, 0, false, true, 8, 'M');
     $pdf->MultiCell(40, 8, $maINC->backSubject,1, 'C', 0, 0, '', '', true, 0, false, true, 8, 'M');
     $pdf->Ln();
-    
-    if($y==13):
+
+    if ($y == 12):
         $y=0;
         $pdf->AddPage();         
         $pdf->SetY(65);
@@ -582,9 +586,9 @@ for($i=1;$i<=3;$i++)
 
 foreach($female->result() as $f){
     $y++;
-    $FA = Modules::run('gradingsystem/getFinalAverage',$f->st_id, segment_4);
+    $FA = Modules::run('gradingsystem/getFinalAverage', $f->st_id, $CI->uri->segment(4));
     $FC = NULL;
-    $INC = Modules::run('reports/getINC', $f->st_id, segment_4);
+    $INC = Modules::run('reports/getINC', $f->st_id, $CI->uri->segment(4));
     $finINC = json_decode($INC);
     
     if($finINC->bsp>0 || $finINC->bs>0):
@@ -705,7 +709,7 @@ if (($male->num_rows() + $female->num_rows()) < 10):
     $pdf->AddPage();
 endif;
 
-    getSideNames($pdf);
+getSideNames($pdf, $CI);
 //$html = Modules::run('reports/form1');
 //
 //$pdf->writeHTML($html, true, false, true, false, '');

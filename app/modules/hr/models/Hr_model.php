@@ -197,31 +197,40 @@ class Hr_model extends CI_Model
         return $q->result();
     }
 
-    public function saveContacts($user_id, $mobile, $column = NULL, $school_year = NULL)
+    public function saveContacts($user_id, $mobile, $tbl_name, $column = NULL, $school_year = NULL, $field_id = null)
     {
-        $this->db = ($school_year == NULL ? $this->eskwela->db($this->session->school_year) : $this->eskwela->db($school_year));
-        // if ($column == NULL):
-        // $details = array('cd_mobile' => $mobile);
-        // else:
-        //     $details = array($column => $mobile);
-        // endif;
-        $details = array($column => $mobile);
+        if ($column === NULL || $field_id === NULL) {
+            return false;
+        }
 
-        $this->db->where('contact_id', $user_id);
-        $q = $this->db->get('profile_contact_details');
-        if ($q->num_rows() > 0):
-            $this->db->where('contact_id', $user_id);
-            $this->db->update('profile_contact_details', $details);
+        $db = ($school_year == NULL)
+            ? $this->eskwela->db($this->session->school_year)
+            : $this->eskwela->db($school_year);
 
-            $this->db->where('user_id', $user_id);
-            $this->db->update('profile', array('contact_id' => $user_id));
+        $details = [$column => $mobile];
+
+        $exists = $db->where($field_id, $user_id)
+            ->count_all_results($tbl_name);
+
+        if ($exists) {
+            $db->where($field_id, $user_id);
+            $db->update($tbl_name, $details);
+
+            if ($tbl_name == 'profile_contact_details') {
+                $db->where('user_id', $user_id);
+                $db->update('profile', ['contact_id' => $user_id]);
+            }
+
             return $user_id;
-        else:
-            $this->db->insert('profile_contact_details', array('contact_id' => $user_id, $column => $mobile));
-            $this->db->where('user_id', $user_id);
-            $this->db->update('profile', array('contact_id' => $user_id));
-            return $this->db->insert_id();
-        endif;
+        } else {
+
+            $db->insert($tbl_name, [
+                $field_id => $user_id,
+                $column => $mobile
+            ]);
+
+            return $db->insert_id();
+        }
     }
 
     function deleteEducBak($id)
@@ -825,6 +834,146 @@ class Hr_model extends CI_Model
         return;
     }
 
+    /**
+     * Save multiple positions for an employee into mapping table profile_employee_position.
+     * Existing rows for the employee are removed, then new ones inserted.
+     *
+     * @param string $employee_id
+     * @param string $user_id
+     * @param array  $positions
+     */
+    public function saveEmployeePositions($employee_id, $user_id, $positions = array())
+    {
+        if (!is_array($positions)) {
+            $positions = array();
+        }
+        if (empty($positions)) {
+            return;
+        }
+
+        $is_primary = 1;
+        foreach ($positions as $pid) {
+            $pid = (int) $pid;
+            if ($pid <= 0) {
+                continue;
+            }
+
+            // remove any existing mapping for this exact position first to avoid duplicates
+            $this->db->where('employee_id', $employee_id);
+            $this->db->where('position_id', $pid);
+            $this->db->delete('profile_employee_position');
+
+            $data = array(
+                'employee_id' => $employee_id,
+                'user_id'     => $user_id,
+                'position_id' => $pid,
+                'is_primary'  => $is_primary,
+            );
+
+            $this->db->insert('profile_employee_position', $data);
+            $is_primary = 0;
+        }
+    }
+
+    public function updateEmployeePosition($emp_id, $uid, $pos_id)
+    {
+        $employee = (int) $emp_id;
+        $position = (int) $pos_id;
+        $user     = (int) $uid;
+
+        $exists = $this->db->where([
+            'employee_id' => $employee,
+            'position_id' => $position,
+            'user_id'     => $user
+        ])->count_all_results('profile_employee_position');
+
+        if (!$exists) {
+            return false;
+        }
+
+        $this->db->trans_start();
+
+        // Remove current primary
+        $this->db->where('employee_id', $employee)
+            ->where('user_id', $user)
+            ->update('profile_employee_position', [
+                'is_primary' => 0
+            ]);
+
+        // Set new primary
+        $this->db->where('employee_id', $employee)
+            ->where('position_id', $position)
+            ->where('user_id', $user)
+            ->update('profile_employee_position', [
+                'is_primary' => 1
+            ]);
+
+        $this->db->trans_complete();
+
+        return $this->db->trans_status();
+    }
+
+
+    /**
+     * Update primary position_id on main profile_employee table for backward compatibility.
+     *
+     * @param string $user_id
+     * @param int    $position_id
+     */
+    public function updateEmployeePrimaryPosition($user_id, $position_id)
+    {
+        $position_id = (int) $position_id;
+        if ($position_id <= 0) {
+            return;
+        }
+
+        $this->db->trans_start();
+
+        $this->db->where('user_id', $user_id);
+        $this->db->update('profile_employee', array('position_id' => $position_id));
+        $this->db->trans_complete();
+
+        return $this->db->trans_status();
+    }
+
+    /**
+     * Delete a single position mapping for an employee.
+     *
+     * @param string $employee_id
+     * @param int    $position_id
+     */
+    public function deleteEmployeePosition($employee_id, $position_id)
+    {
+        $position_id = (int) $position_id;
+        if ($position_id <= 0) {
+            return;
+        }
+
+        $this->db->where('employee_id', $employee_id);
+        $this->db->where('position_id', $position_id);
+        $this->db->delete('profile_employee_position');
+    }
+
+    /**
+     * Get all positions (with department) for an employee from mapping table.
+     *
+     * @param string $employee_id
+     * @return array
+     */
+    public function getEmployeePositions($employee_id)
+    {
+        $this->db->select('pep.*, pp.position, pp.position_dept_id, dpt.*');
+        $this->db->from('profile_employee_position AS pep');
+        $this->db->join('profile_position AS pp', 'pep.position_id = pp.position_id', 'left');
+        $this->db->join('department AS dpt', 'pp.position_dept_id = dpt.dept_id', 'left');
+        $this->db->where('pep.employee_id', $employee_id);
+        $this->db->order_by('pep.is_primary', 'DESC');
+        $this->db->order_by('pp.position', 'ASC');
+
+        $query = $this->db->get();
+        return $query->result();
+    }
+
     function getEmployeeByPosition($position, $position_id)
     {
         $this->db->select('*');
@@ -871,6 +1020,7 @@ class Hr_model extends CI_Model
         $this->db->where('profile_position.position_id !=', 1);
         $this->db->where('account_type !=', 4);
         $this->db->where('account_type !=', 5);
+        $this->db->where('account_type !=', 1);
         $this->db->order_by('profile_position.p_rank', 'DESC');
         $this->db->order_by('lastname', 'ASC');
         $this->db->order_by('firstname', 'ASC');
@@ -1121,13 +1271,18 @@ class Hr_model extends CI_Model
     function getDTR($data)
     {
         $payDay = date('d');
+        $year   = date('Y');
+        $month  = date('m');
+        $lastDay = date('t'); // automatically handles Feb & leap years
+
         if ($payDay > 15) {
-            $from = date('m') . '/16/' . date('Y');
-            $to = date('m') . '/30/' . date('Y');
+            $from = "$year-$month-16";
+            $to   = "$year-$month-$lastDay";
         } else {
-            $from = date('m') . '/01/' . date('Y');
-            $to = date('m') . '/15/' . date('Y');
+            $from = "$year-$month-01";
+            $to   = "$year-$month-15";
         }
+
         $this->db->select('*');
         $this->db->select('profile.user_id as uid');
         $this->db->from('attendance_sheet');

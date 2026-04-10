@@ -1,117 +1,194 @@
 <?php
-  $stngs=Modules::run('main/getSet');
+$stngs = Modules::run('main/getSet');
 ?>
 
-<div class="clearfix row" style="margin:0;">
-  <input type="hidden" name="lastEntry" id="school_sname" value="<?php echo $stngs->short_name; ?>"required>
-  <div class="panel panel-success"style="margin-top: 15px;">
-    <div class="panel-heading text-center">
-      <h3 class="text-center panel-title"><b>Printable Collection Notice / Statement of Account Generator</b></h3>
+<div class="container py-4 py-md-5">
+
+  <input type="hidden" name="lastEntry" id="school_sname" value="<?= $stngs->short_name ?>" required>
+
+  <!-- TOP ROW -->
+  <div class="row g-4 align-items-center mb-4">
+
+    <!-- LEFT: LOGO + TITLE -->
+    <div class="col-12 col-lg-5">
+      <div class="d-flex align-items-center gap-3">
+
+        <img src="<?= base_url() ?>images/forms/logo.png"
+          alt="School Logo"
+          class="img-fluid"
+          style="max-height:65px;">
+
+        <div>
+          <h4 class="fw-bold mb-1">Statement of Account</h4>
+          <p class="text-muted small mb-0">
+            Generate and preview student billing reports
+          </p>
+        </div>
+
+      </div>
     </div>
-    <div class="panel-body">
-      <div class="row">
-        <div class="pull-left">
-          <select name="select_grade_level" style="width:150px; margin: 0 5px 0 20px;" id="select_grade_level" class="controls-row" required>
-            <option>Grade Level</option>       
-              <?php foreach ($get_level as $gl) { ?>              
-            <option value="<?php echo $gl->grade_id ?>"><?php echo $gl->level ?></option>
-              <?php } ?>
-          </select> 
-        </div>
-        <!-- <div class="pull-left">
-          <select name="print_type" id="print_type" style="width:150px; margin-right: 5px;" class="controls-row" required>
-            <option value='none'>Select print type</option>                     
-            <option value='short'>Short - Summarized SOA</option>
-            <option value='long'>Long - Itemized SOA</option>
-          </select>
-        </div>
-        <div class="pull-left">
-          <select name="month_advance" id="month_advance" style="width:100px; margin-right: 5px;" class="controls-row" required>
-            <option value=''>Current</option>                     
-            <option value='1'>+1 Month</option>
-            <option value='2'>+2 Months</option>
-            <option value='3'>+3 Months</option>
-          </select>
-        </div> -->
-        <div class="input-group input-group-sm col-md-3">
-          <input name="duedate" class="form-control" type="text" data-date-format="mm-dd-yyyy" id="duedate" placeholder="Collection Due Date" required>
-          <span class="input-group-btn">
-            <button class="btn btn-default" id="calen"  style="font-size:8px;" onclick="$('#duedate').focus()" type="button"><i class="fa fa-calendar fa-lg"></i></button>
-          </span>
-        </div>
-        <div class="input-group">
-          <span class="input-group-btn">
-            <button onclick="generate_soa()" style="margin-top: -30px; margin-right: 40px;" class="btn btn-success btn-sm pull-right"><i class="fa fa-cog  fa-spin fa-fw"></i>Generate</button> 
-          </span>          
+
+    <!-- RIGHT: GENERATOR CARD -->
+    <div class="col-12 col-lg-7">
+      <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-3 p-md-4">
+
+          <div class="row g-3 align-items-end">
+
+            <!-- Grade Level -->
+            <div class="col-12 col-md-4">
+              <label class="form-label fw-semibold small text-secondary">Grade Level</label>
+              <select name="select_grade_level"
+                id="select_grade_level"
+                class="form-select">
+                <option selected disabled>Select Grade Level</option>
+                <?php foreach ($get_level as $gl) { ?>
+                  <option value="<?= $gl->grade_id ?>"><?= $gl->level ?></option>
+                <?php } ?>
+              </select>
+            </div>
+
+            <!-- Due Date -->
+            <div class="col-12 col-md-4">
+              <label class="form-label fw-semibold small text-secondary">Due Date</label>
+              <input name="duedate"
+                id="duedate"
+                type="text"
+                class="form-control"
+                placeholder="Select due date">
+            </div>
+
+            <!-- Button -->
+            <div class="col-12 col-md-4">
+              <button class="btn btn-success w-100 d-flex align-items-center justify-content-center"
+                onclick="generate_soa()">
+                Generate
+              </button>
+            </div>
+
+          </div>
+
         </div>
       </div>
     </div>
-    <!-- <iframe class="hide" id="report_iframe" width="100%" height="500" src=""></iframe>  -->
+
   </div>
-  <div id="d_report" class="panel panel-success" style="display:none; margin-top: 15px;">
-    <div class="panel-heading text-center">
-      <h3 id="report_header" class="text-center panel-title"><b></b></h3>
-    </div>
-    <div class="panel-body">
-      <iframe class="" style="display:none; margin-top:10px;" id="report_iframe" width="100%" height="400" src=""></iframe>
+
+  <!-- LOADING STATE -->
+  <div id="loading" class="text-center py-5 d-none">
+    <div class="spinner-border text-success" style="width:2.5rem; height:2.5rem;"></div>
+    <div class="mt-3 text-muted">Generating report, please wait...</div>
+  </div>
+
+  <!-- REPORT CARD -->
+  <div id="d_report" class="card border-0 shadow-sm rounded-4 d-none">
+    <div class="card-body p-3 p-md-4">
+
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 id="report_header" class="fw-bold mb-0"></h6>
+      </div>
+
+      <div class="ratio ratio-16x9">
+        <iframe id="report_iframe"
+          class="w-100 border-0 rounded"
+          style="display:none;"
+          src="">
+        </iframe>
+      </div>
+
     </div>
   </div>
-  <!-- <iframe class="" style="display:none; margin-top:10px;" id="report_iframe" width="100%" height="350" src=""></iframe>  -->
+
 </div>
 
-<!-- <button name="send_sms" id="send_sms" type="button" data-toggle="modal" class="btn btn-medium bg-primary "><i class="fa fa-paper-plane fa-fw"></i> Send Collection Notice through SMS</button> -->
-
-<br /><br /><br />
-
-<div class="hide text-center" style="z-index: 2000;" id="loading">
-    <img src="<?php echo base_url()?>images/loading.gif" style="width:200px" />
-</div>
-
-<script type="text/javascript">
-
-  $(document).ready(function() {
-    $('#select_grade_level').select2();
-    $('#print_type').select2();
-    $('#month_advance').select2();
-    $('#duedate').datepicker();
-  });
-
-  function generate_soa()
-  {
-    var gradelevel = $('#select_grade_level').val();
-    // alert(gradelevel);
-    var due_date = $('#duedate').val();
-    var gloptions = 'Select Grade Level';
-    // var printype = document.getElementById('print_type').value;
-    // var madvance = document.getElementById('month_advance').value
-    
-    if (due_date){
-      if (gradelevel==gloptions){
-        alert('Please select grade level.');
-      }else{
-        // document.location = "<?php echo base_url() ?>financemanagement/collect/print_soa/"+gradelevel+'/'+due_date
-        var url = "<?php echo base_url() ?>finance/print_soa/"+gradelevel+'/'+due_date;
-        $('#loading').removeClass('hide');
-        $('#loading').html('<img src="<?php echo base_url()?>images/loading.gif" style="width:200px" />');
-        document.getElementById('report_header').innerHTML = '<b>Statement of Account</b>';
-        // $('#secretContainer').fadeIn(500)
-        // $('#secretContainer').html('<img src="<?php echo base_url() ?>images/library.png" style="width:200px" />')
-        document.getElementById('report_iframe').src = url;
-        $('#report_iframe').attr('onload', 'iframeloaded()');
-        document.getElementById('report_iframe').Window.location.reload(true);
-        window.open(url, '_blank');
-        document.title = 'Collection Notice';
-      }  
-    }else{
-      alert('Please select due date.')
-    }    
+<style>
+  body {
+    background-color: #f8f9fb;
   }
 
-  function iframeloaded()
-  {
-    $('#secretContainer').hide()
-    $('#loading').hide();
-    $('#d_report').show();
-    $('#report_iframe').show();
+  .card {
+    transition: all 0.2s ease;
+  }
+
+  .card:hover {
+    transform: translateY(-2px);
+  }
+
+  .form-control,
+  .form-select {
+    border-radius: 10px;
+    padding: 10px 12px;
+  }
+
+  .btn-success {
+    border-radius: 10px;
+    padding: 10px;
+    font-weight: 500;
+  }
+
+  #report_iframe {
+    background: #fff;
+  }
+</style>
+
+<script>
+  $(document).ready(function() {
+
+    $('#select_grade_level').select2({
+      width: '100%',
+      placeholder: "Select Grade Level"
+    });
+
+    $('#duedate').datepicker({
+      format: 'mm-dd-yyyy',
+      autoclose: true
+    });
+
+  });
+
+  function generate_soa() {
+
+    let gradelevel = $('#select_grade_level').val();
+    let due_date = $('#duedate').val();
+
+    if (!gradelevel) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Required',
+        text: 'Please select grade level'
+      });
+      return;
+    }
+
+    if (!due_date) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Required',
+        text: 'Please select due date'
+      });
+      return;
+    }
+
+    let url = "<?= base_url() ?>finance/print_soa/" + gradelevel + '/' + due_date;
+
+    // Show loading
+    $('#loading').removeClass('d-none');
+    $('#d_report').addClass('d-none');
+
+    // Set iframe
+    $('#report_header').text('Statement of Account');
+    $('#report_iframe')
+      .hide()
+      .attr('src', url)
+      .on('load', function() {
+        $('#loading').addClass('d-none');
+        $('#d_report').removeClass('d-none');
+        $('#report_iframe').fadeIn();
+      });
+
+    // Open new tab (optional)
+    // window.open(url, '_blank');
+
+    document.title = 'Collection Notice';
   }
 </script>

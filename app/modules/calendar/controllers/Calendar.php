@@ -60,6 +60,11 @@ class calendar extends MX_Controller {
         echo Modules::run('templates/main_content', $data);	
 
     }
+
+    function getEventCategory()
+    {
+        return $this->calendar_model->getEventCategory();
+    }
     
     public function getEvent($year=NULL, $month=NULL, $day =NULL, $st_id=NULL )
     {
@@ -128,36 +133,47 @@ class calendar extends MX_Controller {
     public function addEvent()
     {
         $dateFrom = $this->input->post('fromDate');
-        $dateTo = $this->input->post('toDate');
-                $event =$this->input->post('event');
-                $evFrom = $this->input->post('ev_from');
-                $evTo=$this->input->post('ev_to');
-                $category= $this->input->post('category');
-                $person_involved = $this->input->post('person_involved');
-        
-        $days = ceil(abs(strtotime($dateTo) - strtotime($dateFrom)) / 86400);
-        for($d=0; $d<$days; $d++):
-           $m = date('Y-m', strtotime($dateFrom));
-           $day = date('d', strtotime($dateFrom));
-           $day = $day + $d;
-           $date = $m.'-'.$day;
-            $array = array(
-                'event_date'      => $date,
-                'event'      => $event,
-                'time_start'      => $evFrom,
-                'id'            =>  $this->eskwela->codeCheck('calendar_events', 'id', $this->eskwela->code()),
-                'time_end'      => $evTo,
+        $dateTo   = $this->input->post('toDate');
+        $event    = $this->input->post('event');
+        $evFrom   = $this->input->post('ev_from');
+        $evTo     = $this->input->post('ev_to');
+        $category = $this->input->post('category');
+        $person   = $this->input->post('person_involved');
+
+        // ✅ SAFETY CHECK
+        if (!$dateFrom || !$dateTo || !$event) {
+            echo 'Invalid data';
+            return;
+        }
+
+        // ✅ FIX #1: include same-day events
+        $start = new DateTime($dateFrom);
+        $end   = new DateTime($dateTo);
+        $end->modify('+1 day'); // INCLUDE END DATE
+
+        $period = new DatePeriod($start, new DateInterval('P1D'), $end);
+
+        foreach ($period as $dt) {
+            $array = [
+                'event_date'       => $dt->format('Y-m-d'),
+                'event'            => $event,
+                'time_start'       => $evFrom,
+                'time_end'         => $evTo,
                 'category_id'      => $category,
-                'person_involved'      => $person_involved
-            );
-        
+                'person_involved'  => $person,
+                'id'               => $this->eskwela->codeCheck(
+                                        'calendar_events',
+                                        'id',
+                                        $this->eskwela->code()
+                                    )
+            ];
+
             $this->calendar_model->saveEvent($array);
+        }
 
-         //  unset($date);
-        endfor;
-        
-
+        echo 'success';
     }
+
     
     public function saveEvent($date, $event, $evFrom, $evTo, $category, $person_involved)
     {

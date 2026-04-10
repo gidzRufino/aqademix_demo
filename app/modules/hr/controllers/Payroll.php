@@ -406,6 +406,13 @@ class Payroll extends MX_Controller
           echo json_encode($json);
      }
 
+     function updatePayrollShift()
+     {
+          $data = $this->input->post();
+          $q = $this->payroll_model->updatePayrollShift($data);
+          echo json_encode($q ? array('status' => TRUE, 'msg' => 'Payroll Shift Successfully Updated', 'csrfHash' => $this->security->get_csrf_hash()) : array('status' => FALSE, 'msg' => 'An Error Occured During the update', 'csrfHash' => ''));
+     }
+
      function getPayrollShift()
      {
           $payrollShift = $this->payroll_model->getPayrollShift();
@@ -416,6 +423,11 @@ class Payroll extends MX_Controller
      {
           $timeShift = $this->payroll_model->getRawTimeShifting();
           return $timeShift;
+     }
+
+     function getPayrollShiftByID($id)
+     {
+          return $this->payroll_model->getPayrollShiftByID($id);
      }
 
      function getTimeShifting($user_id)
@@ -721,13 +733,25 @@ class Payroll extends MX_Controller
 
      public function addDeduction()
      {
-          $em_id = $this->post('em_id');
-          $pc_code = $this->post('pc_code');
-          $amount = $this->post('amount');
-          $item_id = $this->post('item_id');
-          $amort_id = $this->post('amort_id');
+          $deductions = $this->input->post('deductions');
 
-          $this->setPayrollCharges($em_id, $item_id, $amount, $pc_code, $amort_id);
+          if (!empty($deductions)) {
+
+               foreach ($deductions as $r) {
+
+                    $data = [
+                         'pc_profile_id' => $r['pc_profile_id'],
+                         'pc_amount' => $r['pc_amount'],
+                         'pc_code' => $r['pc_code'],
+                         'pc_item_id' => $r['pc_item_id'],
+                         'pc_amort_id' => $r['pc_amort_id']
+                    ];
+
+                    $this->payroll_model->addDeduction($data);
+               }
+          }
+
+          echo json_encode(['status' => 'success']);
      }
 
      public function getPayrollDefaults($paySched = NULL)
@@ -797,9 +821,27 @@ class Payroll extends MX_Controller
           $data['endDate'] = $endDate;
           $data['pc_code'] = $pc_code;
           $data['payrollPeriod'] = $this->payroll_model->getPayrollPeriod();
+          // echo $this->load->view('payroll/create', $data);
           $data['modules'] = 'hr';
           $data['main_content'] = 'payroll/create';
-          echo Modules::run('templates/canteen_content', $data);
+          echo Modules::run('templates/main_content', $data);
+     }
+
+     function updatePayrollPeriodList($pc_code)
+     {
+          $list = $this->payroll_model->getPayrollPeriod();
+?>
+          <option>Select Payroll Period</option>
+          <?php foreach ($list as $pp): ?>
+               <option id="option_<?php echo $pp->per_id ?>"
+                    from="<?php echo $pp->per_from ?>"
+                    to="<?php echo $pp->per_to ?>"
+                    value="<?php echo $pp->per_id ?>"
+                    <?php echo ($pc_code == $pp->per_id) ? 'selected' : ''; ?>>
+                    <?php echo date('F d, Y', strtotime($pp->per_from)) . ' - ' . date('F d, Y', strtotime($pp->per_to)); ?>
+               </option>
+          <?php endforeach; ?>
+          <?php
      }
 
      function updateDeduction()
@@ -984,7 +1026,7 @@ class Payroll extends MX_Controller
                return $this->payroll_model->getSumLeaveCredited($emp_id);
           else:
                $leave = $this->payroll_model->fetchLeaveList($emp_id);
-?>
+          ?>
                <table class="table table-bordered table-striped">
                     <tr>
                          <th>Date</th>
@@ -1062,26 +1104,48 @@ class Payroll extends MX_Controller
           $result = $this->payroll_model->fetchSSSTable('', '');
           $config['base_url'] = $base_url;
           $config['total_rows'] = $result->num_rows();
-          $config['per_page'] = 10;
-          $config['full_tag_open'] = '<ul class="pagination">';
-          $config['full_tag_close'] = '</ul>';
-          $config['first_tag_open'] = '<li>';
+          $limit = $this->input->get('limit');
+
+          if (!$limit) {
+               $limit = 10;
+          }
+
+          $config['per_page'] = $limit;
+
+          $config['full_tag_open']  = '<nav><ul class="pagination pagination-sm justify-content-end mb-0">';
+          $config['full_tag_close'] = '</ul></nav>';
+
+          $config['first_link'] = 'First';
+          $config['last_link']  = 'Last';
+          $config['next_link']  = '&raquo;';
+          $config['prev_link']  = '&laquo;';
+
+          $config['first_tag_open'] = '<li class="page-item">';
           $config['first_tag_close'] = '</li>';
-          $config['prev_tag_open'] = '<li>';
-          $config['prev_tag_close'] = '</li>';
-          $config['next_tag_open'] = '<li>';
-          $config['next_tag_close'] = '</li>';
-          $config['last_tag_open'] = '<li>';
+
+          $config['last_tag_open'] = '<li class="page-item">';
           $config['last_tag_close'] = '</li>';
-          $config['num_tag_open'] = '<li>';
+
+          $config['next_tag_open'] = '<li class="page-item">';
+          $config['next_tag_close'] = '</li>';
+
+          $config['prev_tag_open'] = '<li class="page-item">';
+          $config['prev_tag_close'] = '</li>';
+
+          $config['num_tag_open'] = '<li class="page-item">';
           $config['num_tag_close'] = '</li>';
-          $config['cur_tag_open'] = '<li class="active"><a href="#">';
-          $config['cur_tag_close'] = '</a></li>';
+
+          $config['cur_tag_open'] = '<li class="page-item active"><span class="page-link">';
+          $config['cur_tag_close'] = '</span></li>';
+
+          $config['attributes'] = array('class' => 'page-link');
 
           $this->pagination->initialize($config);
+
           $data['links'] = $this->pagination->create_links();
 
           $page = $this->payroll_model->fetchSSSTable($config['per_page'], $this->uri->segment(4));
+          $data['total_rows'] = $result->num_rows();
           $data['t'] = $this->uri->segment(4);
           $data['sss'] = $page->result();
           $data['num_of_list'] = $page->num_rows();
@@ -1099,5 +1163,21 @@ class Payroll extends MX_Controller
           else:
                echo json_encode(array('status' => false, 'msg' => 'An Error Occured!'));
           endif;
+     }
+
+     function deletePayrollItems($id)
+     {
+          $res = $this->payroll_model->deletePayrollItem(base64_decode($id));
+          $return = $res ? array('status' => true, 'msg' => 'Item Successfuly Deleted') : array('status' => false, 'msg' => 'Delete Item Failed');
+          echo json_encode($return);
+     }
+
+     function updateDefaultValue()
+     {
+          $id = $this->input->post('id');
+          $value = $this->input->post('value');
+          $query = $this->payroll_model->updatePayrollItemValue(base64_decode($id), $value);
+          $q = $query ? array('status' => true, 'msg' => 'Item Value Updated') : array('status' => false, 'msg' => 'Update Failed');
+          echo json_encode($q);
      }
 }

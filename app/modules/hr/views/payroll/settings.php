@@ -1,68 +1,212 @@
-<div class="col-lg-12 no-padding">
-    <h3 style="margin:10px 0;" class="page-header">Customized Payroll Settings
-        <div class="btn-group pull-right" role="group" aria-label="">
-            <button type="button" class="btn btn-default" onclick="document.location='<?php echo base_url('hr/payroll') ?>'">Dashboard</button>
-            <button type="button" class="btn btn-default" onclick="document.location='<?php echo base_url('hr/payroll/create') ?>'">Create Payroll</button>
-            <div class="btn-group">
-                <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Items</button>
-                <ul class="dropdown-menu dropdown-menu-right">
-                    <li onclick="$('#addItems').modal('show')"><a href="#">Add Payroll Items</a></li>
-                    <!--                  <li onclick="$('#setStatBen').modal('show')"><a href="#">Set Statutory Deductions</a></li>-->
-                    <li onclick="generatePayrollProfile()"><a href="#">Generate Payroll Profile</a></li>
-                </ul>
-            </div>
-        </div>
-    </h3>
-</div>
-<div class="col-lg-12">
-    <div class="col-lg-4">
-        <div class="panel panel-red">
-            <div class="panel-heading">
-                <span>Payroll Items</span>
-            </div>
-            <div class="panel-body">
-                <table class="table table-striped">
-                    <tr>
-                        <th>#</th>
-                        <th>Item Name</th>
-                        <th>Item Type</th>
-                        <th>Defaults</th>
-                        <th>Action</th>
-                    </tr>
-                    <?php
-                    $n = 1;
-                    $items = Modules::run('hr/payroll/getPayrollItems', 1);
-                    foreach ($items as $i):
-                    ?>
-                        <tr>
-                            <td><?php echo $n++ ?></td>
-                            <td><?php echo $i->pi_item_name ?></td>
-                            <td><?php echo ($i->pi_item_type == 0 ? 'Deduction' : 'Additional Income') ?></td>
-                            <td><?php echo $i->pi_default ?></td>
-                            <td></td>
-                        </tr>
-                    <?php
-                    endforeach;
-                    ?>
-                </table>
-            </div>
+<style>
+    .default-wrapper {
+        position: relative;
+    }
+
+    .default-wrapper .default-input {
+        width: 100%;
+        min-width: 80px;
+        padding: 2px 6px;
+        font-size: 0.8rem;
+    }
+
+    .default-wrapper .default-text {
+        display: inline-block;
+        min-width: 80px;
+    }
+</style>
+<div class="container-fluid">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-2">
+        <h4 class="fw-bold mb-0">
+            <i class="fa fa-cogs text-primary me-2"></i>
+            Customized Payroll Settings
+        </h4>
+
+        <div class="btn-group">
+            <button class="btn btn-primary"
+                onclick="document.location='<?php echo base_url('hr/payroll/create') ?>'">
+                <i class="fa fa-plus me-1"></i> Create Payroll
+            </button>
+
+            <button class="btn btn-outline-secondary dropdown-toggle"
+                data-bs-toggle="dropdown">
+                Items
+            </button>
+
+            <ul class="dropdown-menu dropdown-menu-end shadow">
+                <li>
+                    <a class="dropdown-item" href="#" onclick="$('#addItems').modal('show')">
+                        <i class="fa fa-plus-circle me-2"></i> Add Payroll Items
+                    </a>
+                </li>
+
+                <li>
+                    <a class="dropdown-item" href="#" onclick="generatePayrollProfile()">
+                        <i class="fa fa-refresh me-2"></i> Generate Payroll Profile
+                    </a>
+                </li>
+            </ul>
         </div>
     </div>
-    <div class="col-lg-6">
-        <div class="panel panel-green">
-            <div class="panel-heading">
-                SSS Contribution Table
-            </div>
-            <div class="panel-body">
-                <?php echo Modules::run('hr/payroll/fetchSSSTable'); ?>
-                <span id="errSSS"></span>
-                <span class="pull-right" style="font-size: small; background-color: lightblue; padding: 10px;"><i class="fa fa-info-circle"></i> Double click Contribution rates to update. Then Press Enter to Save</span>
+
+
+    <div class="row g-4">
+
+        <!-- PAYROLL ITEMS -->
+        <div class="col-lg-6 col-md-12">
+
+            <div class="card shadow-sm border-0">
+
+                <!-- Header -->
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="fa fa-list-alt text-primary me-2"></i>
+                        Payroll Items
+                    </h5>
+
+                    <span class="badge bg-primary">
+                        <?php
+                        $items = Modules::run('hr/payroll/getPayrollItems', 1);
+                        echo count($items); ?> Items
+                    </span>
+                </div>
+
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+
+                        <table class="table table-borderless table-hover align-middle mb-0">
+
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="text-center">#</th>
+
+                                    <th>
+                                        <i class="fa fa-tag text-muted me-1"></i>
+                                        Item Name
+                                    </th>
+
+                                    <th>
+                                        <i class="fa fa-layer-group text-muted me-1"></i>
+                                        Type
+                                    </th>
+
+                                    <th>
+                                        <i class="fa fa-cog text-muted me-1"></i>
+                                        Default Value
+                                    </th>
+
+                                    <th class="text-center">
+                                        Action
+                                    </th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+
+                                <?php
+                                $n = 1;
+                                $items = Modules::run('hr/payroll/getPayrollItems', 1);
+
+                                foreach ($items as $i):
+                                ?>
+
+                                    <tr class="border-bottom">
+
+                                        <td class="text-center text-muted fw-semibold">
+                                            <?php echo $n++ ?>
+                                        </td>
+
+                                        <!-- Item Name -->
+                                        <td>
+                                            <div class="fw-semibold text-dark">
+                                                <?php echo $i->pi_item_name ?>
+                                            </div>
+                                        </td>
+
+                                        <!-- Type -->
+                                        <td>
+                                            <?php if ($i->pi_item_type == 0): ?>
+
+                                                <span class="badge bg-danger-subtle text-danger px-2 py-2 rounded-pill">
+                                                    <i class="fa fa-minus-circle me-1"></i>
+                                                    Deduction
+                                                </span>
+
+                                            <?php else: ?>
+
+                                                <span class="badge bg-success-subtle text-success px-2 py-2 rounded-pill">
+                                                    <i class="fa fa-plus-circle me-1"></i>
+                                                    Additional Income
+                                                </span>
+
+                                            <?php endif; ?>
+                                        </td>
+
+                                        <!-- Default -->
+                                        <td class="text-center default-cell">
+                                            <div class="d-inline-block default-wrapper">
+                                                <span class="badge bg-light text-dark border px-2 py-2 default-text">
+                                                    <?php echo $i->pi_default ?>
+                                                </span>
+                                                <input type="text"
+                                                    class="form-control form-control-sm default-input d-none text-center"
+                                                    value="<?php echo $i->pi_default ?>">
+                                            </div>
+                                        </td>
+
+                                        <!-- Action -->
+                                        <td class="text-center">
+                                            <!-- Edit -->
+                                            <span class="badge bg-primary me-1 edit-btn"
+                                                style="cursor:pointer;"
+                                                onclick="editItem(this)">
+                                                <i class="fa fa-edit"></i>
+                                            </span>
+
+                                            <!-- Save -->
+                                            <span class="badge bg-success me-1 save-btn d-none"
+                                                style="cursor:pointer;"
+                                                onclick="saveItem(this,'<?php echo base64_encode($i->esk_payroll_items_code) ?>')">
+                                                <i class="fa fa-check"></i>
+                                            </span>
+
+                                            <!-- Cancel -->
+                                            <span class="badge bg-secondary me-1 cancel-btn d-none"
+                                                style="cursor:pointer;"
+                                                onclick="cancelEdit(this)">
+                                                <i class="fa fa-times"></i>
+                                            </span>
+
+                                            <!-- Delete -->
+                                            <span class="badge bg-danger delete-btn"
+                                                style="cursor:pointer;"
+                                                onclick="deleteItem('<?php echo base64_encode($i->esk_payroll_items_code) ?>')">
+                                                <i class="fa fa-trash"></i>
+                                            </span>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+                </div>
             </div>
         </div>
+
+
+        <!-- SSS CONTRIBUTION -->
+        <div class="col-lg-6 col-md-12">
+            <?php echo Modules::run('hr/payroll/fetchSSSTable'); ?>
+        </div>
+
     </div>
+
 </div>
-
-
 
 <div id="setStatBen" style="width:25%; margin: 50px auto;" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
     <div class="panel panel-info" style="margin:0; padding-bottom: 10px;">
@@ -111,46 +255,6 @@
         </div>
     </div>
 </div>
-<div id="addItems" style="width:25%; margin: 50px auto;" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-    <div class="panel panel-success" style="margin:0; padding-bottom: 10px;">
-        <div class="panel-heading">
-            <button type="button" class="close pull-right" data-dismiss="modal" aria-hidden="true">&times;</button>
-            <span id="addEdHisTitle">Set Payroll Items</span>
-        </div>
-        <div class="panel-body">
-            <div class="control-group">
-                <label class="control-label" for="inputDate">Item Name</label>
-                <div class="controls">
-                    <input name="itemName" class="form-control" type="text" id="itemName" />
-                </div>
-            </div>
-            <div class="control-group">
-                <label class="control-label" for="inputDate">Item Type</label>
-
-                <select tabindex="-1" id="itemType" name="itemType" class="form-control">
-                    <option>Select Item Type</option>
-                    <option onclick="$('#odWrapper').show()" value="0">Deduction</option>
-                    <option onclick="$('#odWrapper').hide()" value="1">Additional Income</option>
-                </select>
-            </div>
-            <div class="control-group" id="odWrapper" style="display:none;">
-                <label class="control-label" for="inputDate">Item Category</label>
-                <select tabindex="-1" id="itemCat" name="itemCat" class="form-control">
-                    <option>Select Category</option>
-                    <option onclick="$('#ddWrapper').show()" value="0">Statutory</option>
-                    <option onclick="$('#ddWrapper').hide()" value="1">Other Deductions</option>
-                </select>
-            </div>
-            <input type="hidden" id="pc_code" />
-        </div>
-        <div class="panel-footer">
-            <div class="control-group">
-                <button onclick="addItems()" class="btn btn-block btn-success">ADD</button>
-            </div>
-        </div>
-    </div>
-</div>
-
 
 <script type="text/javascript">
     $(document).ready(function() {
@@ -164,6 +268,90 @@
 
     });
 
+    function deleteItem(id) {
+        if (confirm("Are you sure you want to delete this payroll item?")) {
+            $.ajax({
+                type: 'GET',
+                url: '<?= base_url() . 'hr/payroll/deletePayrollItems/' ?>' + id,
+                data: 'id=' + id,
+                dataType: 'json',
+                success: function(response) {
+                    if (response.status) {
+                        alert(response.msg);
+                        location.reload();
+                    }
+                }
+            });
+        }
+    }
+
+    function editItem(el) {
+
+        let row = $(el).closest('tr');
+
+        let badge = row.find('.default-text');
+        let input = row.find('.default-input');
+
+        input.width(badge.outerWidth());
+
+        badge.addClass('d-none');
+        input.removeClass('d-none').focus();
+
+        row.find('.edit-btn').addClass('d-none');
+        row.find('.save-btn').removeClass('d-none');
+        row.find('.cancel-btn').removeClass('d-none');
+        row.find('.delete-btn').addClass('d-none');
+
+    }
+
+    function cancelEdit(el) {
+
+        let row = $(el).closest('tr');
+
+        row.find('.default-input').addClass('d-none');
+        row.find('.default-text').removeClass('d-none');
+
+        row.find('.edit-btn').removeClass('d-none');
+        row.find('.save-btn').addClass('d-none');
+        row.find('.cancel-btn').addClass('d-none');
+
+        // Show delete button
+        row.find('.delete-btn').removeClass('d-none');
+
+    }
+
+    function saveItem(el, id) {
+
+        let row = $(el).closest('tr');
+        let value = row.find('.default-input').val();
+
+        $.ajax({
+            url: "<?php echo base_url('hr/payroll/updateDefaultValue') ?>",
+            method: "POST",
+            dataType: 'json',
+            data: {
+                id: id,
+                value: value,
+                csrf_test_name: $.cookie('csrf_cookie_name')
+            },
+            success: function(d) {
+
+                row.find('.default-text').text(value);
+
+                row.find('.default-input').addClass('d-none');
+                row.find('.default-text').removeClass('d-none');
+
+                row.find('.edit-btn').removeClass('d-none');
+                row.find('.save-btn').addClass('d-none');
+                row.find('.cancel-btn').addClass('d-none');
+
+                // Show delete again
+                row.find('.delete-btn').removeClass('d-none');
+
+            }
+        });
+
+    }
 
     function generatePayrollProfile() {
         var url = "<?php echo base_url() . 'hr/payroll/generatePayrollProfile/' ?>"; // the script where you handle the form input.

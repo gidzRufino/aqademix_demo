@@ -1,94 +1,126 @@
-<table class="table table-striped table-bordered">
-    <thead>
-      <tr>
-            <th class="col-lg-1" style="vertical-align: middle; text-align: center" rowspan="2">
-                LEVEL
-            </th>
-            <th class="col-lg-3" style="vertical-align: middle; text-align: center"  rowspan="2">
-                NAME OF SCHOOL
-            </th>
-            <th class="col-lg-3" style="vertical-align: middle; text-align: center"  rowspan="2">
-                DEGREE / COURSE
-            </th>
-            <th class="col-lg-1" style="vertical-align: middle; text-align: center"  rowspan="2">
-                YEAR GRADUATED
-            </th>
-            <th class="col-lg-1 text-center" colspan="2">
-                YEARs ATTENDED
-            </th>
-            <th class="col-lg-1" style="vertical-align: middle; text-align: center" rowspan="2">
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-header bg-primary text-white fw-semibold">
+        Educational Background
+    </div>
 
-            </th>
-        </tr>
-        <tr>
-            <th class="text-center">from</th>
-            <th class="text-center ">to</th>
-        </tr>  
-    </thead>
-    <tbody id="educHisBody">  
-        <?php
-            foreach ($edHis->result() as $edInfo):
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th rowspan="2" class="text-center">Level</th>
+                        <th rowspan="2" class="text-center">Name of School</th>
+                        <th rowspan="2" class="text-center">Degree / Course</th>
+                        <th rowspan="2" class="text-center">Year Graduated</th>
+                        <th colspan="2" class="text-center">Years Attended</th>
+                        <th rowspan="2" class="text-center" style="width:100px;">Actions</th>
+                    </tr>
+                    <tr>
+                        <th class="text-center">From</th>
+                        <th class="text-center">To</th>
+                    </tr>
+                </thead>
 
-        ?>        
-        <tr>
-            <td><?php echo $edInfo->el_level; ?></td>
-            <td><?php echo $edInfo->school_name; ?></td>
-            <td><?php echo $edInfo->course; ?></td>
-            <td><?php echo $edInfo->eb_year_grad; ?></td>
-            <td><?php echo $edInfo->eb_dates_from; ?></td>
-            <td><?php echo $edInfo->eb_dates_to; ?></td>
-            <td><button onclick="getEducHis('<?php echo $edInfo->eb_id; ?>')" data-toggle="modal" data-target="#addEdHis" class="btn btn-xs btn-primary"><i class="fa fa-edit"></i></button> <button  onclick="deleteEducBac('<?php echo $edInfo->eb_id; ?>')" class="btn btn-xs btn-danger"><i class="fa fa-trash"></i></button></td>
-        </tr>
-        <?php
-            endforeach;
-        ?>
-    </tbody>
-    
-</table>
+                <tbody id="educHisBody">
+                    <?php foreach ($edHis->result() as $edInfo): ?>
+                        <tr>
+                            <td class="fw-semibold"><?php echo $edInfo->el_level; ?></td>
+                            <td><?php echo $edInfo->school_name; ?></td>
+                            <td><?php echo $edInfo->course; ?></td>
+                            <td class="text-center"><?php echo $edInfo->eb_year_grad; ?></td>
+                            <td class="text-center"><?php echo $edInfo->eb_dates_from; ?></td>
+                            <td class="text-center"><?php echo $edInfo->eb_dates_to; ?></td>
+                            <td class="text-center">
+                                <div class="btn-group btn-group-sm">
+                                    <button
+                                        onclick="getEducHis('<?php echo $edInfo->eb_id; ?>')"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#addEdHis"
+                                        class="btn btn-outline-primary">
+                                        <i class="fa fa-edit"></i>
+                                    </button>
+                                    <button
+                                        onclick="deleteEducBac('<?php echo $edInfo->eb_id; ?>')"
+                                        class="btn btn-outline-danger">
+                                        <i class="fa fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
 
-<hr>
-<h5>College Education:</h5>
+<!-- College Education Section -->
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-light fw-semibold">
+        College Education
+    </div>
+    <div class="card-body">
 
-<dl class="dl-horizontal">
-    <dt>
-    Major:
-    </dt>
-    <dd>
-        <?php 
-            $major = Modules::run('hr/getMajorSubjects', $basicInfo->employee_id );
-            
-        ?>
-        <span class='hide' id="major_wrapper">
-        <input style="width:250px !important; font-size:14px;"  id="major"  class="select2-offscreen" name="major" type="text"  placeholder="Click Here to Select" />
-        <i style="font-size:15px;" class="fa fa-save pointer" onclick="saveMinMaj($('#major').val(), '<?php echo $basicInfo->employee_id?>','major')"></i>
-        </span>
-        <span title="double click to edit" id="a_major" >
-            <?php if($basicInfo->course!=""|| $basicInfo->course!="N/A"):echo $major->maj_min; else: echo "[empty]"; endif; ?> 
-            <i onclick="$('#a_major').hide(), $('#major_wrapper').removeClass('hide'), $('#major').focus() " style="font-size:15px; color:#777;" class="fa fa-pencil-square-o pointer "></i>
-        </span>
-        
-    </dd>
-</dl>
-<dl class="dl-horizontal">
-    <dt>
-    Minor:
-    </dt>
-    <dd>
-        <?php 
-            $minor = Modules::run('hr/getMinorSubjects',$basicInfo->employee_id  )
-        ?>
-        <span class='hide' id="minor_wrapper">
-        <input style="width:250px !important; font-size:14px;"  id="minor"  class="select2-offscreen" name="major" type="text"  placeholder="Click Here to Select" 
-               onblur="$('#minor_wrapper').addClass('hide'), $('#a_minor').show()"
-               />
-        <i style="font-size:15px;" class="fa fa-save pointer" onclick="saveMinMaj($('#minor').val(), '<?php echo $basicInfo->employee_id?>','minor')"></i>
-        </span>
-        <span title="double click to edit" id="a_minor" >
-            <?php if($basicInfo->course!="" || $basicInfo->course!="N/A"):echo $minor->maj_min; else: echo "[empty]"; endif; ?> 
-            <i onclick="$('#a_minor').hide(), $('#minor_wrapper').removeClass('hide'),$('#minor_wrapper').focus()" style="font-size:15px; color:#777;" class="fa fa-pencil-square-o pointer "></i>
-        </span>
-        
-    </dd>
-</dl>
+        <!-- Major -->
+        <div class="row g-4">
+            <div class="col-md-5">
+                <?php $major = Modules::run('hr/getMajorSubjects', $basicInfo->employee_id); ?>
+                <div id="cMajor_card" class="info-card ie-card">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="info-label">Major</div>
+                            <div class="info-value" id="cMajor_text">
+                                <?= ($basicInfo->course != "" || $basicInfo->course != "N/A") ? ($major ? $major->maj_min : '[empty]') : '[empty]'; ?>
+                            </div>
+                            <div id="cMajor_inputWrap" class="d-none mt-3">
+                                <input name="incase_name" id="cMajor_input" type="text" class="form-control form-control-sm" value="<?= ($basicInfo->incase_name != NULL ? $basicInfo->incase_name : '[empty]') ?>">
+                            </div>
+                        </div>
+                        <button id="cMajor_btn_edit" class="edit-chip" onclick="ieEdit('cMajor')"><i class="fa fa-pencil"></i></button>
+                    </div>
 
+                    <!-- Bottom Action Buttons -->
+                    <div id="cMajor_btn_group" class="d-none mt-auto d-flex justify-content-end">
+                        <button class="icon-btn btn btn-success btn-sm d-flex align-items-center justify-content-center"
+                            onclick="updateInformation('cMajor', 'user_id', 'profile_employee')">
+                            <i class="fa fa-check"></i>
+                        </button>
+                        <button class="icon-btn btn btn-light btn-sm d-flex align-items-center justify-content-center"
+                            onclick="ieCancel('cMajor')">
+                            <i class="fa fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-5">
+                <?php $minor = Modules::run('hr/getMinorSubjects', $basicInfo->employee_id); ?>
+                <div id="cMinor_card" class="info-card ie-card">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="info-label">Minor</div>
+                            <div class="info-value" id="cMinor_text">
+                                <?= ($basicInfo->course != "" || $basicInfo->course != "N/A") ? ($minor ? $minor->maj_min : '[empty]') : '[empty]'; ?>
+                            </div>
+                            <div id="cMinor_inputWrap" class="d-none mt-3">
+                                <input name="incase_name" id="cMinor_input" type="text" class="form-control form-control-sm" value="<?= ($basicInfo->incase_name != NULL ? $basicInfo->incase_name : '[empty]') ?>">
+                            </div>
+                        </div>
+                        <button id="cMinor_btn_edit" class="edit-chip" onclick="ieEdit('cMinor')"><i class="fa fa-pencil"></i></button>
+                    </div>
 
+                    <!-- Bottom Action Buttons -->
+                    <div id="cMinor_btn_group" class="d-none mt-auto d-flex justify-content-end">
+                        <button class="icon-btn btn btn-success btn-sm d-flex align-items-center justify-content-center"
+                            onclick="updateInformation('cMinor', 'user_id', 'profile_employee')">
+                            <i class="fa fa-check"></i>
+                        </button>
+                        <button class="icon-btn btn btn-light btn-sm d-flex align-items-center justify-content-center"
+                            onclick="ieCancel('cMinor')">
+                            <i class="fa fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

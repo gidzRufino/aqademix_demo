@@ -1309,7 +1309,7 @@ class sf10_model extends CI_Model {
             );
             $this->db->insert('gs_spr_attendance_tardy', $tardy);
 
-            $this->db->where('spr_id', $id->spr_id);
+            $this->db->where('spr_id', $sprid);
             return $this->db->get('gs_spr_attendance_tardy')->row();
         endif;
     }

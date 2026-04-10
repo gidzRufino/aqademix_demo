@@ -61,8 +61,9 @@ class registrar_model extends CI_Model
         $this->db->where('occupation', $occupation);
         $query = $this->db->get('profile_occupation');
         if ($query->num_rows() == 0):
-            $this->db->insert('profile_occupation', array('occupation' => $occupation));
-            $occ_id = $this->db->insert_id();
+            $occ_code = $this->eskwela->code();
+            $this->db->insert('profile_occupation', array('occ_id' => $occ_code, 'occupation' => $occupation));
+            $occ_id = ($this->db->insert_id() > 0 ? $occ_code : 0);
         else:
             $occ_id = $query->row()->occ_id;
         endif;
@@ -463,9 +464,9 @@ class registrar_model extends CI_Model
     {
         $this->db = $this->eskwela->db($this->session->userdata('school_year'));
         if ($dept_id != 0):
-            if ($dept_id != NULL && $option == NULL):
-                $this->db->where('dept_id <=', $dept_id);
-            endif;
+            // if ($dept_id != NULL && $option == NULL):
+            //     $this->db->where('dept_id <=', $dept_id);
+            // endif;
             if ($option != NULL):
                 $this->db->where('dept_id', $dept_id);
             endif;
@@ -892,8 +893,7 @@ class registrar_model extends CI_Model
         );
 
         $this->db->insert('profile_occupation', $occupation);
-
-        $this->chooseOcc($data, $id);
+        return $this->db->insert_id();
     }
 
 
@@ -1123,16 +1123,23 @@ class registrar_model extends CI_Model
         return ($this->db->affected_rows() > 0 ? TRUE : FALSE);
     }
 
-    function updateParentsInfo($uid, $info, $sy)
+    function updateParentsInfo($details, $tbl, $id, $key)
     {
-        $this->db = $this->eskwela->db($sy != NULL ? $sy : $this->session->school_year);
-        $this->db->where('u_id', $uid);
-        $q = $this->db->get('profile_parent');
-        if ($q->num_rows() > 0):
-            $this->db->where('u_id', $uid);
-            $this->db->update('profile_parent', $info);
-        else:
-            $this->db->insert('profile_parent', $info);
-        endif;
+        $this->db->where($id, $key);
+        $this->db->update($tbl, $details);
+        return $this->db->affected_rows() > 0 ? TRUE : FALSE;
     }
+
+    // function updateParentsInfo($uid, $info, $sy)
+    // {
+    //     $this->db = $this->eskwela->db($sy != NULL ? $sy : $this->session->school_year);
+    //     $this->db->where('u_id', $uid);
+    //     $q = $this->db->get('profile_parent');
+    //     if ($q->num_rows() > 0):
+    //         $this->db->where('u_id', $uid);
+    //         $this->db->update('profile_parent', $info);
+    //     else:
+    //         $this->db->insert('profile_parent', $info);
+    //     endif;
+    // }
 }

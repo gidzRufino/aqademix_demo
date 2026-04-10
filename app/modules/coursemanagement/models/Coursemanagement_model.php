@@ -138,8 +138,21 @@ class coursemanagement_model extends MX_Controller {
         return $q->result();
     }
 
+    function getDeptByID($id)
+    {
+        $this->db->where('level_dept_id', $id);
+        return $this->db->get('level_department');
+    }
+
     function getLevelCatered($dept_id) {
         $this->db->where('dept_id <=', $dept_id);
+        $this->db->order_by('order', 'ASC');
+        return $this->db->get('grade_level')->result();
+    }
+
+    function getLevelByDept($id)
+    {
+        $this->db->where('dept_id', $id);
         $this->db->order_by('order', 'ASC');
         return $this->db->get('grade_level')->result();
     }
@@ -147,15 +160,16 @@ class coursemanagement_model extends MX_Controller {
     function deleteSection($section_id)
     {
         $this->db->where('section_id', $section_id);
-        $this->db->delete('section');
-        return;
+        $r = $this->db->delete('section');
+        return $r ? TRUE : FALSE;
     }
     
     function editSection($section,$id)
     {
         $data = array('section' => $section);
         $this->db->where('section_id',$id);
-        $this->db->update('section',$data);
+        $q = $this->db->update('section', $data);
+        return $q ? true : false;
     }
 }
 

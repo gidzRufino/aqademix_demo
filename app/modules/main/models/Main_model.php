@@ -185,6 +185,12 @@ class main_model extends CI_Model
             ->get('section')->result();
     }
 
+    function getSectionByID($id)
+    {
+        $this->db->where('section_id', $id);
+        return $this->db->get('section');
+    }
+
     function refreshIdGeneration()
     {
         $q = $this->db->get('profile_temp_id');
@@ -530,12 +536,12 @@ class main_model extends CI_Model
     function setImage($id, $image)
     {
 
-        $data = array(
-            'avatar' => $image
-        );
+        // $data = array(
+        //     'avatar' => $image
+        // );
 
         $this->db->where('user_id', $id);
-        $this->db->update('profile', $data);
+        $this->db->update('profile', $image);
     }
 
     function searchEmployees($value)
@@ -609,7 +615,7 @@ class main_model extends CI_Model
 
     function addEnrollmentReq($req)
     {
-        $this->db->insert('enrollment_requirments_list', array('eReq_desc' => $req));
+        $this->db->insert('enrollment_requirments_list', array('eReq_list_id' => $this->eskwela->code(), 'eReq_desc' => $req));
     }
 
     function getAllEnrollmentReq()
@@ -621,10 +627,12 @@ class main_model extends CI_Model
     {
         $this->db->where('eReq_list_id', $id);
         if ($opt == 1):
-            $this->db->update('enrollment_requirments_list', array('eReq_desc' => $value));
+            $q = $this->db->update('enrollment_requirments_list', array('eReq_desc' => $value));
         elseif ($opt == 2):
-            $this->db->delete('enrollment_requirments_list');
+            $q = $this->db->delete('enrollment_requirments_list');
         endif;
+
+        return $q ? TRUE : FALSE;
     }
 
     function checkForDuplicate($id, $dept)
@@ -654,4 +662,11 @@ class main_model extends CI_Model
     }
 
     //---------------------------------- End of Enrollment requirements functions ------------------------------------//
+
+    function updateSettings($data)
+    {
+        $r = $this->db->update('settings', $data);
+
+        return $r ? TRUE : FALSE;
+    }
 }

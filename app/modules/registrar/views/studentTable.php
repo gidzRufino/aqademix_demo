@@ -3,13 +3,12 @@
          $("#sorter").tablesorter({
              debug: true
          });
-         // $('#num_students').html('[ '+<?php //echo $num_of_students 
-                                            ?>+' ]');
+         // $('#num_students').html('[ ' + <?php echo $num_of_students; ?> + ' ]');
      });
 
      function search(value) {
          var sy = $('#inputSY').val();
-         var option = $('#searchOption').val()
+         var option = $('#searchOption').val();
          $('#verify_icon').removeClass('fa-search')
          $('#verify_icon').addClass('fa-spinner fa-spin');
          if (option == 'profile_students_admission.grade_level_id') {
@@ -80,227 +79,251 @@
             $option = "default";
             break;
     }
+    $access = $this->session->userdata('position_id');
     ?>
  <div class="col-lg-12">
-     <div id="links" class="pull-left">
-         <?php echo $links; ?>
+     <div id="links" class="float-start">
+         <?= $links; ?>
      </div>
-     <div class="pull-right">
-         <div class="pull-left">
-             <h5 style="margin:0;">Search By:
-                 <select id="searchOption" onclick="getSearchOption(this.value)" style="width:150px; margin-right:5px; height:40px;">
-                     <option>Select Option</option>
-                     <option value="profile_students.st_id">Student ID</option>
-                     <option value="profile_students_admission.grade_level_id">Grade Level</option>
-                     <option value="profile_students_admission.section_id">Section</option>
-                     <option selected="selected" value="lastname">Last Name</option>
-                     <option value="firstname">First Name</option>
-                     <option value="barangay">Barangay</option>
-                     <option value="mun_city">City</option>
-                 </select>
-             </h5>
-         </div>
-         <div class="pull-left">
-             <div class="form-group pull-right" id="section" style="display: none;">
-                 <select onclick="search(this.value)" tabindex="-1" id="inputSection" style="width:200px; font-size: 15px;" class="populate select2-offscreen span2">
-                     <option>Search By Section</option>
-                     <?php
-                        foreach ($section->result() as $sec) {
-                        ?>
-                         <option value="<?php echo $sec->section_id; ?>"><?php echo $sec->level . ' [ ' . $sec->section . ' ]'; ?></option>
-                     <?php } ?>
-                 </select>
-             </div>
-             <div class="form-group pull-right" id="grade" style=" display: none;">
-                 <select onclick="search(this.value)" tabindex="-1" id="inputGrade" style="width:200px; font-size: 15px;" class="populate select2-offscreen span2">
-                     <option>Search Grade level here</option>
-                     <?php
-                        foreach ($grade as $level) {
-                        ?>
-                         <option value="<?php echo $level->grade_id; ?>"><?php echo $level->level; ?></option>
-                     <?php } ?>
-                 </select>
-             </div>
-             <div class="form-group input-group " id="searchBox">
-                 <input type="hidden" id="gradeSection" value="<?php echo $gradeSection ?>" />
-                 <input style="width:250px;" onkeyup="search(this.value)" class="form-control" id="verify" placeholder="Search" type="text">
-                 <span class="input-group-btn">
-                     <button class="btn btn-default">
-                         <i id="verify_icon" class="fa fa-search"></i>
-                     </button>
-                     <button href="#chartDetails" data-toggle="modal" class="btn btn-default">
-                         <i id="chart_details" class="fa fa-bar-chart"></i>
-                     </button>
-                 </span>
-             </div>
+
+     <!-- ====== FILTERS ====== -->
+     <div class="d-flex flex-wrap gap-2 mb-3 align-items-center justify-content-end">
+
+         <select id="searchOption"
+             class="form-select form-select-sm"
+             style="width:150px;"
+             onchange="getSearchOption(this.value)">
+             <option>Select Option</option>
+             <option value="profile_students.st_id">Student ID</option>
+             <option value="profile_students_admission.grade_level_id">Grade Level</option>
+             <option value="profile_students_admission.section_id">Section</option>
+             <option selected value="lastname">Last Name</option>
+             <option value="firstname">First Name</option>
+             <option value="barangay">Barangay</option>
+             <option value="mun_city">City</option>
+         </select>
+
+         <!-- Section Filter -->
+         <select id="inputSection"
+             class="form-select form-select-sm d-none"
+             style="width:200px;"
+             onchange="search(this.value)">
+             <option>Search By Section</option>
+             <?php foreach ($section->result() as $sec): ?>
+                 <option value="<?= $sec->section_id ?>">
+                     <?= $sec->level . ' [ ' . $sec->section . ' ]' ?>
+                 </option>
+             <?php endforeach; ?>
+         </select>
+
+         <!-- Grade Filter -->
+         <select id="inputGrade"
+             class="form-select form-select-sm d-none"
+             style="width:180px;"
+             onchange="search(this.value)">
+             <option>Search Grade level here</option>
+             <?php foreach ($grade as $level): ?>
+                 <option value="<?= $level->grade_id ?>">
+                     <?= $level->level ?>
+                 </option>
+             <?php endforeach; ?>
+         </select>
+
+         <!-- Search Box -->
+         <div class="input-group" style="width:260px;">
+             <input type="hidden" id="gradeSection" value="<?= $gradeSection ?>" />
+             <input type="text"
+                 class="form-control"
+                 placeholder="Search"
+                 id="verify"
+                 onkeyup="search(this.value)">
+
+             <button class="btn btn-outline-secondary" type="button">
+                 <i class="fa fa-search"></i>
+             </button>
+
+             <button class="btn btn-outline-secondary"
+                 type="button"
+                 data-bs-toggle="modal"
+                 data-bs-target="#chartDetails">
+                 <i class="fa fa-bar-chart"></i>
+             </button>
          </div>
 
      </div>
- </div>
- <div id="studentTable" class="row table-responsive" style="margin:0 1%;">
-     <table style="font-size:12px;" class="tablesorter table table-striped">
-         <thead style="background:#E6EEEE;">
-             <tr>
-                 <th>Image</th>
-                 <th>USER ID</th>
-                 <th>LAST NAME</th>
-                 <th>FIRST NAME</th>
-                 <th>MIDDLE NAME</th>
-                 <th>GRADE</th>
-                 <th>SECTION</th>
-                 <th>GENDER</th>
-                 <td>STATUS</td>
-                 <td>REMARKS <small>( refer to depEd forms )</small></td>
-                 <?php
-                    $access = $this->session->userdata('position_id');
-                    if ($access == 1 || $access == 2 || $access == 43 || $access == 49 || $this->session->userdata('position') == 'Admin Officer'):
-                    ?>
-                     <td>Action</td>
-                 <?php
-                    endif;
-                    ?>
 
-                 <td>School Year</td>
-             </tr>
-         </thead>
+     <!-- ====== STUDENT TABLE CARD ====== -->
+     <div class="card shadow-sm border-0">
+         <div class="card-body p-0">
 
-         <?php
-            $settings = Modules::run('main/getSet');
-            foreach ($students as $s) {
-            ?>
-             <tr>
-                 <td style="width:60px; text-align: center;">
-                     <?php if ($s->avatar != ''):
-                            if (file_exists('uploads/' . $s->avatar)):
-                        ?>
-                             <img class="img-circle" style="width:50px;" src="<?php echo base_url() . 'uploads/' . $s->avatar  ?>" />
-                         <?php else: ?>
-                             <img class="img-circle" style="width:50px;" src="<?php echo base_url() . 'images/avatar/' . ($s->sex == 'Female' ? 'female.png' : 'male.png')  ?>" />
-                         <?php endif; ?>
-                     <?php else: ?>
-                         <img class="img-circle" style="width:50px;" src="<?php echo base_url() . 'images/avatar/' . ($s->sex == 'Female' ? 'female.png' : 'male.png')  ?>" />
-                     <?php endif; ?>
-                 </td>
-                 <td><a href="<?php echo base_url('registrar/viewDetails/' . base64_encode($s->uid)) ?>/"><?php echo ($s->uid == "" ? $s->user_id : $s->uid); ?></a></td>
-                 <td onclick="document.location='<?php echo base_url('registrar/viewDetails/' . base64_encode($s->uid)) ?>/'"><?php echo strtoupper($s->lastname); ?></td>
-                 <td><?php echo strtoupper($s->firstname); ?></td>
-                 <td><?php echo strtoupper($s->middlename); ?></td>
-                 <td><?php echo $s->level; ?></td>
-                 <td><?php echo $s->section; ?></td>
-                 <td><?php echo $s->sex; ?></td>
-                 <td id="img_<?php echo $s->uid ?>_td" style="text-align:center"><?php
-                                                                                    //echo $s->stats;
-                                                                                    if ($s->stats) {
-                                                                                    ?>
-                         <a href="#adminRemarks" data-toggle="modal">
-                             <img onclick="getRemarks('<?php echo $s->st_id ?>','<?php echo $s->user_id ?>')" style="cursor: pointer;width:20px" src="<?php echo base_url() ?>images/official.png" alt="official" />
-                         </a>
-                     <?php
-                                                                                    } else {
-                        ?>
-                         <a href="#adminRemarks" data-toggle="modal">
-                             <img onclick="getRemarks('<?php echo $s->st_id ?>','<?php echo $s->user_id ?>')" style="cursor: pointer;width:20px" src="<?php echo base_url() ?>images/unofficial.png" alt="official" />
-                         </a>
-                     <?php
-                                                                                    }
-                        ?>
-                 </td>
-                 <td onmouseout="$('#delete_<?php echo $s->uid ?>').hide()" onmouseover="$('#delete_<?php echo $s->uid ?>').show()" id="remarks_<?php echo $s->uid ?>_td">
-                     <?php
-                        $remarks = Modules::run('main/getAdmissionRemarks', $s->uid, NULL, $s->school_year);
-                        if ($remarks->num_rows() > 0) {
-                            echo $remarks->row()->code . ' ' . $remarks->row()->remarks . ' - ' . $remarks->row()->remark_date;
-                        ?>
-                         <button id="delete_<?php echo $s->uid ?>" type="button" class="close pull-right hide" onclick="deleteAdmissionRemark('<?php echo $s->uid ?>',<?php echo $remarks->row()->code_indicator_id ?> )">&times;</button>
-                     <?php
-                        }
-                        // echo $s->st_id;
-                        ?>
+             <div id="studentTable" class="table-responsive">
+                 <table class="table table-hover align-middle mb-0" style="font-size:14px;">
 
-                 </td>
-                 <?php
-                    $access = $this->session->userdata('position_id');
-                    if ($access == 1 || $access == 2 || $access == 43 || $access == 49 || $this->session->userdata('position') == 'Admin Officer'):
-                    ?>
-                     <td>
-                         <?php if ($s->rfid == "" || $s->rfid == "NULL"): ?>
-                             <a href="#addId" data-toggle="modal" onclick="showAddRFIDForm('<?php echo $s->u_id ?>','RFID')">Add RFID</a> |
-                         <?php else: ?>
-                             <a href="#addId" data-toggle="modal" onclick="showAddRFIDForm('<?php echo $s->u_id ?>','<?php echo $s->rfid ?>')">Edit RFID</a> |
-                         <?php endif; ?>
-                         <a href="#deleteIDConfirmation" data-toggle="modal" onclick="showDeleteConfirmation('<?php echo $s->uid ?>','<?php echo $s->psid ?>')" style="color:#FF3030;">DELETE</a>
+                     <thead class="table-light">
+                         <tr class="text-center">
+                             <th>Student</th>
+                             <th>User ID</th>
+                             <th>Grade</th>
+                             <th>Section</th>
+                             <th>Gender</th>
+                             <th>Status</th>
+                             <th>Remarks</th>
+                             <?php if (in_array($access, [1, 2, 43, 49]) || $this->session->userdata('position') === 'Admin Officer'): ?>
+                                 <th style="min-width:160px;">Actions</th>
+                                 <th>School Year</th>
+                             <?php endif; ?>
+                         </tr>
+                     </thead>
 
-                     </td>
-                     <td>
-                         <?php echo $s->school_year . ' - ' . ($s->school_year + 1) ?>
-                     </td>
-                 <?php
-                    endif;
-                    ?>
-             </tr>
-         <?php
-            }
+                     <tbody>
+                         <?php foreach ($students as $s):
+                                $nxt_lvl = Modules::run('registrar/getlevelByOrder', ($s->order == 15 ? $s->order : ($s->order + 1)));
+                                $name = strtoupper($s->firstname . ' ' . $s->lastname);
+                            ?>
+                             <tr class="text-center">
 
-            ?>
-     </table>
- </div>
+                                 <!-- ===== Student Column (Avatar + Name) ===== -->
+                                 <td class="text-start">
+                                     <div class="d-flex align-items-center gap-3">
+                                         <?php
+                                            $avatar = ($s->avatar && file_exists('uploads/' . $s->avatar))
+                                                ? 'uploads/' . $s->avatar
+                                                : 'images/avatar/' . ($s->sex == 'Female' ? 'female.png' : 'male.png');
+                                            ?>
 
- <!-- Modal -->
- <div class="modal fade" id="addId" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-     <div class="modal-dialog">
-         <div class="modal-content">
-             <div class="modal-header">
-                 <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                 <h3 id="myModalLabel">Scan Students Identification Card</h3>
-             </div>
-             <div class="modal-body">
-                 <div class="control-group">
-                     <label class="control-label" for="input">CARD NUMBER:</label>
-                     <div class="controls">
-                         <input type="text" id="inputCard" onclick="this.value=''" placeholder="RFID" required>
-                         <input type="hidden" id="stud_id">
-                     </div>
-                 </div>
-             </div>
-             <div class="modal-footer">
-                 <button class="btn" data-dismiss="modal">Close</button>
-                 <button onclick="updateProfile('<?php echo base64_encode('user_id') ?>','<?php echo base64_encode('esk_profile') ?>','rfid')" class="btn btn-primary">Save </button>
-                 <div id="resultSection" class="help-block"></div>
+                                         <img src="<?= base_url($avatar) ?>"
+                                             class="rounded-circle border"
+                                             style="width:48px; height:48px; object-fit:cover;">
+
+                                         <div>
+                                             <div class="fw-semibold"
+                                                 style="cursor:pointer"
+                                                 onclick="document.location='<?= base_url('registrar/viewDetails/' . base64_encode($s->uid)) ?>/'">
+                                                 <?= strtoupper($s->lastname) ?>,
+                                             </div>
+                                             <small class="text-muted">
+                                                 <?= strtoupper($s->firstname . ' ' . $s->middlename) ?>
+                                             </small>
+                                         </div>
+                                     </div>
+                                 </td>
+
+                                 <!-- ===== User ID ===== -->
+                                 <td>
+                                     <a class="fw-semibold text-decoration-none"
+                                         href="<?= base_url('registrar/viewDetails/' . base64_encode($s->uid)) ?>">
+                                         <?= $s->uid ?: $s->user_id ?>
+                                     </a>
+                                 </td>
+
+                                 <!-- ===== Grade ===== -->
+                                 <td>
+                                     <span class="badge bg-primary-subtle text-primary">
+                                         <?= $s->level ?>
+                                     </span>
+                                 </td>
+
+                                 <!-- ===== Section ===== -->
+                                 <td>
+                                     <span class="badge bg-info-subtle text-info">
+                                         <?= $s->section ?>
+                                     </span>
+                                 </td>
+
+                                 <!-- ===== Gender ===== -->
+                                 <td>
+                                     <span class="badge bg-secondary">
+                                         <?= $s->sex ?>
+                                     </span>
+                                 </td>
+
+                                 <!-- ===== Status ===== -->
+                                 <td>
+                                     <a href="#adminRemarks" data-bs-toggle="modal">
+                                         <img onclick="getRemarks('<?= $s->st_id ?>','<?= $s->user_id ?>')"
+                                             src="<?= base_url($s->stats ? 'images/official.png' : 'images/unofficial.png') ?>"
+                                             style="width:22px; cursor:pointer;">
+                                     </a>
+                                 </td>
+
+                                 <!-- ===== Remarks ===== -->
+                                 <td class="text-start"
+                                     onmouseout="$('#delete_<?= $s->uid ?>').hide()"
+                                     onmouseover="$('#delete_<?= $s->uid ?>').show()">
+
+                                     <?php
+                                        $remarks = Modules::run('main/getAdmissionRemarks', $s->uid, NULL, $s->school_year);
+                                        if ($remarks->num_rows() > 0):
+                                            echo $remarks->row()->code . ' ' .
+                                                $remarks->row()->remarks . ' - ' .
+                                                $remarks->row()->remark_date;
+                                        ?>
+                                         <button id="delete_<?= $s->uid ?>"
+                                             type="button"
+                                             class="btn-close btn-sm ms-2"
+                                             style="display:none"
+                                             onclick="deleteAdmissionRemark('<?= $s->uid ?>',<?= $remarks->row()->code_indicator_id ?>)">
+                                         </button>
+                                     <?php endif; ?>
+                                 </td>
+
+                                 <!-- ===== Actions ===== -->
+                                 <?php if (in_array($access, [1, 2, 43, 49]) || $this->session->userdata('position') === 'Admin Officer'): ?>
+                                     <td>
+                                         <div class="d-flex justify-content-center gap-1 flex-wrap">
+
+                                             <?php if (!$s->rfid || $s->rfid === "NULL"): ?>
+                                                 <button class="btn btn-sm btn-outline-primary"
+                                                     data-bs-toggle="modal"
+                                                     data-bs-target="#addId"
+                                                     onclick="showAddRFIDForm('<?= $s->u_id ?>','RFID', '<?= $name ?>')">
+                                                     Add RFID
+                                                 </button>
+                                             <?php else: ?>
+                                                 <button class="btn btn-sm btn-outline-secondary"
+                                                     data-bs-toggle="modal"
+                                                     data-bs-target="#addId"
+                                                     onclick="showAddRFIDForm('<?= $s->u_id ?>','<?= $s->rfid ?>', '<?= $name ?>')">
+                                                     Edit RFID
+                                                 </button>
+                                             <?php endif; ?>
+
+                                             <button class="btn btn-sm btn-outline-danger"
+                                                 data-bs-toggle="modal"
+                                                 data-bs-target="#deleteIDConfirmation"
+                                                 onclick="showDeleteConfirmation('<?= $s->uid ?>','<?= $s->psid ?>')">
+                                                 Delete
+                                             </button>
+                                             <button class="btn btn-sm btn-outline-success"
+                                                 data-bs-toggle="modal"
+                                                 data-bs-target="#rollOver"
+                                                 onclick="
+                                                    $('#ro_st_id').val('<?= $s->uid ?>');
+                                                    $('#curr_grade_id').val('<?= $s->grade_id ?>');
+                                                    $('#ro_grade_id').val('<?= $nxt_lvl->grade_id ?>');
+                                                    $('#curr_lDesc').html('<?= $s->level ?>');
+                                                    $('#stName').html('<?= $name ?>');
+                                                    $('#new_lDesc').html('<?= $nxt_lvl->level ?>');">
+                                                 Roll Over
+                                             </button>
+                                         </div>
+                                     </td>
+
+                                     <!-- ===== School Year ===== -->
+                                     <td>
+                                         <span class="badge bg-dark">
+                                             <?= $s->school_year ?> - <?= $s->school_year + 1 ?>
+                                         </span>
+                                     </td>
+                                 <?php endif; ?>
+
+                             </tr>
+                         <?php endforeach; ?>
+                     </tbody>
+
+                 </table>
              </div>
          </div>
      </div>
- </div>
 
- <!-- Modal -->
- <div class="modal fade" id="deleteIDConfirmation" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-     <div class="modal-dialog">
-         <div class="modal-content">
-             <div class="modal-header">
-                 <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                 <h4 id="myModalLabel">[ Delete Roll Over ] : ID Verifications</h4>
-             </div>
-             <div class="modal-body">
-                 <div class="control-group">
-                     <label class="control-label" for="input">ENTER EMPLOYEE ID #:</label>
-                     <div class="controls">
-                         <input type="text" id="user_id" onclick="this.value=''" placeholder="ID #:" required>
-                         <input type="hidden" id="stud_id">
-                         <input type="hidden" id="sy" value="<?php echo $this->uri->segment(3) ?>">
-                     </div>
-                 </div>
-                 <div class="row-fluid">
-                     <h6>Action: <br />To Delete student id( <span id="sp_stud_id"></span> )</h6>
-                     <input type="checkbox" id="deleteAll" onclick="deleteAll($('#sp_stud_id').html())" />
-                 </div>
-             </div>
-             <div class="modal-footer">
-                 <button class="btn" onclick="$('#deleteAll').prop('checked', false)" data-dismiss="modal">Close</button>
-                 <button onclick="deleteROStudent()" class="btn btn-danger">CONFIRM DELETE </button>
-                 <div id="resultSection" class="help-block"></div>
-             </div>
-         </div>
-     </div>
- </div>
-
-
- <?php echo Modules::run('main/showAdminRemarksForm') ?>
+     <?php echo Modules::run('main/showAdminRemarksForm') ?>

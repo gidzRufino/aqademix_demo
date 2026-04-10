@@ -1,96 +1,96 @@
-
 <?php
-    $attributes = array('class' => '','role'=>'form', 'id'=>'fundTransferForm');
-    echo form_open(base_url().'finance/finance_pisd/processFundTransfer', $attributes);
+$attributes = array('id' => 'fundTransferForm', 'role' => 'form');
+echo form_open(base_url() . 'finance/finance_pisd/processFundTransfer', $attributes);
 ?>
-    <div class="form-group">
-        <label>Transfer To Account &nbsp;<small class="text-info">Note: Leave Blank if transferring to Same Account</small></label> <br />
-         <div class="input-group col-lg-12">
-            <input onkeyup="searchTransferAccount(this.value)" id="searchTransferBox" class="form-control" type="text" placeholder="Search Name Here" />
-            <div onblur="$(this).hide()" style="min-height: 30px; margin-top:46px; background: rgb(255, 255, 255) none repeat scroll 0% 0%; z-index: 1000; position: absolute; width: 97%; display: none" class="resultOverflow" id="searchTransferName">
+<div class="mb-3">
+    <label for="searchTransferBox" class="form-label">
+        Transfer To Account
+        <small class="text-info d-block">Note: Leave blank if transferring to the same account</small>
+    </label>
+    <div class="position-relative">
+        <input type="text" id="searchTransferBox" class="form-control" placeholder="Search Name Here" onkeyup="searchTransferAccount(this.value)">
 
-            </div>
-            <div class="input-group-btn">
-              <button style="height: 34px; width: 150px;" type="button" class="btn btn-default dropdown-toggle" id="btnTransferControl" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><?php echo $school_year.' - '.($school_year+1) ?> <span class="caret"></span></button>
-              <ul class="dropdown-menu dropdown-menu-right">
-                    <?php $ro_years = Modules::run('registrar/getROYear');
-
-                        foreach ($ro_years as $ro)
-                        {   
-                          $roYears = $ro->ro_years+1;
-
-                    ?>    
-                            <li onclick="$('#btnTransferControl').html('<?php echo $ro->ro_years.' - '.$roYears; ?>  <span class=\'caret\'></span>'), $('#transferSchoolYearTo').val('<?php echo $ro->ro_years ?>')"><a href="#"><?php echo $ro->ro_years.' - '.$roYears; ?></a></li>
-                    <?php } ?>
-              </ul> 
-            </div><!-- /btn-group -->
+        <div id="searchTransferName" class="position-absolute bg-white border rounded w-100 mt-1 d-none" style="z-index: 1000; max-height: 200px; overflow-y: auto;">
+            <!-- Dynamic search results will appear here -->
         </div>
     </div>
+</div>
 
-
-    <div class="form-group">
-        <label>Transfer Item to</label> <br />
-        <select style="width:90%;"  name="transferItemTo" id="transferItemTo" required>
-          <option value="0">Select Item</option> 
-            <?php 
-                   foreach ($fin_items as $i)
-                     {   
-                       if($i->item_id==$transaction->t_charge_id):
-                           $selected = 'selected="selected"';
-                       else:
-                           $selected = '';
-                       endif;
-               ?>                        
-                    <option onclick="$('#transferItemNameTo').val('<?php echo strtoupper($i->item_description); ?>')" <?php echo $selected ?> id="<?php echo $i->item_id; ?>_desc" value="<?php echo $i->item_id; ?>"><?php echo strtoupper($i->item_description); ?></option>
-            <?php }?>
-        </select>   
-          <input type="hidden" name="transferItemFrom" id="transferItemFrom" value="<?php echo $transaction->t_charge_id ?>" />
-          <input type="hidden" name="transferItemNameFrom" id="transferItemNameFrom" value="<?php echo strtoupper($transaction->item_description) ?>" />
-          <input type="hidden" name="transferItemNameTo" id="transferItemNameTo" value="<?php echo strtoupper($transaction->item_description) ?>" />
+<div class="mb-3">
+    <label for="transferSchoolYearControl" class="form-label">Select School Year</label>
+    <div class="dropdown">
+        <button class="btn btn-outline-secondary dropdown-toggle w-100 text-start" type="button" id="btnTransferControl" data-bs-toggle="dropdown" aria-expanded="false">
+            <?php echo $school_year . ' - ' . ($school_year + 1) ?>
+        </button>
+        <ul class="dropdown-menu w-100" aria-labelledby="btnTransferControl">
+            <?php
+            $ro_years = Modules::run('registrar/getROYear');
+            foreach ($ro_years as $ro) {
+                $roYears = $ro->ro_years + 1;
+            ?>
+                <li>
+                    <a class="dropdown-item" href="#" onclick="$('#btnTransferControl').text('<?php echo $ro->ro_years . ' - ' . $roYears; ?>'); $('#transferSchoolYearTo').val('<?php echo $ro->ro_years ?>')">
+                        <?php echo $ro->ro_years . ' - ' . $roYears; ?>
+                    </a>
+                </li>
+            <?php } ?>
+        </ul>
     </div>
-    <div class="form-group">
-    <input type="hidden" name="transferPaymentType" id="transferPaymentType" value="<?php echo $transaction->t_type ?>" />
-    <input type="hidden" name="transferSchoolYear" id="transferSchoolYear" value="<?php echo $school_year ?>" />
-    <input type="hidden" name="transferSchoolYearTo" id="transferSchoolYearTo" value="<?php echo $school_year ?>" />
-    <input type="hidden" name="transferSTIDFrom" id="transferSTIDFrom" value="<?php echo $st_id ?>" />
-    <input type="hidden" name="transferSTID" id="transferSTID" value="<?php echo $st_id ?>" />
-    <input type="hidden" name="transferRefNumber" id="transferRefNumber"  value="<?php echo $transaction->ref_number?>" class="form-control"  placeholder="OR Number" />
-    <input type="hidden" name="transferReceiptType" id="transferReceiptType"  value="<?php echo $transaction->t_receipt_type?>" class="form-control" />
-    <input type="hidden" name="transferAmountFrom" id="transferAmountFrom"  value="<?php echo $transaction->t_amount?>" class="form-control" />
-    <input type="hidden" name="transferNameFrom" id="transferNameFrom"  value="<?php echo $name ?>" class="form-control" />
-    <input type="hidden" name="transferNameTo" id="transferNameTo"  value="<?php echo $name ?>" class="form-control" />
-    </div>
+</div>
 
-    <div class="form-group">
-        <label>Transfer Amount</label>
-        <input type="text" name="transferedAmount" id="transferedAmount" onclick="$(this).val('')" class="form-control" value="<?php echo $transaction->t_amount ?>" placeholder="Amount" />
-    </div>
+<div class="mb-3">
+    <label for="transferItemTo" class="form-label">Transfer Item To</label>
+    <select class="form-select" name="transferItemTo" id="transferItemTo" required>
+        <option value="0">Select Item</option>
+        <?php
+        foreach ($fin_items as $i) {
+            $selected = ($i->item_id == $transaction->t_charge_id) ? 'selected' : '';
+        ?>
+            <option <?php echo $selected ?> value="<?php echo $i->item_id ?>" onclick="$('#transferItemNameTo').val('<?php echo strtoupper($i->item_description); ?>')">
+                <?php echo strtoupper($i->item_description); ?>
+            </option>
+        <?php } ?>
+    </select>
+</div>
 
-    <input type="hidden" name="transfer_trans_id" id="transfer_trans_id" value="<?php echo $transaction->trans_id ?>" />
+<div class="mb-3">
+    <label for="transferedAmount" class="form-label">Transfer Amount</label>
+    <input type="text" name="transferedAmount" id="transferedAmount" class="form-control" value="<?php echo $transaction->t_amount ?>" placeholder="Amount" onclick="$(this).val('')">
+</div>
+
+<!-- Hidden Inputs -->
+<input type="hidden" name="transferItemFrom" id="transferItemFrom" value="<?php echo $transaction->t_charge_id ?>" />
+<input type="hidden" name="transferItemNameFrom" id="transferItemNameFrom" value="<?php echo strtoupper($transaction->item_description) ?>" />
+<input type="hidden" name="transferItemNameTo" id="transferItemNameTo" value="<?php echo strtoupper($transaction->item_description) ?>" />
+<input type="hidden" name="transferPaymentType" id="transferPaymentType" value="<?php echo $transaction->t_type ?>" />
+<input type="hidden" name="transferSchoolYear" id="transferSchoolYear" value="<?php echo $school_year ?>" />
+<input type="hidden" name="transferSchoolYearTo" id="transferSchoolYearTo" value="<?php echo $school_year ?>" />
+<input type="hidden" name="transferSTIDFrom" id="transferSTIDFrom" value="<?php echo $st_id ?>" />
+<input type="hidden" name="transferSTID" id="transferSTID" value="<?php echo $st_id ?>" />
+<input type="hidden" name="transferRefNumber" id="transferRefNumber" value="<?php echo $transaction->ref_number ?>" />
+<input type="hidden" name="transferReceiptType" id="transferReceiptType" value="<?php echo $transaction->t_receipt_type ?>" />
+<input type="hidden" name="transferAmountFrom" id="transferAmountFrom" value="<?php echo $transaction->t_amount ?>" />
+<input type="hidden" name="transferNameFrom" id="transferNameFrom" value="<?php echo $name ?>" />
+<input type="hidden" name="transferNameTo" id="transferNameTo" value="<?php echo $name ?>" />
+<input type="hidden" name="transfer_trans_id" id="transfer_trans_id" value="<?php echo $transaction->trans_id ?>" />
 </form>
-<script type="text/javascript">
-    
-    function processFundTransfer()
-    {
+
+<script>
+    function processFundTransfer() {
         var data = $('#fundTransferForm').serialize();
-       
-        var url = '<?php echo base_url().'finance/finance_pisd/processFundTransfer/' ?>';
+        var url = '<?php echo base_url() . 'finance/finance_pisd/processFundTransfer/' ?>';
         $.ajax({
             type: "POST",
             url: url,
-            data: data, // serializes the form's elements.
+            data: data,
             beforeSend: function() {
-               
+                // Optional: add spinner or disable button
             },
-            success: function(data)
-            {
-                alert(data);
+            success: function(response) {
+                alert(response);
                 location.reload();
             }
         });
-
-    return false;
+        return false;
     }
-    
 </script>
-    

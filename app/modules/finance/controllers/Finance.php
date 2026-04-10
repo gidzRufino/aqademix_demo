@@ -1773,7 +1773,8 @@ class Finance extends MX_Controller
             't_charge_id' => $this->post('item_id'),
             't_amount' => $this->post('amount'),
             't_date' => $this->post('trans_date'),
-            't_receipt_type' => $this->post('receipt')
+            't_receipt_type' => $this->post('receipt'),
+            't_remarks' => $this->post('remarks')
         );
 
         if ($this->finance_model->saveEditTransaction($details, $this->post('trans_id'), $this->post('school_year'))):
@@ -2281,7 +2282,7 @@ class Finance extends MX_Controller
             $data['fin_items'] = $this->finance_model->getFinItems($this->session->school_year);
             $data['modules'] = 'finance';
             $data['main_content'] = 'finance_settings';
-            echo Modules::run('templates/college_content', $data);
+            echo Modules::run('templates/main_content', $data);
         else:
             redirect('login');
         endif;
@@ -2798,12 +2799,6 @@ class Finance extends MX_Controller
         $discountCategory = $this->post('discountCategory');
 
         $charge = $this->getChargesByItemId($item, 0, $sy, $plan_id);
-        //$totalDiscount = $this->getTotalDiscount($st_id, 2);
-        //        if($item==1):
-        //            $charges = ($charge->row()->amount-$totalDiscount) * $amount;
-        //        else:
-        //            $charges = ($charge->row()->amount) * $amount;
-        //        endif;
         $charges = ($charge->row()->amount) * $amount;
         if ($discount_type == 1):
             $charges = $amount;
@@ -2866,6 +2861,9 @@ class Finance extends MX_Controller
         $data['st_id'] = $st_id;
         $data['discountType'] = $this->getDiscountType();
         $data['semester'] = $semester;
+        $data['student'] = $this->getBasicStudent(base64_decode($st_id), $school_year, $semester);
+        $data['plan'] = $this->getPlanByCourse($data['student']->grade_id, 0, $data['student']->st_type, $school_year);
+        $data['charges'] = ($data['plan']->fin_plan_id != '' ? $this->financeChargesByPlan(0, $data['student']->school_year, 0, $data['plan']->fin_plan_id, $data['student']->semester) : 0);
         if (file_exists(APPPATH . 'modules/finance/views/' . strtolower($settings->short_name) . '_accountDetails.php')):
             $this->load->view('finance/' . strtolower($settings->short_name) . '_accountDetails', $data);
         else:
@@ -2947,7 +2945,7 @@ class Finance extends MX_Controller
             else:
                 $data['main_content'] = 'financeAccounts';
             endif;
-            echo Modules::run('templates/canteen_content', $data);
+            echo Modules::run('templates/main_content', $data);
         else:
             redirect('login');
         endif;
@@ -3059,7 +3057,7 @@ class Finance extends MX_Controller
 
         $charge = array(
             'extra_id' => $this->eskwela->codeCheck('c_finance_extra', 'extra_id', $this->eskwela->code()),
-            'extra_st_id' => $user_id,
+            'extra_st_id' => $st_id,
             'extra_item_id' => $item,
             'extra_amount' => $amount,
             'extra_sem' => $sem,

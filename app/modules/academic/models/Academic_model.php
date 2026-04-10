@@ -310,6 +310,7 @@ function getSubjectsPerGradeLvl($id){
         $this->db->select('*');
         $this->db->from('subjects_settings');
         $this->db->where('grade_level_id', $grade_id);
+        $this->db->order_by('order', 'ASC');
         $query = $this->db->get();
         return $query->result();
     }

@@ -1,0 +1,10 @@
+<h5 id="myModalLabel">Upload Book Picture</h5>
+<form class="row-fluid" method="post" action="<?php echo base_url()?>main/do_upload" enctype="multipart/form-data">
+    <input style="height:35px;" class="btn-mini" type="file" name="userfile" size="20" />
+    <br /><br />
+
+    <input type="submit" value="upload" class="btn-primary"/>
+    <input type="hidden" name="id" value="<?php echo $item_id?>" />
+    <input type="hidden" name="location" value="<?php echo $this->uri->segment(1).'/'.$this->uri->segment(2).'/'.$this->uri->segment(3) ?>" />
+
+ </form>

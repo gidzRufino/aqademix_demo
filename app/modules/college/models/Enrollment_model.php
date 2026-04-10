@@ -631,24 +631,19 @@ class Enrollment_model extends CI_Model
 
     function checkName($lastname, $firstname, $middlename, $school_year)
     {
-        $this->db = ($school_year == NULL ? $this->eskwela->db($this->session->school_year) : $this->eskwela->db($school_year));
-        $this->db->where('lastname', $lastname);
-        $this->db->where('firstname', $firstname);
-        $q = $this->db->get('profile');
-        if ($q->num_rows() == 0):
-            $this->db->where('lastname', $lastname);
-            $this->db->where('firstname', $firstname);
-            $this->db->where('middlename', $middlename);
-            $q1 = $this->db->get('profile');
-            if ($q1->num_rows() == 0):
-                return FALSE;
-            else:
-                return TRUE;
-            endif;
-        else:
-            return TRUE;
-        endif;
+        $db = ($school_year == NULL
+            ? $this->eskwela->db($this->session->school_year)
+            : $this->eskwela->db($school_year)
+        );
+
+        $db->where('UPPER(TRIM(lastname))', strtoupper(trim($lastname)));
+        $db->where('UPPER(TRIM(firstname))', strtoupper(trim($firstname)));
+        $db->where('UPPER(TRIM(middlename))', strtoupper(trim($middlename)));
+
+        $q = $db->get('profile');
+        return (int) $q->num_rows();
     }
+
 
     public function checkIdIfExist($st_id)
     {
@@ -729,7 +724,7 @@ class Enrollment_model extends CI_Model
             'sla_address' => $asla,
             'semester' => $semester == 3 ? 3 : 0,
             'st_id' => $uid,
-            'str_id' => $strand,
+            'str_id' =>( $strand == null ? 0 : $strand),
             'st_type' => 1,
             'status' => $status,
             'enrolled_online' => 1

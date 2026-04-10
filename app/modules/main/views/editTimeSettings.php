@@ -1,71 +1,117 @@
-<div id='addressInfo'>
-    <div class='panel panel-info' style='margin:0;'>
-        <div class='panel-heading '>
+<div id="addressInfo">
+
+    <?php
+    $timeInAM = $optionToEdit == 'a' ? $query->row()->ps_from : $query->row()->time_in;
+    $timeOutAM = $optionToEdit == 'a' ? $query->row()->ps_to : $query->row()->time_out;
+    $timeInPM = $optionToEdit == 'a' ? $query->row()->ps_from_pm : $query->row()->time_in_pm;
+    $timeOutPM = $optionToEdit == 'a' ? $query->row()->ps_to_pm : $query->row()->time_out_pm;
+    $id = $optionToEdit == 'a' ? $query->row()->ps_id : $query->row()->section_id;
+    ?>
+    <!-- Title -->
+    <div class="mb-3">
+        <h5 class="fw-semibold mb-0">
             Edit <?php echo $section ?> Time Settings
-        </div>
-        <input type='text' id='editOption' value='<?php echo $optionToEdit ?>' hidden='' />
-        <div class='panel-body'>
-            <div class='form-group'>
-                <label class='control-label'>Time In [ AM ]</label>
-                <div class='controls'>
-                    <input class='form-control col-lg-12' type='time' value='<?php echo $timeInAM ?>' placeholder='<?php echo $timeInAM ?>' id='inAM' />
-                </div>
-
-            </div>
-            <div class='control-group'>
-                <label class='control-label'>Time Out [ AM ]</label>
-                <div class='controls'>
-                    <input class='form-control col-lg-12' type='time' value='<?php echo $timeOutAM ?>' placeholder='<?php echo $timeOutAM ?>' id='outAM' />
-                </div>
-
-            </div>
-            <div class='control-group'>
-                <label class='control-label'>Time In [ PM ]</label>
-                <div class='controls'>
-                    <input class='form-control col-lg-12' type='time' value='<?php echo $timeInPM ?>' placeholder='<?php echo $timeInPM ?>' id='inPM' />
-                </div>
-
-            </div>
-            <div class='control-group'>
-                <label class='control-label'>Time Out [ PM ]</label>
-                <div class='controls'>
-                    <input class='form-control col-lg-12' type='time' value='<?php echo $timeOutPM ?>' placeholder='<?php echo $timeOutPM ?>' id='outPM' />
-                </div>
-
-            </div>
-        </div>
-
-        <div class='panel-footer clearfix'>
-            <button data-dismiss='clickover' class='btn btn-xs btn-danger pull-right'>Cancel</button>&nbsp;&nbsp;
-            <a href='#' data-dismiss='clickover' onclick='editTimeSettings(<?php echo $sectionID ?>)' style='margin-right:10px;' class='btn btn-xs btn-success pull-right'>Save</a>
-        </div>
+        </h5>
+        <small class="text-muted">Update AM and PM schedule</small>
     </div>
+
+    <input type="hidden" id="editOption" value="<?php echo $optionToEdit ?>" />
+
+    <!-- FORM -->
+    <div class="row g-3">
+
+        <!-- AM IN -->
+        <div class="col-md-6 col-12">
+            <div class="form-floating">
+                <input type="time" class="form-control" id="inAM"
+                    value="<?php echo $timeInAM ?>">
+                <label>Time In (AM)</label>
+            </div>
+        </div>
+
+        <!-- AM OUT -->
+        <div class="col-md-6 col-12">
+            <div class="form-floating">
+                <input type="time" class="form-control" id="outAM"
+                    value="<?php echo $timeOutAM ?>">
+                <label>Time Out (AM)</label>
+            </div>
+        </div>
+
+        <!-- PM IN -->
+        <div class="col-md-6 col-12">
+            <div class="form-floating">
+                <input type="time" class="form-control" id="inPM"
+                    value="<?php echo $timeInPM ?>">
+                <label>Time In (PM)</label>
+            </div>
+        </div>
+
+        <!-- PM OUT -->
+        <div class="col-md-6 col-12">
+            <div class="form-floating">
+                <input type="time" class="form-control" id="outPM"
+                    value="<?php echo $timeOutPM ?>">
+                <label>Time Out (PM)</label>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ACTIONS -->
+    <div class="d-flex justify-content-end gap-2 mt-4">
+        <button class="btn btn-light" data-bs-dismiss="modal">
+            Cancel
+        </button>
+
+        <button class="btn btn-primary"
+            onclick="editTimeSettings(<?php echo $id ?>)">
+            <i class="fa fa-save me-1"></i> Save Changes
+        </button>
+    </div>
+
 </div>
-<script type='text/javascript'>
+<script>
     function editTimeSettings(id) {
-        var option = $('#editOption').val();
-        var inAM = $('#inAM').val();
-        var outAM = $('#outAM').val();
-        var inPM = $('#inPM').val();
-        var outPM = $('#outPM').val();
-        var url = '<?php echo base_url() . 'main/editTimeSettings/' ?>' + inAM + '/' + outAM + '/' + inPM + '/' + outPM + '/' + id + '/' + option;
+        let option = '<?= $optionToEdit ?>';
+
+        let data = {
+            id: id,
+            option: option,
+            inAM: $('#inAM').val(),
+            outAM: $('#outAM').val(),
+            inPM: $('#inPM').val(),
+            outPM: $('#outPM').val(),
+            csrf_test_name: $.cookie('csrf_cookie_name')
+        };
+
+        console.log(data);
         $.ajax({
-            type: 'GET',
+            type: 'POST',
+            url: "<?= base_url('main/editTimeSettings') ?>",
+            data: data,
             dataType: 'json',
-            url: url,
-            data: 'id=' + id,
-            success: function(data) {
-                if (data.status) {
-                    $('#' + id + '_ami').text(inAM);
-                    $('#' + id + '_amo').text(outAM);
-                    $('#' + id + '_pmi').text(inPM);
-                    $('#' + id + '_pmo').text(outPM);
+
+            success: function(res) {
+                if (res.status) {
+
+                    // Update UI instantly
+                    $('#' + id + '_ami').text(data.inAM);
+                    $('#' + id + '_amo').text(data.outAM);
+                    $('#' + id + '_pmi').text(data.inPM);
+                    $('#' + id + '_pmo').text(data.outPM);
+
+                    // Close modal
+                    showTopAlert(res.msg, 'success');
+                    $('#editTimeModal').modal('hide');
+
                 } else {
-                    alert(data.msg);
+                    showTopAlert(res.msg, 'danger');
                 }
             },
-            error: function(data) {
-                alert('error');
+
+            error: function() {
+                showTopAlert('Something went wrong', 'danger');
             }
         });
     }

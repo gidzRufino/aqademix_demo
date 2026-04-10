@@ -1,4 +1,4 @@
-<div id="cardPreview" style="width:800px; margin: 15px auto 0;" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+<!-- <div id="cardPreview" style="width:800px; margin: 15px auto 0;" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
     <div class="panel panel-danger">
         <div class="panel-heading clearfix">
             <h4 class="no-margin col-lg-4">Grades Review</h4>
@@ -19,6 +19,6 @@
             </div>
         </div>
     </div>
-</div>
+</div> -->
 
        

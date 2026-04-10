@@ -1158,6 +1158,10 @@ class get_registrar_model extends CI_Model
         $this->db->join('religion', 'profile.rel_id = religion.rel_id', 'left');
         $this->db->join('profile_parent', 'profile.user_id = profile_parent.u_id', 'left');
         $this->db->join('profile_medical', 'profile.user_id = profile_medical.user_id', 'left');
+
+$this->db->join('ua_students', 'profile_students.st_id = ua_students.uname', 'left');
+$this->db->join('user_accounts', 'profile_parent.p_id = user_accounts.u_id', 'left');
+
         ($semester != NULL ? $this->db->where('semester', $semester) : '');
         //$this->db->join('sh_strand','sh_strand.st_id = profile_students_admission.str_id','left');
         if ($year == NULL):

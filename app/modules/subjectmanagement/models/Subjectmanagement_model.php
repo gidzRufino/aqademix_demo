@@ -115,12 +115,19 @@ class subjectmanagement_model extends MX_Controller {
             return FALSE;
         endif;
     }
-            
+
+    function addStrand($data)
+    {
+        $data['st_id'] = $this->eskwela->codeCheck('sh_strand', 'st_id', $this->eskwela->code());
+        $r = $this->db->insert('sh_strand', $data);
+        return $r ? TRUE : FALSE;
+    }
+
     function updateSHstrand($id, $details)
     {
         $this->db->where('st_id', $id);
-        $this->db->update('sh_strand', $details);
-        return;
+        $q = $this->db->update('sh_strand', $details);
+        return $q ? TRUE : FALSE;
     }
     
     function getSHStrandsByName($strand)
@@ -141,6 +148,13 @@ class subjectmanagement_model extends MX_Controller {
     {
         $q = $this->db->get('sh_strand');
         return $q->result();
+    }
+
+    function deleteStrand($id)
+    {
+        $this->db->where('st_id', $id);
+        $r = $this->db->delete('sh_strand');
+        return $r ? TRUE : FALSE;
     }
     
     function checkSHSSubjectPerLevel($grade_level, $sub_id)
@@ -241,7 +255,13 @@ class subjectmanagement_model extends MX_Controller {
         $q = $this->db->get('level_department');
         return $q->result();
     }
-    
+
+    function getDeptByID($id)
+    {
+        $this->db->where('level_dept_id', $id);
+        return $this->db->get('level_department');
+    }
+
     function deleteSection($section_id)
     {
         $this->db->where('section_id', $section_id);
@@ -252,6 +272,17 @@ class subjectmanagement_model extends MX_Controller {
     function checkSubjectSettings($subj_id) {
         $this->db->where('sub_id', $subj_id);
         return $this->db->get('subjects_settings');
+    }
+
+    public function updatePosition($id, $position, $grade_id)
+    {
+        $this->db->where('id', $id);
+        $this->db->where('grade_level_id', $grade_id);
+        $this->db->update('subjects_settings', [
+            'order' => $position
+        ]);
+
+        return true;
     }
 }
 

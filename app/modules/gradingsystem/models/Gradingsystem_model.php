@@ -379,6 +379,7 @@ class gradingsystem_model extends CI_Model {
     function savePromotion($section_id, $grade_id, $column, $value, $school_year) {
         $this->db = $this->eskwela->db($this->session->userdata('school_year'));
         $details = array(
+            'id' => $this->eskwela->code(),
             'grade_id' => $grade_id,
             'section_id' => $section_id,
             $column => $value,
@@ -1261,4 +1262,20 @@ class gradingsystem_model extends CI_Model {
         $this->db->update('gs_settings', array($field => ($opt == 0 ? $data : '')));
     }
 
+    function deleteSubject($id)
+    {
+        $this->db->where('subject_id', $id);
+        return $this->db->delete('subjects');
+    }
+
+    public function getSubjects($limit = null, $offset = null, $search = '')
+    {
+        if ($search != '') {
+            $this->db->like('subject', $search);
+        }
+        if ($limit !== null) {
+            $this->db->limit($limit, $offset);
+        }
+        return $this->db->get('subjects');
+    }
 }

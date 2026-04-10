@@ -110,24 +110,137 @@ $website = Modules::run('main/getSet');
       width: 100%;
     }
   }
+
+/* ===== Layout ===== */
+
+.app-layout {
+    display: flex;
+    min-height: 100vh;
+    padding-top: 56px; /* navbar height */
+    background:rgb(255, 255, 255);
+}
+
+/* Sidebar */
+.app-sidebar {
+    width: 260px;
+    flex-shrink: 0;
+    background: #fff;
+    /* border-right: 1px solid #e5e7eb; */
+    min-height: calc(100vh - 56px);
+
+    /* IMPORTANT */
+    padding-top: 0;
+    margin-top: 0;
+
+    border-top-left-radius: 0;
+}
+
+/* Main content */
+.navbar {
+    z-index: 1030; /* default Bootstrap navbar */
+}
+
+.app-content {
+    position: relative;
+    z-index: 1;
+}
+
+.app-content {
+    flex: 1;
+    padding: 1.25rem;
+    background: #f5f7fb;
+
+    border-top-left-radius: 22px;
+    overflow: hidden;
+    border: 2px solid #e9ecef;
+
+    /* IMPORTANT */
+    margin-top: 0;
+    padding-top: 1.25rem;
+}
+
+
+/* Smooth transition (future collapse-ready) */
+.app-sidebar,
+.app-content {
+    transition: all 0.25s ease-in-out;
+}
+
+/* ===== Mobile ===== */
+@media (max-width: 991px) {
+
+    .app-layout {
+        position: relative;
+    }
+
+    .app-sidebar {
+        position: fixed;
+        top: 56px;
+        left: -260px;
+        height: calc(100vh - 56px);
+        box-shadow: 0 0 20px rgba(0,0,0,0.15);
+    }
+
+    .app-sidebar.show {
+        left: 0;
+    }
+
+    .app-content {
+        padding: 1rem;
+    }
+}
+
+/* Page content cards */
+.app-content .card {
+    border-radius: 0.75rem;
+    border: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+}
+
+/* Tables */
+.app-content table {
+    background: #fff;
+}
+
+/* Page headings */
+.app-content h1,
+.app-content h2,
+.app-content h3 {
+    font-weight: 600;
+}
+
+
 </style>
+
 <div id="wrapper">
   <input type="hidden" id="portal_address" value="<?php echo base64_encode($website->web_address); ?>" />
   <input type="hidden" id="web_address" value="<?php echo $website->web_address; ?>" />
   <!-- Navigation -->
-  <nav class="navbar navbar-default navbar-static-top" role="navigation" style="margin-bottom: 0; ">
-    <?php
-    echo Modules::run('nav/getDashIcons');
-    echo Modules::run('nav/getSideNav');
+  <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top">
+    <div class="container-fluid">
+        <?php echo Modules::run('nav/getDashIcons'); ?>
+        <!-- You can keep other top navbar items here -->
+    </div>
+</nav>
 
-    ?>
-  </nav>
+<!-- Page wrapper: sidebar + main content -->
+<!-- Layout Wrapper -->
+<div class="app-layout">
 
-  <div id="page-wrapper">
-    <span class="hide" id="countdown"></span>
-    <?php $this->load->view($modules . '/' . $main_content); ?>
+    <!-- Sidebar -->
+    <aside id="sidebar" class="app-sidebar">
+        <?php echo Modules::run('nav/getSideNav'); ?>
+    </aside>
 
-  </div>
+    <!-- Main Content -->
+    <main id="main-content" class="app-content">
+        <span class="hide" id="countdown"></span>
+        <?php $this->load->view($modules . '/' . $main_content); ?>
+    </main>
+
+</div>
+
+
   <input type="hidden" id="chat_url" value="<?php echo base_url() . 'chat_system/chat/' ?>" />
   <input type="hidden" id="base_url" value="<?php echo base_url() ?>" />
   <div id="submitLoad" class="hide">

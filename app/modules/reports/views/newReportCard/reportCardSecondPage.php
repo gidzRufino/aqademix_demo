@@ -40,35 +40,13 @@ function getMAPEH($pdf, $first, $second, $third, $fourth, $term)
     
     $pdf->SetXY(10,72);
     $pdf->SetFont('helvetica', 'B', 8);
-    $pdf->MultiCell(40, 5, 'MAPEH',1, 'L', 0, 0, '', '', true, 0, false, true, 5, 'M');
-    switch ($term):
-            case 1:
-                $pdf->MultiCell(12, 5, round($first, 0, PHP_ROUND_HALF_UP),1, 'C', 0, 0, '', '', true, 0, false, true,5, 'M');
-                $pdf->MultiCell(12, 5, '',1, 'C', 0, 0, '', '', true, 0, false, true,5, 'T'); 
-                $pdf->MultiCell(12, 5, '',1, 'C', 0, 0, '', '', true, 0, false, true,5, 'T'); 
-                $pdf->MultiCell(12, 5, '',1, 'C', 0, 0, '', '', true, 0, false, true,5, 'T'); 
-            break;
-            case 2:
-                $pdf->MultiCell(12, 5, round($first, 0, PHP_ROUND_HALF_UP),1, 'C', 0, 0, '', '', true, 0, false, true,5, 'M');
-                $pdf->MultiCell(12, 5, round($second, 0, PHP_ROUND_HALF_UP),1, 'C', 0, 0, '', '', true, 0, false, true,5, 'M'); 
-                $pdf->MultiCell(12, 5, '',1, 'C', 0, 0, '', '', true, 0, false, true,5, 'T'); 
-                $pdf->MultiCell(12, 5, '',1, 'C', 0, 0, '', '', true, 0, false, true,5, 'T'); 
-            break;
-            case 3:
-                $pdf->MultiCell(12, 5, round($first, 0, PHP_ROUND_HALF_UP),1, 'C', 0, 0, '', '', true, 0, false, true,5, 'M');
-                $pdf->MultiCell(12, 5, round($second, 0, PHP_ROUND_HALF_UP),1, 'C', 0, 0, '', '', true, 0, false, true,5, 'M');
-                $pdf->MultiCell(12, 5, round($third, 0, PHP_ROUND_HALF_UP),1, 'C', 0, 0, '', '', true, 0, false, true,5, 'M');
-                $pdf->MultiCell(12, 5, '',1, 'C', 0, 0, '', '', true, 0, false, true,5, 'M'); 
-            break;
-            case 4:
-                $pdf->MultiCell(12, 5, round($first, 0, PHP_ROUND_HALF_UP),1, 'C', 0, 0, '', '', true, 0, false, true,5, 'M');
-                $pdf->MultiCell(12, 5, round($second, 0, PHP_ROUND_HALF_UP),1, 'C', 0, 0, '', '', true, 0, false, true,5, 'M');
-                $pdf->MultiCell(12, 5, round($third, 0, PHP_ROUND_HALF_UP),1, 'C', 0, 0, '', '', true, 0, false, true,5, 'M');
-                $pdf->MultiCell(12, 5, round($fourth, 0, PHP_ROUND_HALF_UP),1, 'C', 0, 0, '', '', true, 0, false, true,5, 'M'); 
-            break;
-                
-        endswitch;
-   if($term==4):
+    $pdf->MultiCell(40, 5, 'MAPEH', 1, 'L', 0, 0, '', '', true, 0, false, true, 5, 'M');
+    $pdf->MultiCell(12, 5, round($first, 0, PHP_ROUND_HALF_UP), 1, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+    $pdf->MultiCell(12, 5, round($second, 0, PHP_ROUND_HALF_UP), 1, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+    $pdf->MultiCell(12, 5, round($third, 0, PHP_ROUND_HALF_UP), 1, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+    $pdf->MultiCell(12, 5, round($fourth, 0, PHP_ROUND_HALF_UP), 1, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+
+    if ($term == 4):
     if($macFinalAverage >= 75):
         $pdf->MultiCell(24, 5, round($macFinalAverage, 0, PHP_ROUND_HALF_UP),1, 'C', 0, 0, '', '', true, 0, false, true,5, 'T');
     else:
@@ -109,184 +87,125 @@ $pdf->SetFont('helvetica', 'N', 8);
 $pdf->Ln(15);
 $pdf->SetX(10);
 $pdf->SetFont('helvetica', 'B', 8);
-$pdf->MultiCell(40, 10.5, 'Learning Areas',1, 'C', 0, 0, '', '', true, 0, false, true, 10, 'M');
-$pdf->MultiCell(48 , 5, 'Quarter','LTR', 'C', 0, 0, '', '', true, 0, false, true,5, 'M');
-$pdf->MultiCell(24 , 10.5, 'Final Grade',1, 'C', 0, 0, '', '', true, 0, false, true, 10, 'M');
-$pdf->MultiCell(15 , 10.5, 'Remarks',1, 'C', 0, 0, '', '', true, 0, false, true, 10, 'M');
+$pdf->MultiCell(57, 10.5, 'Learning Areas', 1, 'C', 0, 0, '', '', true, 0, false, true, 10, 'M');
+$pdf->MultiCell(40, 5, 'Quarter', 'LTR', 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->MultiCell(15, 10.5, 'Final Grade', 1, 'C', 0, 0, '', '', true, 0, false, true, 10, 'M');
+$pdf->MultiCell(20, 10.5, 'Remarks', 1, 'C', 0, 0, '', '', true, 0, false, true, 10, 'M');
 $pdf->SetFont('helvetica', 'N', 8);
 $pdf->Ln();
-$pdf->SetXY(50, 28);
-$pdf->MultiCell(12, 5, '1',1, 'C', 0, 0, '', '', true, 0, false, true,5, 'M');
-$pdf->MultiCell(12, 5, '2',1, 'C', 0, 0, '', '', true, 0, false, true,5, 'M');
-$pdf->MultiCell(12, 5, '3',1, 'C', 0, 0, '', '', true, 0, false, true,5, 'M');
-$pdf->MultiCell(12, 5, '4',1, 'C', 0, 0, '', '', true, 0, false, true,5, 'M');
+$pdf->SetXY(67, 28);
+$pdf->MultiCell(10, 5, '1', 1, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->MultiCell(10, 5, '2', 1, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->MultiCell(10, 5, '3', 1, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->MultiCell(10, 5, '4', 1, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
 $pdf->Ln();
 
-$subject_ids = Modules::run('academic/getSpecificSubjectPerlevel', $student->grade_id); 
+$subject_ids = Modules::run('academic/getSpecificSubjectPerlevel', $student->grade_id);
 //$subject = explode(',', $subject_ids->subject_id);
-$i=0;
-foreach($subject_ids as $s){
-    $i++;
-    $singleSub = Modules::run('academic/getSpecificSubjects', $s->sub_id);
-    $pdf->SetX(10);
-    switch ($i):
-        case 8:
-        case 9:
-        case 10:
-        case 11:
-            $pdf->MultiCell(40, 5,'     '.$singleSub->subject,1, 'L', 0, 0, '', '', true, 0, false, true, 5, 'M');
-        break;
-        default :
-            $pdf->MultiCell(40, 5, $singleSub->subject,1, 'L', 0, 0, '', '', true, 0, false, true, 5, 'M');
-        break;
-    endswitch;
-    
-	$fg = Modules::run('gradingsystem/getFinalGrade', $student->uid, $s->sub_id, $term, $sy);
-        switch ($term):
-            case 1:
-                $pdf->MultiCell(12, 5, transmuteGrade(round(Modules::run('gradingsystem/getFinalGrade', $student->uid, $s->sub_id, 1, $sy)->row()->final_rating, 2)),1, 'C', 0, 0, '', '', true, 0, false, true,5, 'T');
-                $pdf->MultiCell(12, 5, '',1, 'C', 0, 0, '', '', true, 0, false, true,5, 'T'); 
-                $pdf->MultiCell(12, 5, '',1, 'C', 0, 0, '', '', true, 0, false, true,5, 'T'); 
-                $pdf->MultiCell(12, 5, '',1, 'C', 0, 0, '', '', true, 0, false, true,5, 'T'); 
-            break;
-            case 2:
-                $pdf->MultiCell(12, 5, transmuteGrade(round(Modules::run('gradingsystem/getFinalGrade', $student->uid, $s->sub_id, 1, $sy)->row()->final_rating, 2)),1, 'C', 0, 0, '', '', true, 0, false, true,5, 'T'); 
-                $pdf->MultiCell(12, 5, transmuteGrade(round(Modules::run('gradingsystem/getFinalGrade', $student->uid, $s->sub_id, 2, $sy)->row()->final_rating, 2)),1, 'C', 0, 0, '', '', true, 0, false, true,5, 'T'); 
-                $pdf->MultiCell(12, 5, '',1, 'C', 0, 0, '', '', true, 0, false, true,5, 'T'); 
-                $pdf->MultiCell(12, 5, '',1, 'C', 0, 0, '', '', true, 0, false, true,5, 'T'); 
-            break;
-            case 3:
-                $pdf->MultiCell(12, 5, transmuteGrade(round(Modules::run('gradingsystem/getFinalGrade', $student->uid, $s->sub_id, 1, $sy)->row()->final_rating, 2)),1, 'C', 0, 0, '', '', true, 0, false, true,5, 'T'); 
-                $pdf->MultiCell(12, 5, transmuteGrade(round(Modules::run('gradingsystem/getFinalGrade', $student->uid, $s->sub_id, 2, $sy)->row()->final_rating, 2)),1, 'C', 0, 0, '', '', true, 0, false, true,5, 'T'); 
-                $pdf->MultiCell(12, 5, transmuteGrade(round(Modules::run('gradingsystem/getFinalGrade', $student->uid, $s->sub_id, 3, $sy)->row()->final_rating, 2)),1, 'C', 0, 0, '', '', true, 0, false, true,5, 'T'); 
-                $pdf->MultiCell(12, 5, '',1, 'C', 0, 0, '', '', true, 0, false, true,5, 'T'); 
-            break;
-            case 4:
-                $pdf->MultiCell(12, 5, transmuteGrade(round(Modules::run('gradingsystem/getFinalGrade', $student->uid, $s->sub_id, 1, $sy)->row()->final_rating, 2)),1, 'C', 0, 0, '', '', true, 0, false, true,5, 'T'); 
-                $pdf->MultiCell(12, 5, transmuteGrade(round(Modules::run('gradingsystem/getFinalGrade', $student->uid, $s->sub_id, 2, $sy)->row()->final_rating, 2)),1, 'C', 0, 0, '', '', true, 0, false, true,5, 'T'); 
-                $pdf->MultiCell(12, 5, transmuteGrade(round(Modules::run('gradingsystem/getFinalGrade', $student->uid, $s->sub_id, 3, $sy)->row()->final_rating, 2)),1, 'C', 0, 0, '', '', true, 0, false, true,5, 'T'); 
-                $pdf->MultiCell(12, 5, transmuteGrade(round(Modules::run('gradingsystem/getFinalGrade', $student->uid, $s->sub_id, 4, $sy)->row()->final_rating, 2)),1, 'C', 0, 0, '', '', true, 0, false, true,5, 'T'); 
-            break;
-                
-        endswitch;
-           
-
-        $first = Modules::run('gradingsystem/getFinalGrade', $student->uid, $s->sub_id, 1, $sy)->row()->final_rating;
-        $second = Modules::run('gradingsystem/getFinalGrade', $student->uid, $s->sub_id, 2, $sy)->row()->final_rating;
-        $third = Modules::run('gradingsystem/getFinalGrade', $student->uid, $s->sub_id, 3, $sy)->row()->final_rating;
-        $fourth = Modules::run('gradingsystem/getFinalGrade', $student->uid, $s->sub_id, 4, $sy)->row()->final_rating;
-        
-        $m1 = transmuteGrade(round(Modules::run('gradingsystem/getFinalGrade', $student->uid, 13, 1, $sy)->row()->final_rating, 2));
-        $a1 = transmuteGrade(round(Modules::run('gradingsystem/getFinalGrade', $student->uid, 14, 1, $sy)->row()->final_rating, 2));
-        $pe1 = transmuteGrade(round(Modules::run('gradingsystem/getFinalGrade', $student->uid, 15, 1, $sy)->row()->final_rating, 2));
-        $h1 = transmuteGrade(round(Modules::run('gradingsystem/getFinalGrade', $student->uid, 16, 1, $sy)->row()->final_rating, 2));
-        $mapeh1 = ($m1 + $a1 + $pe1 + $h1)/4;
-        if($mapeh1==0):$mapeh1=""; endif;
-        
-        $m2 = transmuteGrade(round(Modules::run('gradingsystem/getFinalGrade', $student->uid, 13, 2, $sy)->row()->final_rating, 2));
-        $a2 = transmuteGrade(round(Modules::run('gradingsystem/getFinalGrade', $student->uid, 14, 2, $sy)->row()->final_rating, 2));
-        $pe2 = transmuteGrade(round(Modules::run('gradingsystem/getFinalGrade', $student->uid, 15, 2, $sy)->row()->final_rating, 2));
-        $h2= transmuteGrade(round(Modules::run('gradingsystem/getFinalGrade', $student->uid, 16, 2, $sy)->row()->final_rating, 2));
-        $mapeh2 = ($m2 + $a2 + $pe2 + $h2)/4;
-        if($mapeh2==0):$mapeh2=""; endif;
-        
-        $m3 = transmuteGrade(round(Modules::run('gradingsystem/getFinalGrade', $student->uid, 13, 3, $sy)->row()->final_rating, 2));
-        $a3 = transmuteGrade(round(Modules::run('gradingsystem/getFinalGrade', $student->uid, 14, 3, $sy)->row()->final_rating, 2));
-        $pe3 = transmuteGrade(round(Modules::run('gradingsystem/getFinalGrade', $student->uid, 15, 3, $sy)->row()->final_rating, 2));
-        $h3= transmuteGrade(round(Modules::run('gradingsystem/getFinalGrade', $student->uid, 16, 3, $sy)->row()->final_rating, 2));
-        $mapeh3 = ($m3 + $a3 + $pe3 + $h3)/4;
-        if($mapeh3==0):$mapeh3=""; endif;
-        
-        $m4 = transmuteGrade(round(Modules::run('gradingsystem/getFinalGrade', $student->uid, 13, 4, $sy)->row()->final_rating, 2));
-        $a4 = transmuteGrade(round(Modules::run('gradingsystem/getFinalGrade', $student->uid, 14, 4, $sy)->row()->final_rating, 2));
-        $pe4 = transmuteGrade(round(Modules::run('gradingsystem/getFinalGrade', $student->uid, 15, 4, $sy)->row()->final_rating, 2));
-        $h4= transmuteGrade(round(Modules::run('gradingsystem/getFinalGrade', $student->uid, 16, 4, $sy)->row()->final_rating, 2));
-        $mapeh4 = ($m4 + $a4 + $pe4 + $h4)/4;
-        if($mapeh4==0):$mapeh4=""; endif;
-        
-    if($s->sub_id==17):
-        if(Modules::run('gradingsystem/getFinalGrade', $student->uid, $s->sub_id, 4, $sy)->row()->final_rating!=0):
-            $pdf->MultiCell(12, 5, 'Passed',1, 'C', 0, 0, '', '', true, 0, false, true,5, 'M');
-        else:
-            $pdf->MultiCell(12, 5, '',1, 'C', 0, 0, '', '', true, 0, false, true,5, 'M');
-        endif;
-        $pdf->MultiCell(12, 5, $singleSub->unit_a,1, 'C', 0, 0, '', '', true, 0, false, true,5, 'M');
-        $pdf->MultiCell(12, 5, '',1, 'C', 0, 0, '', '', true, 0, false, true,5, 'M');
-    else:
-        $finalAverage = ($first+$second+$third+$fourth)/4;
-        if($finalAverage<=75 && $finalAverage >= $settings->final_passing_mark):
-            $finalAverage = 75;
-        endif;
-        
-        Modules::run('gradingsystem/saveGeneralAverage', $student->section_id, $student->uid, $s->sub_id, $sy, $finalAverage);
-            $finalAverage = ($first+$second+$third+$fourth)/4;
-            if($finalAverage<=75 && $finalAverage >= $settings->final_passing_mark):
-                $finalAverage = 75;
-            endif;
-            if($fourth!=0):
-                $pdf->MultiCell(24, 5, transmuteGrade(round($finalAverage, 2)),1, 'C', 0, 0, '', '', true, 0, false, true,5, 'M');
-                if($finalAverage >= $settings->final_passing_mark):
-                    $pdf->MultiCell(15, 5, 'Passed',1, 'C', 0, 0, '', '', true, 0, false, true,5, 'T');
-                else:
-                     $pdf->SetTextColor(255, 0, 0);
-                     $pdf->MultiCell(24, 5, '',1, 'C', 0, 0, '', '', true, 0, false, true,5, 'T');
-                     $pdf->SetTextColor(000, 0, 0);
-
-                endif;
-            else:
-                $pdf->MultiCell(24, 5, 'ss',1, 'C', 0, 0, '', '', true, 0, false, true,5, 'M');
-                $pdf->MultiCell(15, 5, '',1, 'C', 0, 0, '', '', true, 0, false, true,5, 'M');
-            endif;
-        
+$i = 0;
+$m = 0;
+$mp = 0;
+$mapeh1 = 0;
+$mapeh2 = 0;
+$mapeh3 = 0;
+$mapeh4 = 0;
+foreach ($subject_ids as $sp):
+    $singleSub = Modules::run('academic/getSpecificSubjects', $sp->sub_id);
+    if ($singleSub->parent_subject == 11):
+        $fg = Modules::run('gradingsystem/getFinalGrade', $student->uid, $sp->sub_id, 1, $sy);
+        $fg1 += $fg->row()->final_rating;
+        $sg = Modules::run('gradingsystem/getFinalGrade', $student->uid, $sp->sub_id, 2, $sy);
+        $sg1 += $sg->row()->final_rating;
+        $tg = Modules::run('gradingsystem/getFinalGrade', $student->uid, $sp->sub_id, 3, $sy);
+        $tg1 += $tg->row()->final_rating;
+        $frg = Modules::run('gradingsystem/getFinalGrade', $student->uid, $sp->sub_id, 4, $sy);
+        $frg1 += $frg->row()->final_rating;
+        $mp += 1;
     endif;
-    
-    
-    if($i==7): 
-        $pdf->Ln();
-    endif; 
-        
-    $pdf->Ln();
-    
+endforeach;
+$mapeh1 = round(($fg1 / $mp));
+$mapeh2 = round(($sg1 / $mp));
+$mapeh3 = round(($tg1 / $mp));
+$mapeh4 = round(($frg1 / $mp));
+$finalMAPEH = round(($mapeh1 + $mapeh2 + $mapeh3 + $mapeh4) / 4, 2);
+$q = 1;
 
-    $generalFinal += $finalAverage;
+$pdf->SetFont('times', 'R', 8);
+$pdf->SetFillColor(225, 225, 225);
+foreach ($subject_ids as $s) {
+    $pdf->SetX(10);
+    $singleSub = Modules::run('academic/getSpecificSubjects', $s->sub_id);
+    $fg = Modules::run('gradingsystem/getFinalGrade', $student->uid, $s->sub_id, 1, $sy);
+    $sg = Modules::run('gradingsystem/getFinalGrade', $student->uid, $s->sub_id, 2, $sy);
+    $tg = Modules::run('gradingsystem/getFinalGrade', $student->uid, $s->sub_id, 3, $sy);
+    $frg = Modules::run('gradingsystem/getFinalGrade', $student->uid, $s->sub_id, 4, $sy);
+    if ($singleSub->parent_subject == 11):
+        if ($q == 1):
+            $pdf->MultiCell(57, 5, 'MAPEH', 1, 'L', 0, 0, '', '', true, 0, false, true, 5, 'M');
+            $pdf->MultiCell(10, 5, ($mapeh1 != 0 ? $mapeh1 : ''), 1, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+            $pdf->MultiCell(10, 5, ($mapeh2 != 0 ? $mapeh2 : ''), 1, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+            $pdf->MultiCell(10, 5, ($mapeh3 != 0 ? $mapeh3 : ''), 1, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+            $pdf->MultiCell(10, 5, ($mapeh4 != 0 ? $mapeh4 : ''), 1, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+            //        $pdf->MultiCell(10, 5, ($finalMAPEH != 0 ? $finalMAPEH : ''), 1, 'C', 1, 0, '', '', true, 0, false, true, 5, 'M');
+            $pdf->MultiCell(15, 5, ($mapeh4 != 0 ? number_format($finalMAPEH, 2) : ''), 1, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+            $pdf->MultiCell(20, 5, ($mapeh4 != 0 ? ($finalMAPEH < 75 ? 'Failed' : 'Passed') : ''), 1, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+            $pdf->Ln();
+            $pdf->SetX(10);
+        endif;
+        $pdf->SetFont('times', 'I', 8);
+        $pdf->MultiCell(57, 5, '      ' . $singleSub->subject, 1, 'L', 0, 0, '', '', true, 0, false, true, 5, 'M');
+        $pdf->MultiCell(10, 5, ($fg->row()->final_rating != '' ? $fg->row()->final_rating : ''), 1, 'C', 1, 0, '', '', true, 0, false, true, 5, 'M');
+        $pdf->MultiCell(10, 5, ($sg->row()->final_rating != '' ? $sg->row()->final_rating : ''), 1, 'C', 1, 0, '', '', true, 0, false, true, 5, 'M');
+        $pdf->MultiCell(10, 5, ($tg->row()->final_rating != '' ? $tg->row()->final_rating : ''), 1, 'C', 1, 0, '', '', true, 0, false, true, 5, 'M');
+        $pdf->MultiCell(10, 5, ($frg->row()->final_rating != '' ? $frg->row()->final_rating : ''), 1, 'C', 1, 0, '', '', true, 0, false, true, 5, 'M');
+        $finRateNum = round(($fg->row()->final_rating + $sg->row()->final_rating + $tg->row()->final_rating + $frg->row()->final_rating) / 4, 2);
+        //        $pdf->MultiCell(10, 5, ($finalMAPEH != 0 ? ($frg->row()->final_rating != '' ? $finalMAPEH : '') : ''), 1, 'C', 1, 0, '', '', true, 0, false, true, 5, 'M');
+        $pdf->MultiCell(15, 5, ($frg->row()->final_rating != 0 ? number_format($finRateNum, 2) : ''), 1, 'C', 1, 0, '', '', true, 0, false, true, 5, 'M');
+        $pdf->MultiCell(20, 5, ($frg->row()->final_rating != 0 ? ($finRateNum < 75 ? 'Failed' : 'Passed') : ''), 1, 'C', 1, 0, '', '', true, 0, false, true, 5, 'M');
+        $q++;
+    else:
+        $subCount++;
+        $pdf->MultiCell(57, 5, ($s->sub_id != 218876 ? $singleSub->subject : 'GMRC / CFC'), 1, 'L', 0, 0, '', '', true, 0, false, true, 5, 'M');
+        $pdf->MultiCell(10, 5, ($fg->row()->final_rating != '' ? $fg->row()->final_rating : ''), 1, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+        $pdf->MultiCell(10, 5, ($sg->row()->final_rating != '' ? $sg->row()->final_rating : ''), 1, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+        $pdf->MultiCell(10, 5, ($tg->row()->final_rating != '' ? $tg->row()->final_rating : ''), 1, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+        $pdf->MultiCell(10, 5, ($frg->row()->final_rating != '' ? $frg->row()->final_rating : ''), 1, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+        $finRateNum = round(($fg->row()->final_rating + $sg->row()->final_rating + $tg->row()->final_rating + $frg->row()->final_rating) / 4, 2);
+        $pdf->MultiCell(15, 5, ($frg->row()->final_rating != 0 ? number_format($finRateNum, 2) : ''), 1, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+        $pdf->MultiCell(20, 5, ($frg->row()->final_rating != 0 ? ($finRateNum < 75 ? 'Failed' : 'Passed') : ''), 1, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+        $firstFinal += $fg->row()->final_rating;
+        $secondFinal += $sg->row()->final_rating;
+        $thirdFinal += $tg->row()->final_rating;
+        $fourthFinal += $frg->row()->final_rating;
+        $rateNum += $finRateNum;
+    endif;
+    $pdf->Ln();
 }
-    getMAPEH($pdf, $mapeh1, $mapeh2, $mapeh3, $mapeh4, $term);
-	
-    $pdf->Ln(11);
-    $pdf->SetX(10);
-    $pdf->MultiCell(40, 5, '',1, 'L', 0, 0, '', '', true, 0, false, true, 5, 'M'); 
-    $pdf->MultiCell(12, 5, '',1, 'C', 0, 0, '', '', true, 0, false, true,5, 'M'); 
-    $pdf->MultiCell(12, 5, '',1, 'C', 0, 0, '', '', true, 0, false, true,5, 'M');
-    $pdf->MultiCell(12, 5, '',1, 'C', 0, 0, '', '', true, 0, false, true,5, 'M');
-    $pdf->MultiCell(12, 5, '',1, 'C', 0, 0, '', '', true, 0, false, true,5, 'M');
-    $pdf->MultiCell(24 , 5, '',1, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
-    $pdf->MultiCell(15 , 5, '',1, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
-    //$pdf->MultiCell(12 , 5, '',1, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
-    
-    $pdf->Ln();
-    $pdf->SetX(10);
-    $pdf->MultiCell(40, 5, '',0, 'L', 0, 0, '', '', true, 0, false, true, 5, 'M'); 
- 
-//
-        
-        $generalFinal = round($generalFinal/$i, 2);
-        if($generalFinal<=75 && $generalFinal >=$settings->final_passing_mark):
-            $generalFinal = 75;
-        endif;
 
-        $pdf->MultiCell(48, 5, 'General Average',1, 'C', 0, 0, '', '', true, 0, false, true,5, 'M');
-        if($term!=4):
-             $pdf->MultiCell(24 , 5, '',1, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
-        else:    
-            $pdf->MultiCell(24 , 5, transmuteGrade($generalFinal),1, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
-        endif;
-//        $pdf->MultiCell(12 , 5, '',1, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M
-        
-        if(!Modules::run('gradingsystem/checkIfCardLock', $student->uid, $sy)):
-           Modules::run('gradingsystem/saveFinalAverage', $student->uid, $generalFinal, $sy); 
-        endif;
+$generalFinal = round($generalFinal / $i, 2);
+if ($generalFinal <= 75 && $generalFinal >= $settings->final_passing_mark):
+    $generalFinal = 75;
+endif;
 
-    $pdf->Ln(40);
+$aveFirst = round((($firstFinal + $mapeh1) / ($subCount + 1)), 2);
+$aveSecond = round((($secondFinal + $mapeh2) / ($subCount + 1)), 2);
+$aveThird = round((($thirdFinal + $mapeh3) / ($subCount + 1)), 2);
+$aveFourth = round((($fourthFinal + $mapeh4) / ($subCount + 1)), 2);
+$aveFinRate = round(($rateNum + $finalMAPEH) / ($subCount + 1), 2);
+
+$pdf->SetX(10);
+$pdf->SetFont('times', 'B', 8);
+$pdf->MultiCell(57, 5, 'Average', 1, 'L', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->MultiCell(10, 5, ($aveFirst != 0 ? number_format($aveFirst, 2) : ''), 1, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->MultiCell(10, 5, ($aveSecond != 0 ? number_format($aveSecond, 2) : ''), 1, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->MultiCell(10, 5, ($aveThird != 0 ? number_format($aveThird, 2) : ''), 1, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->MultiCell(10, 5, ($aveFourth != 0 ? number_format($aveFourth, 2) : ''), 1, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->MultiCell(15, 5, ($aveFourth != 0 ? number_format($aveFinRate, 2) : ''), 1, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+$pdf->MultiCell(20, 5, ($aveFourth != 0 ? ($aveFinRate < 75 ? 'Failed' : 'Passed') : ''), 1, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');
+// getMAPEH($pdf, $mapeh1, $mapeh2, $mapeh3, $mapeh4, $term);
+
+
+$pdf->Ln(40);
     $pdf->SetX(20);
     $pdf->SetFont('helvetica', 'B', 8);
     $pdf->MultiCell(40, 5, 'Descriptors',0, 'L', 0, 0, '', '', true, 0, false, true, 5, 'M');
@@ -365,85 +284,75 @@ function getRating($behaviorRating)
         break;
     }
     return $star;
-}    
-    
-    foreach($bh_group as $bhg):
-        switch ($bhg->bh_group):
-            case 1:
-                $group = 'MAKA 
-DIYOS';
-                $pdf->SetX(155);
-                $pdf->MultiCell(40, 30, $group,1, 'C', 0, 0, '', '', true, 0, false, true, 30, 'M');
-                $bhRate = Modules::run('reports/getBhRate', $bhg->bh_group);
+}
 
-                foreach($bhRate as $bhr):
-                    $pdf->MultiCell(50, 15, $bhr->bh_name,1, 'L', 0, 0, '', '', true, 0, false, true, 15, 'M');
-                    $pdf->MultiCell(10, 15, getRating(Modules::run('gradingsystem/getBHRating', $student->st_id,1, $sy, $bhr->bh_id)),1, 'C', 0, 0, '', '', true, 0, false, true, 15, 'M');
-                    $pdf->MultiCell(10, 15, getRating(Modules::run('gradingsystem/getBHRating', $student->st_id,2, $sy, $bhr->bh_id)),1, 'C', 0, 0, '', '', true, 0, false, true, 15, 'M');
-                    $pdf->MultiCell(10, 15, getRating(Modules::run('gradingsystem/getBHRating', $student->st_id,3, $sy, $bhr->bh_id)),1, 'C', 0, 0, '', '', true, 0, false, true, 15, 'M');
-                    $pdf->MultiCell(10, 15, getRating(Modules::run('gradingsystem/getBHRating', $student->st_id,4, $sy, $bhr->bh_id)),1, 'C', 0, 0, '', '', true, 0, false, true, 15, 'M');
-                    $pdf->Ln();
-                    $pdf->SetX(195);
-                endforeach;
-            
-            break;
-            case 2:
-                $group = 'MAKATAO';
-                
-                $pdf->SetX(155);
-                $pdf->MultiCell(40, 30, $group,1, 'C', 0, 0, '', '', true, 0, false, true, 30, 'M');
-                $bhRate = Modules::run('reports/getBhRate', $bhg->bh_group);
+$baseLineHeight = 5;
+$pdf->setCellPaddings(1, 1, 1, 1);
 
-                foreach($bhRate as $bhr):
-                    $pdf->MultiCell(50, 15, $bhr->bh_name,1, 'L', 0, 0, '', '', true, 0, false, true, 15, 'M');
-                    $pdf->MultiCell(10, 15, getRating(Modules::run('gradingsystem/getBHRating', $student->uid,1, $sy, $bhr->bh_id)),1, 'C', 0, 0, '', '', true, 0, false, true, 15, 'M');
-                    $pdf->MultiCell(10, 15, getRating(Modules::run('gradingsystem/getBHRating', $student->uid,2, $sy, $bhr->bh_id)),1, 'C', 0, 0, '', '', true, 0, false, true, 15, 'M');
-                    $pdf->MultiCell(10, 15, getRating(Modules::run('gradingsystem/getBHRating', $student->uid,3, $sy, $bhr->bh_id)),1, 'C', 0, 0, '', '', true, 0, false, true, 15, 'M');
-                    $pdf->MultiCell(10, 15, getRating(Modules::run('gradingsystem/getBHRating', $student->uid,4, $sy, $bhr->bh_id)),1, 'C', 0, 0, '', '', true, 0, false, true, 15, 'M');
-                    $pdf->Ln();
-                    $pdf->SetX(195);
-                endforeach;
-            break;
-            case 3:
-                $group = 'MAKA 
-KALIKASAN';
-               $pdf->SetX(155);
-                $pdf->MultiCell(40, 15, $group,1, 'C', 0, 0, '', '', true, 0, false, true, 15, 'M');
-                $bhRate = Modules::run('reports/getBhRate', $bhg->bh_group);
+$col3Width = 40;
+$subColW   = $col3Width / 4;
 
-                foreach($bhRate as $bhr):
-                    $pdf->MultiCell(50, 15, $bhr->bh_name,1, 'L', 0, 0, '', '', true, 0, false, true, 15, 'M');
-                    $pdf->MultiCell(10, 15, getRating(Modules::run('gradingsystem/getBHRating', $student->uid,1, $sy, $bhr->bh_id)),1, 'C', 0, 0, '', '', true, 0, false, true, 15, 'M');
-                    $pdf->MultiCell(10, 15, getRating(Modules::run('gradingsystem/getBHRating', $student->uid,2, $sy, $bhr->bh_id)),1, 'C', 0, 0, '', '', true, 0, false, true, 15, 'M');
-                    $pdf->MultiCell(10, 15, getRating(Modules::run('gradingsystem/getBHRating', $student->uid,3, $sy, $bhr->bh_id)),1, 'C', 0, 0, '', '', true, 0, false, true, 15, 'M');
-                    $pdf->MultiCell(10, 15, getRating(Modules::run('gradingsystem/getBHRating', $student->uid,4, $sy, $bhr->bh_id)),1, 'C', 0, 0, '', '', true, 0, false, true, 15, 'M');           
-                    $pdf->Ln();
-                    $pdf->SetX(195);
-                endforeach; 
-            break;
-            case 4:
-                $group = 'MAKA 
-BANSA';
-                $pdf->SetX(155);
-                $pdf->MultiCell(40, 30, $group,1, 'C', 0, 0, '', '', true, 0, false, true, 30, 'M');
-                $bhRate = Modules::run('reports/getBhRate', $bhg->bh_group);
+foreach ($bh_group as $bhg):
 
-                foreach($bhRate as $bhr):
-                    $pdf->MultiCell(50, 15, $bhr->bh_name,1, 'L', 0, 0, '', '', true, 0, false, true, 15, 'M');
-                    $pdf->MultiCell(10, 15, getRating(Modules::run('gradingsystem/getBHRating', $student->uid,1, $sy, $bhr->bh_id)),1, 'C', 0, 0, '', '', true, 0, false, true, 15, 'M');
-                    $pdf->MultiCell(10, 15, getRating(Modules::run('gradingsystem/getBHRating', $student->uid,2, $sy, $bhr->bh_id)),1, 'C', 0, 0, '', '', true, 0, false, true, 15, 'M');
-                    $pdf->MultiCell(10, 15, getRating(Modules::run('gradingsystem/getBHRating', $student->uid,3, $sy, $bhr->bh_id)),1, 'C', 0, 0, '', '', true, 0, false, true, 15, 'M');
-                    $pdf->MultiCell(10, 15, getRating(Modules::run('gradingsystem/getBHRating', $student->uid,4, $sy, $bhr->bh_id)),1, 'C', 0, 0, '', '', true, 0, false, true, 15, 'M');
-                    $pdf->Ln();
-                    $pdf->SetX(195);
-                endforeach;
-            break;
-        endswitch;
-        
-    endforeach;
-    
-    
-    $pdf->Ln(10);
+    $bhRate = Modules::run('reports/getBhRate', $bhg->core_id, 1);
+    if (empty($bhRate)) {
+        continue;
+    }
+
+    $startY      = $pdf->GetY();
+    $currentY    = $startY;
+    $totalHeight = 0;
+
+    /**
+     * PRE-CALCULATE TOTAL HEIGHT (based on column 2)
+     */
+    $rowHeights = [];
+
+    foreach ($bhRate as $bhr) {
+        $lines = $pdf->getNumLines($bhr->bh_name, 50);
+        $rowH  = max($baseLineHeight, $lines * $baseLineHeight);
+        $rowHeights[] = $rowH;
+        $totalHeight += $rowH;
+    }
+
+    /**
+     * COLUMN 1 (grouped)
+     */
+    $pdf->SetXY(155, $startY);
+    $pdf->MultiCell(40, $totalHeight, $bhg->core_values, 1, 'C', false, 0, '', '', true, 0, false, true, $totalHeight, 'M');
+
+    /**
+     * COLUMN 2 + COLUMN 3 (row-by-row)
+     */
+    foreach ($bhRate as $index => $bhr) {
+
+        $rowH = $rowHeights[$index];
+
+        /**
+         * COLUMN 2
+         */
+        $pdf->SetXY(195, $currentY);
+        $pdf->MultiCell(50, $rowH, $bhr->bh_name, 1, 'C', false, 0, '', '', true, 0, false, true, $rowH, 'M');
+
+        /**
+         * COLUMN 3 (split into 4)
+         */
+        $x = 245;
+        for ($i = 0; $i < 4; $i++) {
+            $pdf->SetXY($x + ($subColW * $i), $currentY);
+            $pdf->MultiCell($subColW, $rowH, '', 1, 'C', false, 0, '', '', true, 0, false, true, $rowH, 'M');
+        }
+
+        $currentY += $rowH;
+    }
+
+    // Move cursor below the block
+    $pdf->SetY($startY + $totalHeight);
+
+endforeach;
+
+
+$pdf->Ln(10);
     $pdf->SetX(150);
     $pdf->SetFont('helvetica', 'B', 8);
     $pdf->MultiCell(40, 5, 'Marking',0, 'C', 0, 0, '', '', true, 0, false, true, 5, 'M');

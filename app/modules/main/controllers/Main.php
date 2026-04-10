@@ -251,6 +251,13 @@ class Main extends MX_Controller
         endif;
     }
 
+    function updateSettings()
+    {
+        $data = $this->input->post();
+        $q = $this->main_model->updateSettings($data);
+        echo json_encode($q ? array('status' => TRUE, 'msg' => 'School Information Successfully Updated', 'csrfHash' => $this->security->get_csrf_hash()) : array('status' => FALSE, 'msg' => 'An Error Occured During the update', 'csrfHash' => ''));
+    }
+
     function hasPk($table)
     {
         $fields = $this->db->field_data($table);
@@ -329,8 +336,15 @@ class Main extends MX_Controller
         }
     }
 
-    function editTimeSettings($inAM, $outAM, $inPM, $outPM, $id, $option)
+    function editTimeSettings()
     {
+        $id = $this->input->post('id');
+        $option = $this->input->post('option');
+        $inAM = $this->input->post('inAM');
+        $outAM = $this->input->post('outAM');
+        $inPM = $this->input->post('inPM');
+        $outPM = $this->input->post('outPM');
+
         $result = $this->main_model->editTimeSettings($inAM, $outAM, $inPM, $outPM, $id, $option);
         if ($result):
             $data = array('status' => TRUE, 'msg' => 'Time Successfuly Updated');
@@ -343,6 +357,26 @@ class Main extends MX_Controller
     function getTimeSettingsPerSection()
     {
         return $this->main_model->getTimeSettingsPerSection();
+    }
+
+    function getSectionByID($id)
+    {
+        return $this->main_model->getSectionByID($id);
+    }
+
+    function loadTimeSettings()
+    {
+        $id = $this->input->post('id');
+        $type = $this->input->post('type');
+        if ($type == 'employee') {
+            $data['query'] = Modules::run('hr/payroll/getPayrollShiftByID', $id);
+            $data['optionToEdit'] = 'a';
+        } else {
+            $data['query'] = Modules::run('main/getSectionByID', $id);
+            $data['optionToEdit'] = 'b';
+        }
+
+        echo $this->load->view('editTimeSettings', $data, TRUE);
     }
 
     function editQuarterSettings($from, $to, $id)
@@ -911,11 +945,13 @@ class Main extends MX_Controller
             $data['settings'] = $this->getSet();
             $settings = $this->getSet();
             $data['gs_settings'] = Modules::run('gradingsystem/getSet', $this->session->userdata('school_year'));
+            $data['strand'] = Modules::run('subjectmanagement/getAllStrands');
             $next = $settings->school_year + 1;
             $data['sy'] = $settings->school_year . ' - ' . $next;
             $data['modules'] = "main";
             $data['main_content'] = 'settings';
-            echo Modules::run('templates/schedule_content', $data);
+            echo Modules::run('templates/main_content', $data);
+            // echo Modules::run('templates/schedule_content', $data);
         } else {
             echo Modules::run('login');
         }
@@ -943,9 +979,9 @@ class Main extends MX_Controller
         $subject_id = $this->input->post('subject_id');
 
         if ($this->main_model->removeSubject($subject_id)):
-            echo 'Successfully Removed';
+            echo json_encode(array('status' => true, 'msg' => 'Successfully Removed'));
         else:
-            echo 'Something went Wrong, Sorry...';
+            echo json_encode((array('status' => true, 'msg' => 'Something went Wrong, Sorry...')));
         endif;
     }
 
@@ -970,7 +1006,33 @@ class Main extends MX_Controller
         foreach ($subject as $s) {
             $singleSub = Modules::run('academic/getSpecificSubjects', $s->sub_id);
             ?>
-            <li><?php echo $singleSub->subject ?></li>
+            <li class="list-group-item subject-item d-flex align-items-center justify-content-between px-2 py-1 rounded mb-1"
+                id="sub_<?php echo $s->id; ?>"
+                data-id="<?= $s->id; ?>">
+
+                <!-- LEFT SIDE -->
+                <div class="d-flex align-items-center gap-2">
+
+                    <!-- 🔥 DRAG HANDLE (separate block) -->
+                    <span class="drag-handle">
+                        <i class="fas fa-grip-vertical text-muted"></i>
+                    </span>
+
+                    <i class="fas fa-book text-primary small"></i>
+
+                    <span class="subject-name">
+                        <?php echo $singleSub->subject ?>
+                    </span>
+                </div>
+
+                <!-- RIGHT ACTION -->
+                <div class="subject-actions">
+                    <button class="btn btn-sm btn-outline-danger delete-subject-btn"
+                        data-id="<?php echo $s->id; ?>">
+                        <i class="fas fa-trash small"></i>
+                    </button>
+                </div>
+            </li>
         <?php
         }
     }
@@ -1070,8 +1132,13 @@ class Main extends MX_Controller
     function showAdminRemarksForm()
     {
         //$data['st_id'] = $st_id;
-        $data['codeIndicators'] = $this->main_model->getCodeIndicators();
+        $data['codeIndicators'] = $this->getCodeIndicators();
         $this->load->view('adminRemarks', $data);
+    }
+
+    function getCodeIndicators()
+    {
+        return $this->main_model->getCodeIndicators();
     }
 
     function saveAdmissionRemarks()
@@ -1095,7 +1162,7 @@ class Main extends MX_Controller
             $this->main_model->updateAdmissionRemarks($details, $st_id);
         } else {
             $details = array(
-                //                'remark_id' => $this->eskwela->code(),
+                'remark_id' => $this->eskwela->code(),
                 'remarks' => $required_information,
                 'code_indicator_id' => $code_indicator,
                 'remark_to' => $st_id,
@@ -1268,26 +1335,64 @@ class Main extends MX_Controller
 
     function do_upload()
     {
-        $sy = $this->input->post('syUpload');
+        $sy            = $this->input->post('syUpload');
         $upload_option = $this->input->post('picture_option');
-        $location = $this->input->post('location');
-        $id = $this->input->post('id');
-        $filePic = $this->input->post('userfile');
-        $fileMime = $this->input->post('imgMime');
-        $baseImg_to_php = explode(',', $filePic);
-        $rn = substr(str_shuffle("0123456789"), 0, 2);
-        $filename = $id . '-' . $rn;
-        $imgData = base64_decode($baseImg_to_php[1]);
-        $filePath_img = ($upload_option == 'sign' ? 'uploads/sign/' . $filename . '.' . $fileMime : 'uploads/' . $filename . '.' . $fileMime);
-        $remImg = 'uploads/' . $id;
-        foreach (glob("$remImg-*.*") as $deletefile) {
-            // unlink is used to delete the file and delete the cache of the file
-            unlink($deletefile);
+        $location      = $this->input->post('location');
+        $id            = $this->input->post('id');
+        $filePic       = $this->input->post('userfile');
+        $fileMime      = $this->input->post('imgMime');
+
+        // Validate required data
+        if (empty($id) || empty($filePic) || empty($fileMime)) {
+            show_error('Invalid upload data.');
+            return;
         }
 
+        // Clean file extension (avoid invalid extensions)
+        $fileMime = preg_replace('/[^a-zA-Z0-9]/', '', strtolower($fileMime));
+
+        // Split base64 string safely
+        $baseImg_to_php = explode(',', $filePic);
+        if (count($baseImg_to_php) < 2) {
+            show_error('Invalid image format.');
+            return;
+        }
+
+        $imgData = base64_decode($baseImg_to_php[1]);
+        if ($imgData === false) {
+            show_error('Failed to decode image.');
+            return;
+        }
+
+        // Generate filename
+        $rn       = substr(str_shuffle("0123456789"), 0, 2);
+        $filename = $id . '-' . $rn;
+
+        // Determine upload path
+        $dir = ($upload_option == 'sign') ? 'uploads/sign/' : 'uploads/';
+        if (!is_dir($dir)) {
+            mkdir($dir, 0777, true);
+        }
+
+        $filePath_img = $dir . $filename . '.' . $fileMime;
+
+        // Remove previous images (retain original logic)
+        $remImg = $upload_option == 'sign' ? 'uploads/sign/' . $id : 'uploads/' . $id;
+        foreach (glob($remImg . '-*.*') as $deletefile) {
+            if (is_file($deletefile)) {
+                unlink($deletefile);
+            }
+        }
+
+        // Save file
         file_put_contents($filePath_img, $imgData);
 
-        ($upload_option != 'sign' ? $this->main_model->setImage($id, $filename . '.' . $fileMime, $sy) : '');
+        // Save image name to DB (retain original behavior)
+        $info = $filename . '.' . $fileMime;
+        $insertData = array(
+            ($upload_option == 'sign') ? 'signature_img' : 'avatar' => $info
+        );
+        $this->main_model->setImage($id, $insertData, $sy);
         ?>
         <script>
             alert('upload successfully');
@@ -1295,49 +1400,6 @@ class Main extends MX_Controller
         </script>
         <?php
     }
-
-    /*
-      function do_upload()
-      {
-      $upload_option = $this->input->post('picture_option');
-      $location = $this->input->post('location');
-      $id=  $this->input->post('id');
-      $config['file_name'] = $id;
-      $config['upload_path'] = ($upload_option=='sign'?'uploads/sign':'uploads');
-      $config['overwrite'] = TRUE;
-      $config['allowed_types'] = '*';
-      $config['max_size']	= '300';
-      $config['max_width']  = '1024';
-      $config['max_height']  = '768';
-      $this->load->library('upload', $config);
-      $this->upload->initialize($config);
-
-
-      if (!$this->upload->do_upload())
-      {
-      $error = array('error' => $this->upload->display_errors());
-      ?>
-      <script>
-      alert('<?php echo $error['error'] ?>');
-      document.location="<?php echo base_url().$location?>";
-      </script>
-      <?php
-
-      }
-      else
-      {
-      $img_data = $this->upload->data();
-      $ext = $img_data['file_ext'];
-      ($upload_option!='sign'?$this->main_model->setImage($id,$id.$ext):'');
-
-      ?>
-      <script>
-      alert('upload successfully');
-      document.location="<?php echo base_url().$location?>";
-      </script>
-      <?php
-      }
-      } */
 
     public function showStats()
     {
@@ -1635,7 +1697,8 @@ class Main extends MX_Controller
 
     function deleteReq($id, $option)
     {
-        $this->main_model->editDelReqList($id, $option);
+        $r = $this->main_model->editDelReqList($id, $option);
+        echo json_encode($r ? array('status' => TRUE, 'msg' => 'Successfuly Deleted') : array('status' => FALSE, 'msg' => 'Delete Failed!'));
     }
 
     function listRequirements()

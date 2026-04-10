@@ -1,4 +1,6 @@
-<?php if (! defined('BASEPATH')) exit('No direct script access allowed');
+<?php if (! defined('BASEPATH')) {
+    exit('No direct script access allowed');
+}
 
 /*
  * To change this template, choose Tools | Templates
@@ -14,7 +16,7 @@ class reports extends MX_Controller
 {
     //put your code here
 
-    protected  $generate;
+    protected $generate;
 
 
     public function __construct()
@@ -30,17 +32,17 @@ class reports extends MX_Controller
 
     }
 
-    function getEnrollmentCount($grade_id = NULL, $type = NULL)
+    public function getEnrollmentCount($grade_id = null, $type = null)
     {
         return $this->reports_model->getEnrollmentCount($grade_id, $type);
     }
 
-    function showEnrollmentCountList()
+    public function showEnrollmentCountList()
     {
         return $this->load->view('enrollmentCount');
     }
 
-    function checkIfGreater($data, $value)
+    public function checkIfGreater($data, $value)
     {
         if ($data > $value):
             return $value;
@@ -49,13 +51,13 @@ class reports extends MX_Controller
         endif;
     }
 
-    function getSubBH($bh)
+    public function getSubBH($bh)
     {
         $data = $this->reports_model->getSubBH($bh);
         return $data;
     }
 
-    function deportment($section, $term, $deportment, $sy)
+    public function deportment($section, $term, $deportment, $sy)
     {
         $data['students'] = Modules::run('registrar/getAllStudentsForExternal', '', $section);
         $data['deport_desc'] = Modules::run('gradingsystem/getDeportmentByID', $deportment);
@@ -63,13 +65,13 @@ class reports extends MX_Controller
         $this->load->view('deportment', $data);
     }
 
-    public function class_profile($section_id = NULL, $term = NULL, $school_year = NULL)
+    public function class_profile($section_id = null, $term = null, $school_year = null)
     {
         $settings = Modules::run('main/getSet');
         $gs_settings = Modules::run('gradingsystem/getSet', $school_year);
         $data['gs_settings'] = Modules::run('gradingsystem/getSet', $school_year);
         $data['school_year'] = $school_year;
-        $data['students'] = Modules::run('registrar/getAllStudentsBasicInfoByGender', $section_id, NULL, "1", $school_year);
+        $data['students'] = Modules::run('registrar/getAllStudentsBasicInfoByGender', $section_id, null, "1", $school_year);
         if (file_exists(APPPATH . 'modules/reports/views/' . strtolower($settings->short_name) . '_classProfile.php')):
             $this->load->view(strtolower($settings->short_name) . '_classProfile', $data);
         else:
@@ -77,13 +79,13 @@ class reports extends MX_Controller
         endif;
     }
 
-    public function class_ranking($section_id = null, $grade_id = NULL, $term = NULL, $school_year = NULL)
+    public function class_ranking($section_id = null, $grade_id = null, $term = null, $school_year = null)
     {
         $settings = Modules::run('main/getSet');
         $gs_settings = Modules::run('gradingsystem/getSet', $school_year);
         $data['gs_settings'] = Modules::run('gradingsystem/getSet', $school_year);
         $data['school_year'] = $school_year;
-        $data['students'] = Modules::run('registrar/getAllStudentsBasicInfoByGender', $grade_id, NULL, "1", $school_year, NULL, $section_id);
+        $data['students'] = Modules::run('registrar/getAllStudentsBasicInfoByGender', $grade_id, null, "1", $school_year, null, $section_id);
         $data['getStudents'] = Modules::run('registrar/getAllStudentsForExternal', '', $section_id);
         if ($term != 0):
             if (file_exists(APPPATH . 'modules/reports/views/' . strtolower($settings->short_name) . '_classRanking.php')):
@@ -112,12 +114,12 @@ class reports extends MX_Controller
     //         $this->load->view(strtolower($settings->short_name).'_classRanking',$data);
     //     else:
     //         $this->load->view('classRanking',$data);
-    //     endif;    
+    //     endif;
 
 
     // }
 
-    public function printRegistrationForm($st_id = NULL, $school_year = NULL)
+    public function printRegistrationForm($st_id = null, $school_year = null)
     {
         $this->load->helper('file');
         $settings = Modules::run('main/getSet');
@@ -128,10 +130,10 @@ class reports extends MX_Controller
         endif;
     }
 
-    public function getLevelOfProficiency($school_year, $grading, $grade_level, $section = NULL, $subject = NULL)
+    public function getLevelOfProficiency($school_year, $grading, $grade_level, $section = null, $subject = null)
     {
         if ($section == 'Select%20Section' || $section == 0):
-            $section = NULL;
+            $section = null;
         endif;
         switch ($grading) {
             case 1:
@@ -228,7 +230,7 @@ class reports extends MX_Controller
     {
         $count = Modules::run('registrar/getNumberOfStudentPerSection', $section_id, $this->session->userdata('school_year'), 1);
         $num = $count / 4;
-        echo '<option >Select Page</option>';
+        echo '<option value="">Select Page</option>';
         for ($x = 0; $x <= $num; $x++):
             $y = $y + 2;
 ?>
@@ -237,7 +239,7 @@ class reports extends MX_Controller
         endfor;
     }
 
-    public function getTopTen($section_id = NULL, $grade_id = NULL, $grading = NULL, $school_year = NULL, $subject_id = NULL)
+    public function getTopTen($section_id = null, $grade_id = null, $grading = null, $school_year = null, $subject_id = null)
     {
         $data['sy'] = $school_year;
         $data['gs_settings'] = Modules::run('gradingsystem/getSet', $school_year);
@@ -253,7 +255,7 @@ class reports extends MX_Controller
         endif;
     }
 
-    public function getTopTenRaw($section_id = NULL, $grade_id = NULL, $grading = NULL, $subject_id = NULL)
+    public function getTopTenRaw($section_id = null, $grade_id = null, $grading = null, $subject_id = null)
     {
         $generate = Modules::run('gradingsystem/getTopTenPerLevel');
         $topTen = $generate->getTopTenByGradeLevel($grade_id, $grading, $this->session->userdata('school_year'), $section_id);
@@ -271,7 +273,7 @@ class reports extends MX_Controller
         return $this->load->view('reports/reportCard/pilgrimFront');
     }
 
-    public function cc($function, $data = NULL)
+    public function cc($function, $data = null)
     {
         $classCard = Modules::load('reports/class_card');
         $c_function = $classCard->$function($data);
@@ -365,7 +367,7 @@ class reports extends MX_Controller
         $data['error'] = ''; //initialize image upload error array to empty
 
         $config['upload_path'] = 'uploads';
-        $config['overwrite'] = TRUE;
+        $config['overwrite'] = true;
         $config['allowed_types'] = '*';
         $config['max_size'] = '1000';
 
@@ -395,7 +397,7 @@ class reports extends MX_Controller
             //echo $objWorksheet->getCellByColumnAndRow(3,2)->getValue().'<br />';
 
             for ($col = 3; $col <= 9; $col++) {
-                //echo $col.' | '.$row.' | '.$objWorksheet->getCellByColumnAndRow($col,$row)->getValue().'<br />';  
+                //echo $col.' | '.$row.' | '.$objWorksheet->getCellByColumnAndRow($col,$row)->getValue().'<br />';
                 echo '<br />';
                 if ($objWorksheet->getCellByColumnAndRow($col, 1)->getValue() != ""):
                     $assess_details = array(
@@ -430,7 +432,7 @@ class reports extends MX_Controller
 
     // this next process is connection with form 137
 
-    public function saveAcademicRecords($user_id = NULL)
+    public function saveAcademicRecords($user_id = null)
     {
         $school_year = $this->post('school_year');
         $school = $this->post('school');
@@ -490,48 +492,48 @@ class reports extends MX_Controller
 
         endif;
 
-        $data['acadRecords'] = $this->getAcadRecords(base64_decode($user_id), $school_year,  $grade_id = NULL);
+        $data['acadRecords'] = $this->getAcadRecords(base64_decode($user_id), $school_year, $grade_id = null);
 
         $this->load->view('form137/academicRecordsModal', $data);
     }
 
-    function showAcadRecordsModal($user_id, $grade_id = NULL, $school_year = NULL)
+    public function showAcadRecordsModal($user_id, $grade_id = null, $school_year = null)
     {
         $ar['acadRecords'] = $this->reports_model->getAcadRecords(base64_decode($user_id), $school_year, $grade_id);
 
         $this->load->view('form137/academicRecordsModal', $ar);
     }
 
-    function showAcadRecords($user_id, $grade_id = NULL, $school_year = NULL)
+    public function showAcadRecords($user_id, $grade_id = null, $school_year = null)
     {
         $ar['acadRecords'] = $this->reports_model->getAcadRecords(base64_decode($user_id), $school_year, $grade_id);
 
         $this->load->view('form137/academicRecords', $ar);
     }
 
-    function getAcadRecords($user_id, $school_year)
+    public function getAcadRecords($user_id, $school_year)
     {
         $acadRecords = $this->reports_model->getAcadRecords($user_id, $school_year);
         return $acadRecords;
     }
 
-    function deleteSingleRecord($spr_id)
+    public function deleteSingleRecord($spr_id)
     {
         $spr = $this->reports_model->deleteSingleRecord($spr_id);
         if ($spr):
-            echo json_encode(array('status' => TRUE));
+            echo json_encode(array('status' => true));
         else:
-            echo json_encode(array('status' => FALSE));
+            echo json_encode(array('status' => false));
         endif;
     }
 
-    function checkIfAcadExist($user_id, $levelCode)
+    public function checkIfAcadExist($user_id, $levelCode)
     {
         $exist = $this->reports_model->checkIfAcadExist(base64_decode($user_id), $levelCode);
         if ($exist->num_rows() > 0):
-            echo json_encode(array('status' => TRUE, 'school' => $exist->row()->school_name, 'year' => $exist->row()->school_year, 'spr_id' =>  $exist->row()->spr_id));
+            echo json_encode(array('status' => true, 'school' => $exist->row()->school_name, 'year' => $exist->row()->school_year, 'spr_id' =>  $exist->row()->spr_id));
         else:
-            echo json_encode(array('status' => FALSE));
+            echo json_encode(array('status' => false));
         endif;
     }
 
@@ -605,7 +607,7 @@ class reports extends MX_Controller
                                 $second = ($records->second == 0 ? $secondGrading->row()->final_rating : $records->second);
                                 $third = ($records->third == 0 ? $thirdGrading->row()->final_rating : $records->third);
                                 $fourth = ($records->fourth == 0 ? $fourthGrading->row()->final_rating : $records->fourth);
-                                $ave = ($aveGrading->row()->final_rating == NULL ? ($first + $second + $third + $fourth) / 4 : $aveGrading->row()->final_rating);
+                                $ave = ($aveGrading->row()->final_rating == null ? ($first + $second + $third + $fourth) / 4 : $aveGrading->row()->final_rating);
                                 break;
                         endswitch;
 
@@ -660,10 +662,9 @@ class reports extends MX_Controller
 
                     $this->updatedSPRecords($spr, $records->s_id, $first, $second, $third, $fourth);
                 endforeach;
-
             else:
-                //               
-            ?>
+                //
+?>
                 <div class="alert alert-danger clearfix">
                     <h5 class="text-center">INFO: Record has already been processed. Do you want to repeat the process? Or Delete the Records <br /><br />
                         <span class="btn btn-success" onmouseover="$('#saveController').val('2')" onclick="getRecords()">Yes</span>&nbsp;<span data-dismiss="modal" class="btn btn-danger">No</span>&nbsp;<span onclick="deleteSPRecord('<?php echo $spr_id ?>')" data-dismiss="modal" class="btn btn-danger">Delete</span>
@@ -671,21 +672,21 @@ class reports extends MX_Controller
                 </div>
             <?php
             endif;
-        //           
+        //
         endif;
     }
 
-    function deleteSPRecords($spr_id)
+    public function deleteSPRecords($spr_id)
     {
         $spr = $this->reports_model->deleteSPRecords($spr_id);
         if ($spr):
-            echo json_encode(array('status' => TRUE));
+            echo json_encode(array('status' => true));
         else:
-            echo json_encode(array('status' => FALSE));
+            echo json_encode(array('status' => false));
         endif;
     }
 
-    function updatedSPRecords($spr_id, $subject_id, $first, $second, $third, $fourth)
+    public function updatedSPRecords($spr_id, $subject_id, $first, $second, $third, $fourth)
     {
         $ar = array(
             'first'         => $first,
@@ -698,26 +699,26 @@ class reports extends MX_Controller
         return;
     }
 
-    function getSPRecords($user_id, $year_level, $subject_id = NULL)
+    public function getSPRecords($user_id, $year_level, $subject_id = null)
     {
         $spr = $this->reports_model->getSPRecords($user_id, $year_level, $subject_id);
         return $spr;
     }
 
-    function lock_unlock_SPR()
+    public function lock_unlock_SPR()
     {
         $spr = $this->reports_model->lock_unlock_SPR($this->post('spr_id'), $this->post('option'));
         return $spr;
     }
 
-    function getCurrentSPR_level($st_id, $next)
+    public function getCurrentSPR_level($st_id, $next)
     {
         $spr = $this->reports_model->getCurrentSPR_level($st_id, $next);
         return $spr;
     }
 
 
-    function updateBasicSPR()
+    public function updateBasicSPR()
     {
         $spr_id = $this->post('spr_id');
         $school = $this->post('school');
@@ -732,7 +733,7 @@ class reports extends MX_Controller
     }
 
 
-    function getGrade($subject)
+    public function getGrade($subject)
     {
         $plg = Modules::run('gradingsystem/getLetterGrade', $subject);
         foreach ($plg->result() as $plg) {
@@ -754,11 +755,11 @@ class reports extends MX_Controller
 
 
 
-    function checkSubject($subject_id, $spr_id)
+    public function checkSubject($subject_id, $spr_id)
     {
         $exist = $this->reports_model->checkSubject($subject_id, $spr_id);
         if ($exist):
-            echo json_encode(array('status' => TRUE, 'msg' => 'Sorry, Subject already Exist'));
+            echo json_encode(array('status' => true, 'msg' => 'Sorry, Subject already Exist'));
         endif;
     }
 
@@ -767,22 +768,24 @@ class reports extends MX_Controller
     {
         $data['subjects'] = Modules::run('academic/getSubjects');
         //print_r(Modules::run('registrar/getAllStudentsByLevel',NULL, $section_id, $school_year));
-        $data['students'] = Modules::run('registrar/getAllStudentsByLevel', NULL, $section_id, $school_year);
-        $data['modules'] = "f137";
-        $data['main_content'] = 'generateForm137';
-        echo Modules::run('templates/main_content', $data);
+        $data['students'] = Modules::run('registrar/getAllStudentsByLevel', null, $section_id, $school_year);
+        $data['sy'] = $school_year;
+        echo $this->load->view('f137/generateForm137', $data);
+        // $data['modules'] = "f137";
+        // $data['main_content'] = 'generateForm137';
+        // echo Modules::run('templates/main_content', $data);
     }
 
-    public function getSchoolDays($year = NULL, $dept_id = NULL)
+    public function getSchoolDays($year = null, $dept_id = null)
     {
-        if ($year == NULL):
+        if ($year == null):
             $year = $this->input->post('year');
         endif;
         $data['exist'] = $this->reports_model->getSchoolDays($year, $dept_id);
         $this->load->view('form137/schoolDays', $data);
     }
 
-    public function getRawSchoolDays($year, $dept_id = NULL)
+    public function getRawSchoolDays($year, $dept_id = null)
     {
         $schoolDays = $this->reports_model->getSchoolDays($year, $dept_id);
         return $schoolDays;
@@ -936,9 +939,9 @@ class reports extends MX_Controller
         $this->getDaysPresentModal($spr_details->spr_id, $st_id);
     }
 
-    public function getDaysPresent($spr_id = NULL)
+    public function getDaysPresent($spr_id = null)
     {
-        if ($spr_id == NULL):
+        if ($spr_id == null):
             $spr_id = $this->post('spr_id');
         endif;
 
@@ -952,9 +955,9 @@ class reports extends MX_Controller
         $this->load->view('form137/daysPresent', $data);
     }
 
-    public function getDaysPresentModal($spr_id = NULL, $st_id = NULL)
+    public function getDaysPresentModal($spr_id = null, $st_id = null)
     {
-        if ($spr_id == NULL):
+        if ($spr_id == null):
             $spr_id = $this->post('spr_id');
         endif;
         $data['rfid'] = $st_id;
@@ -1004,17 +1007,17 @@ class reports extends MX_Controller
         $checkEdHistory = $this->reports_model->getEdHistory($this->input->post('st_id'));
         if ($checkEdHistory->st_id != ""):
             $this->reports_model->updateEdHistory($this->input->post('st_id'), $edHistory);
-            echo json_encode(array('status' => TRUE, 'msg' => "Information Succesfully Updated"));
+            echo json_encode(array('status' => true, 'msg' => "Information Succesfully Updated"));
         else:
             if ($this->reports_model->saveEdHistory($edHistory)):
-                echo json_encode(array('status' => TRUE, 'msg' => "Information Succesfully added"));
+                echo json_encode(array('status' => true, 'msg' => "Information Succesfully added"));
             else:
-                echo json_encode(array('status' => FALSE, 'msg' => "Internal Error Occured"));
+                echo json_encode(array('status' => false, 'msg' => "Internal Error Occured"));
             endif;
         endif;
     }
 
-    function generateF137($st_id)
+    public function generateF137($st_id)
     {
         $student = Modules::run('registrar/getSingleStudent', $st_id);
         $data['edHistory'] = $this->reports_model->getEdHistory($st_id);
@@ -1042,7 +1045,7 @@ class reports extends MX_Controller
         endif;
     }
 
-    function printF137($st_id, $sy, $val)
+    public function printF137($st_id, $sy, $val)
     {
         $gs_settings = Modules::run('gradingsystem/getSet');
         $settings = Modules::run('main/getSet');
@@ -1074,7 +1077,7 @@ class reports extends MX_Controller
         $this->load->view('printClassRecord');
     }
 
-    public function generateReportCard($st_id, $term, $school_year = NULL)
+    public function generateReportCard($st_id, $term, $school_year = null)
     {
         $this->load->helper('file');
         $settings = Modules::run('main/getSet');
@@ -1102,9 +1105,9 @@ class reports extends MX_Controller
             case 'dpma':
                 echo Modules::run('customize/generateReportCard', strtolower($settings->short_name), $data['student'], $term, $data['behavior'], $data['core_values'], $school_year);
                 break;
-                // case 'wiserkidz':
-                //     echo Modules::run('customize/generateReportCard', strtolower($settings->short_name), $data['student'], $term, $data['behavior'], $data['core_values'], $school_year);
-                //     break;
+            // case 'wiserkidz':
+            //     echo Modules::run('customize/generateReportCard', strtolower($settings->short_name), $data['student'], $term, $data['behavior'], $data['core_values'], $school_year);
+            //     break;
             default:
                 echo $this->load->view('generateReportCard', $data);
                 break;
@@ -1124,23 +1127,26 @@ class reports extends MX_Controller
         //        endif;
     }
 
-    public function generateCard($section_id = NULL, $year = NULL, $strand = NULL)
+    public function generateCard($section_id = null, $year = null, $strand = null, $term = null)
     {
         $data['strand'] = $strand;
         $data['ro_year'] = Modules::run('registrar/getROYear');
-        $data['students'] = Modules::run('registrar/getAllStudentsForExternal', '', $section_id, NULL, 1, $year);
-        $data['modules'] = "reports";
-        $data['main_content'] = 'generateCard';
-        echo Modules::run('templates/main_content', $data);
+        $data['students'] = Modules::run('registrar/getAllStudentsForExternal', '', $section_id, null, 1, $year);
+        $data['sy'] = $year;
+        $data['term'] = $term;
+        echo $this->load->view('generateCard', $data);
+        // $data['modules'] = "reports";
+        // $data['main_content'] = 'generateCard';
+        // echo Modules::run('templates/main_content', $data);
     }
 
-    public function getBhRate($group, $dept_id = NULL)
+    public function getBhRate($group, $dept_id = null)
     {
         $bh = $this->reports_model->getBehaviorRate($group, $dept_id);
         return $bh;
     }
 
-    function getBehaviorStatement($id, $sy, $term, $stid)
+    public function getBehaviorStatement($id, $sy, $term, $stid)
     {
         $data['stid'] = $stid;
         $data['term'] = $term;
@@ -1151,7 +1157,7 @@ class reports extends MX_Controller
         $this->load->view('displayCoreValues', $data);
     }
 
-    public function cardReview($student_id = NULL, $school_year = NULL, $grading = NULL, $strand = NULL)
+    public function cardReview($student_id = null, $school_year = null, $grading = null, $strand = null)
     {
         $gs_settings = Modules::run('gradingsystem/getSet', $school_year);
         $data['sy'] = $school_year;
@@ -1162,10 +1168,11 @@ class reports extends MX_Controller
             case 2:
                 $data['bh_group'] = $this->reports_model->getBhGroup(2);
 
+                // no break
             default:
                 break;
         endswitch;
-        if ($strand != NULL):
+        if ($strand != null):
             $data['strand'] = $strand;
             $this->load->view('reportCardPreviewData_sh', $data);
         else:
@@ -1174,7 +1181,7 @@ class reports extends MX_Controller
         endif;
     }
 
-    public function printReportCard($student_id = NULL, $school_year = NULL, $date_admitted = NULL, $grading = NULL, $strand = NULL, $admitted = NULL)
+    public function printReportCard($student_id = null, $school_year = null, $date_admitted = null, $grading = null, $strand = null, $admitted = null)
     {
         $this->load->helper('file');
         $gs_settings = Modules::run('gradingsystem/getSet', $school_year);
@@ -1207,12 +1214,8 @@ class reports extends MX_Controller
                             // $this->load->view('newReportCard/reportCard', $data);
                             break;
                     endswitch;
-                //                    $directory = '../modules/customize/views/' . strtolower($settings->short_name);
-                //                    if (is_dir($directory)):
-                //                        echo Modules::run('customize/printReportCard', strtolower($settings->short_name), $data['student'], $admitted, $school_year, $grading);
-                //                    else:
-                //                        $this->load->view('customMsge');
-                //                    endif;
+                else:
+                    $this->load->view('newReportCard/reportCard', $data);
                 endif;
                 break;
             default:
@@ -1221,7 +1224,7 @@ class reports extends MX_Controller
         endswitch;
     }
 
-    function printIndividual($st_id, $term, $school_year, $grade_level, $section)
+    public function printIndividual($st_id, $term, $school_year, $grade_level, $section)
     {
         $this->load->library('pdf');
         $settings = Modules::run('main/getSet');
@@ -1241,7 +1244,7 @@ class reports extends MX_Controller
     }
 
 
-    function getSingleStudent($user_id, $year = NULL)
+    public function getSingleStudent($user_id, $year = null)
     {
         $student = $this->reports_model->getSingleStudent($user_id, $year);
         return $student;
@@ -1249,14 +1252,14 @@ class reports extends MX_Controller
 
 
 
-    public function depEdForm1($section_id = null, $school_year = NULL, $grade_id = NULL)
+    public function depEdForm1($section_id = null, $school_year = null, $grade_id = null)
     {
         //        $students = Modules::run('registrar/getAllStudentsForExternal','', $section_id);
         //        print_r($students->result());
         $settings = Modules::run('main/getSet');
-        $data['male'] = Modules::run('registrar/getAllStudentsByGender', $section_id, 'Male', NULL, $school_year);
-        $data['female'] = Modules::run('registrar/getAllStudentsByGender', $section_id, 'Female', NULL, $school_year);
-        $data['getStudents'] = Modules::run('registrar/getAllStudentsForExternal', '', $section_id, NULL, NULL, $school_year);
+        $data['male'] = Modules::run('registrar/getAllStudentsByGender', $section_id, 'Male', null, $school_year);
+        $data['female'] = Modules::run('registrar/getAllStudentsByGender', $section_id, 'Female', null, $school_year);
+        $data['getStudents'] = Modules::run('registrar/getAllStudentsForExternal', '', $section_id, null, null, $school_year);
         if (file_exists(APPPATH . 'modules/reports/views/sf/' . strtolower($settings->short_name) . '_depEdForm1.php')):
             $this->load->view('sf/' . strtolower($settings->short_name) . '_depEdForm1', $data);
         else:
@@ -1264,7 +1267,7 @@ class reports extends MX_Controller
         endif;
     }
 
-    public function depEdForm2($section_id = null, $date = null, $school_year = NULL, $grade_id = NULL)
+    public function depEdForm2($section_id = null, $date = null, $school_year = null, $grade_id = null)
     {
         //        $students = Modules::run('registrar/getAllStudentsForExternal','', $section_id);
         //        print_r($students->result());
@@ -1273,23 +1276,25 @@ class reports extends MX_Controller
         $data['maleEoSY'] = Modules::run('registrar/getAllStudentsBasicInfoByGender', $grade_id, 'Male', "0", $school_year, '', $section_id);
         $data['femaleEoSY'] = Modules::run('registrar/getAllStudentsBasicInfoByGender', $grade_id, 'Female', "0", $school_year, '', $section_id);
         $data['female'] = Modules::run('registrar/getAllStudentsBasicInfoByGender', $grade_id, 'Female', "", $school_year, '', $section_id);
-        if ($date != Null):
+        if ($date != null):
             $data['month'] = $date;
         else:
             $data['month'] = date('F');
         endif;
+        $data['CI'] = &get_instance();
         $data['getStudents'] = Modules::run('registrar/getAllStudentsForExternal', '', $section_id);
         $this->load->view('sf/depEdForm2', $data);
     }
 
-    public function depEdForm4($date = null, $year = NULL)
+    public function depEdForm4($date = null, $year = null)
     {
         //        $students = Modules::run('registrar/getAllStudentsForExternal','', $section_id);
         //        print_r($students->result());
         $settings = $this->eskwela->getSet();
         $data['gradeLevel'] = Modules::run('registrar/getGradeLevel', $settings->level_catered);
-        $data['section'] = Modules::run('registrar/getAllSection', NULL, $settings->level_catered);
+        $data['section'] = Modules::run('registrar/getAllSection', null, $settings->level_catered);
         $data['month'] = $date;
+        $data['CI'] = &get_instance();
         $data['school_year'] = $year;
 
         if ($date == 06):
@@ -1301,8 +1306,9 @@ class reports extends MX_Controller
 
     }
 
-    public function depEdForm5($section_id = null, $year = NULL)
+    public function depEdForm5($section_id = null, $year = null)
     {
+        $data['CI'] = &get_instance();
         $data['sy'] = $year;
         $data['male'] = Modules::run('registrar/getAllStudentsByGender', $section_id, 'Male', 1, $year);
         $data['female'] = Modules::run('registrar/getAllStudentsByGender', $section_id, 'Female', 1, $year);
@@ -1310,8 +1316,9 @@ class reports extends MX_Controller
         $this->load->view('sf/depEdForm5', $data);
     }
 
-    public function depEdForm6($year = NULL)
+    public function depEdForm6($year = null)
     {
+        $data['CI'] = &get_instance();
         $data['sy'] = $year;
         $this->load->view('sf/depEdForm6', $data);
     }
@@ -1322,20 +1329,20 @@ class reports extends MX_Controller
         $this->load->view('sf/depEdForm7', $data);
     }
 
-    public function enrollmentList($grade_id = null, $year = NULL, $strand = NULL, $section_id = NULL)
+    public function enrollmentList($grade_id = null, $year = null, $strand = null, $section_id = null)
     {
         $settings = $this->eskwela->getSet();
         $data['str_id'] = $strand;
         if ($settings->short_name != 'aac'):
             $data['male'] = Modules::run('registrar/getAllStudentsByGender', $grade_id, 'Male', "1", $year, $strand);
             $data['female'] = Modules::run('registrar/getAllStudentsByGender', $grade_id, 'Female', "1", $year, $strand);
-            $data['getStudents'] = Modules::run('registrar/getAllStudentsByGender', $grade_id, NULL, 1, $year, $strand);
+            $data['getStudents'] = Modules::run('registrar/getAllStudentsByGender', $grade_id, null, 1, $year, $strand);
         else:
-            $data['male'] = $this->reports_model->getAllStudentsByGender(($strand == NULL || $strand == 0 ? $grade_id : $section_id), 'Male', "1", $year, $strand);
-            $data['female'] = $this->reports_model->getAllStudentsByGender(($strand == NULL || $strand == 0 ? $grade_id : $section_id), 'female', "1", $year, $strand);
-            $data['getStudents'] = $this->reports_model->getAllStudentsByGender(($strand == NULL || $strand == 0 ? $grade_id : $section_id), NULL, 1, $year, $strand);
+            $data['male'] = $this->reports_model->getAllStudentsByGender(($strand == null || $strand == 0 ? $grade_id : $section_id), 'Male', "1", $year, $strand);
+            $data['female'] = $this->reports_model->getAllStudentsByGender(($strand == null || $strand == 0 ? $grade_id : $section_id), 'female', "1", $year, $strand);
+            $data['getStudents'] = $this->reports_model->getAllStudentsByGender(($strand == null || $strand == 0 ? $grade_id : $section_id), null, 1, $year, $strand);
         endif;
-        if ($strand == NULL || $strand == 0):
+        if ($strand == null || $strand == 0):
             if (file_exists(APPPATH . 'modules/reports/views/' . strtolower($settings->short_name) . '_enrollmentList.php')):
                 $this->load->view(strtolower($settings->short_name) . '_enrollmentList', $data);
             else:
@@ -1365,12 +1372,12 @@ class reports extends MX_Controller
 
     //    }
 
-    public function grading_sheet($section_id = null, $subject_id = NULL, $school_year = NULL, $strand = NULL, $grade_id = NULL)
+    public function grading_sheet($section_id = null, $subject_id = null, $school_year = null, $strand = null, $grade_id = null)
     {
         $settings = Modules::run('main/getSet');
         $data['male'] = Modules::run('registrar/getAllStudentsBasicInfoByGender', $grade_id, 'Male', 1, $school_year, $strand, $section_id);
         $data['female'] = Modules::run('registrar/getAllStudentsBasicInfoByGender', $grade_id, 'Female', 1, $school_year, $strand, $section_id);
-        $data['getStudents'] = Modules::run('registrar/getAllStudentsBasicInfoByGender', $section_id, NULL, $school_year);
+        $data['getStudents'] = Modules::run('registrar/getAllStudentsBasicInfoByGender', $section_id, null, $school_year);
         $data['subject_id'] = $subject_id;
         if (file_exists(APPPATH . 'modules/reports/views/' . strtolower($settings->short_name) . '_grading_sheet.php')):
             $this->load->view(strtolower($settings->short_name) . '_grading_sheet', $data);
@@ -1379,7 +1386,7 @@ class reports extends MX_Controller
         endif;
     }
 
-    public function master_sheet($section_id = null, $term = NULL, $school_year = NULL, $strand = NULL, $grade_id = NULL)
+    public function master_sheet($section_id = null, $term = null, $school_year = null, $strand = null, $grade_id = null)
     {
         $settings = Modules::run('main/getSet');
         $gs_settings = Modules::run('gradingsystem/getSet', $school_year);
@@ -1428,7 +1435,7 @@ class reports extends MX_Controller
         //        endif;
     }
 
-    public function preTestPerSubject($section_id = null, $subject_id = NULL)
+    public function preTestPerSubject($section_id = null, $subject_id = null)
     {
         $data['male'] = Modules::run('registrar/getAllStudentsByGender', $section_id, 'Male', "1");
         $data['female'] = Modules::run('registrar/getAllStudentsByGender', $section_id, 'Female', "1");
@@ -1458,7 +1465,7 @@ class reports extends MX_Controller
         echo Modules::run('templates/main_content', $data);
     }
 
-    public function exportToCsv($grade_id = NULL, $section_id = NULL)
+    public function exportToCsv($grade_id = null, $section_id = null)
     {
         $data['report'] = $this->reports_model->getCSVData($grade_id, $section_id);
         $data['modules'] = "reports";
@@ -1489,7 +1496,7 @@ class reports extends MX_Controller
         $data['error'] = ''; //initialize image upload error array to empty
 
         $config['upload_path'] = 'uploads';
-        $config['overwrite'] = TRUE;
+        $config['overwrite'] = true;
         $config['allowed_types'] = '*';
         $config['max_size'] = '1000';
 
@@ -1632,8 +1639,9 @@ class reports extends MX_Controller
                     alert('Uploaded Successfully')
                 </script>
             <?php
-            } else
+            } else {
                 $data['error'] = "Error occured";
+            }
             print_r($data);
             //$this->load->view('csvindex', $data);
         }
@@ -1652,7 +1660,7 @@ class reports extends MX_Controller
         $data['error'] = ''; //initialize image upload error array to empty
 
         $config['upload_path'] = 'uploads';
-        $config['overwrite'] = TRUE;
+        $config['overwrite'] = true;
         $config['allowed_types'] = '*';
         $config['max_size'] = '1000';
 
@@ -1695,7 +1703,7 @@ class reports extends MX_Controller
         $data['error'] = ''; //initialize image upload error array to empty
 
         $config['upload_path'] = 'uploads';
-        $config['overwrite'] = TRUE;
+        $config['overwrite'] = true;
         $config['allowed_types'] = '*';
         $config['max_size'] = '1000';
 
@@ -1726,37 +1734,37 @@ class reports extends MX_Controller
             $num_rows = $objWorksheet->getHighestRow();
 
             for ($st = 2; $st <= ($num_rows); $st++) {
-                if ($objWorksheet->getCellByColumnAndRow(0, $st)->getValue() != NULL):
+                if ($objWorksheet->getCellByColumnAndRow(0, $st)->getValue() != null):
                     $st_id = $objWorksheet->getCellByColumnAndRow(0, $st)->getValue();
                 else:
                     Modules::run('registrar/getLatestIdNum', $objWorksheet->getCellByColumnAndRow(10, $st)->getValue());
                     $st_id = Modules::run('registrar/importLatestId');
                 endif;
 
-                $lastname = ($objWorksheet->getCellByColumnAndRow(1, $st)->getValue() == NULL ? "" : $objWorksheet->getCellByColumnAndRow(1, $st)->getValue());
-                $firstname = ($objWorksheet->getCellByColumnAndRow(2, $st)->getValue() == NULL ? "" : $objWorksheet->getCellByColumnAndRow(2, $st)->getValue());
-                $middlename = ($objWorksheet->getCellByColumnAndRow(3, $st)->getValue() == NULL ? "" : $objWorksheet->getCellByColumnAndRow(3, $st)->getValue());
+                $lastname = ($objWorksheet->getCellByColumnAndRow(1, $st)->getValue() == null ? "" : $objWorksheet->getCellByColumnAndRow(1, $st)->getValue());
+                $firstname = ($objWorksheet->getCellByColumnAndRow(2, $st)->getValue() == null ? "" : $objWorksheet->getCellByColumnAndRow(2, $st)->getValue());
+                $middlename = ($objWorksheet->getCellByColumnAndRow(3, $st)->getValue() == null ? "" : $objWorksheet->getCellByColumnAndRow(3, $st)->getValue());
                 $rfid = '';
-                $birthdate = date("Y-m-d", ($objWorksheet->getCellByColumnAndRow(4, $st)->getValue() == NULL ? "" : $objWorksheet->getCellByColumnAndRow(4, $st)->getValue()));
-                $religion = ($objWorksheet->getCellByColumnAndRow(5, $st)->getValue() == NULL ? "" : $objWorksheet->getCellByColumnAndRow(5, $st)->getValue());
-                $street = ($objWorksheet->getCellByColumnAndRow(7, $st)->getValue() == NULL ? "" : $objWorksheet->getCellByColumnAndRow(7, $st)->getValue());
-                $barangay = ($objWorksheet->getCellByColumnAndRow(8, $st)->getValue() == NULL ? "" : $objWorksheet->getCellByColumnAndRow(8, $st)->getValue());
-                $mun_city = ($objWorksheet->getCellByColumnAndRow(9, $st)->getValue() == NULL ? "" : $objWorksheet->getCellByColumnAndRow(9, $st)->getValue());
-                $grade_id = ($objWorksheet->getCellByColumnAndRow(10, $st)->getValue() == NULL ? 0 : $objWorksheet->getCellByColumnAndRow(10, $st)->getValue());
-                $section = ($objWorksheet->getCellByColumnAndRow(27, $st)->getValue() == NULL ? 0 : $objWorksheet->getCellByColumnAndRow(27, $st)->getValue());
-                $f_lastname = ($objWorksheet->getCellByColumnAndRow(13, $st)->getValue() == NULL ? "" : $objWorksheet->getCellByColumnAndRow(13, $st)->getValue());
-                $f_firstname = ($objWorksheet->getCellByColumnAndRow(14, $st)->getValue() == NULL ? "" : $objWorksheet->getCellByColumnAndRow(14, $st)->getValue());
-                $f_middlename = ($objWorksheet->getCellByColumnAndRow(15, $st)->getValue() == NULL ? "" : $objWorksheet->getCellByColumnAndRow(15, $st)->getValue());
+                $birthdate = date("Y-m-d", ($objWorksheet->getCellByColumnAndRow(4, $st)->getValue() == null ? "" : $objWorksheet->getCellByColumnAndRow(4, $st)->getValue()));
+                $religion = ($objWorksheet->getCellByColumnAndRow(5, $st)->getValue() == null ? "" : $objWorksheet->getCellByColumnAndRow(5, $st)->getValue());
+                $street = ($objWorksheet->getCellByColumnAndRow(7, $st)->getValue() == null ? "" : $objWorksheet->getCellByColumnAndRow(7, $st)->getValue());
+                $barangay = ($objWorksheet->getCellByColumnAndRow(8, $st)->getValue() == null ? "" : $objWorksheet->getCellByColumnAndRow(8, $st)->getValue());
+                $mun_city = ($objWorksheet->getCellByColumnAndRow(9, $st)->getValue() == null ? "" : $objWorksheet->getCellByColumnAndRow(9, $st)->getValue());
+                $grade_id = ($objWorksheet->getCellByColumnAndRow(10, $st)->getValue() == null ? 0 : $objWorksheet->getCellByColumnAndRow(10, $st)->getValue());
+                $section = ($objWorksheet->getCellByColumnAndRow(27, $st)->getValue() == null ? 0 : $objWorksheet->getCellByColumnAndRow(27, $st)->getValue());
+                $f_lastname = ($objWorksheet->getCellByColumnAndRow(13, $st)->getValue() == null ? "" : $objWorksheet->getCellByColumnAndRow(13, $st)->getValue());
+                $f_firstname = ($objWorksheet->getCellByColumnAndRow(14, $st)->getValue() == null ? "" : $objWorksheet->getCellByColumnAndRow(14, $st)->getValue());
+                $f_middlename = ($objWorksheet->getCellByColumnAndRow(15, $st)->getValue() == null ? "" : $objWorksheet->getCellByColumnAndRow(15, $st)->getValue());
                 $f_occupation = '';
-                $f_mobile = ($objWorksheet->getCellByColumnAndRow(12, $st)->getValue() == NULL ? "" : $objWorksheet->getCellByColumnAndRow(12, $st)->getValue());
-                $m_lastname = ($objWorksheet->getCellByColumnAndRow(18, $st)->getValue() == NULL ? "" : $objWorksheet->getCellByColumnAndRow(18, $st)->getValue());
-                $m_firstname = ($objWorksheet->getCellByColumnAndRow(19, $st)->getValue() == NULL ? "" : $objWorksheet->getCellByColumnAndRow(19, $st)->getValue());
-                $m_middlename = ($objWorksheet->getCellByColumnAndRow(20, $st)->getValue() == NULL ? "" : $objWorksheet->getCellByColumnAndRow(20, $st)->getValue());
+                $f_mobile = ($objWorksheet->getCellByColumnAndRow(12, $st)->getValue() == null ? "" : $objWorksheet->getCellByColumnAndRow(12, $st)->getValue());
+                $m_lastname = ($objWorksheet->getCellByColumnAndRow(18, $st)->getValue() == null ? "" : $objWorksheet->getCellByColumnAndRow(18, $st)->getValue());
+                $m_firstname = ($objWorksheet->getCellByColumnAndRow(19, $st)->getValue() == null ? "" : $objWorksheet->getCellByColumnAndRow(19, $st)->getValue());
+                $m_middlename = ($objWorksheet->getCellByColumnAndRow(20, $st)->getValue() == null ? "" : $objWorksheet->getCellByColumnAndRow(20, $st)->getValue());
                 $m_occupation = '';
-                $m_mobile = ($objWorksheet->getCellByColumnAndRow(17, $st)->getValue() == NULL ? "" : $objWorksheet->getCellByColumnAndRow(17, $st)->getValue());
-                $ice_name = ($objWorksheet->getCellByColumnAndRow(24, $st)->getValue() == NULL ? "" : $objWorksheet->getCellByColumnAndRow(24, $st)->getValue());
-                $ice_contact = ($objWorksheet->getCellByColumnAndRow(25, $st)->getValue() == NULL ? "" : $objWorksheet->getCellByColumnAndRow(25, $st)->getValue());
-                $ice_relation = ($objWorksheet->getCellByColumnAndRow(26, $st)->getValue() == NULL ? "" : $objWorksheet->getCellByColumnAndRow(26, $st)->getValue());
+                $m_mobile = ($objWorksheet->getCellByColumnAndRow(17, $st)->getValue() == null ? "" : $objWorksheet->getCellByColumnAndRow(17, $st)->getValue());
+                $ice_name = ($objWorksheet->getCellByColumnAndRow(24, $st)->getValue() == null ? "" : $objWorksheet->getCellByColumnAndRow(24, $st)->getValue());
+                $ice_contact = ($objWorksheet->getCellByColumnAndRow(25, $st)->getValue() == null ? "" : $objWorksheet->getCellByColumnAndRow(25, $st)->getValue());
+                $ice_relation = ($objWorksheet->getCellByColumnAndRow(26, $st)->getValue() == null ? "" : $objWorksheet->getCellByColumnAndRow(26, $st)->getValue());
 
                 $religion_id = $processAdmission->setReligion($religion);
                 $basicInfo = array(
@@ -1779,15 +1787,15 @@ class reports extends MX_Controller
 
                 $pid = $processAdmission->saveProfile($basicInfo);
                 $profile_id = $pid->user_id;
-                $processAdmission->setStudInfo($st_id, $profile_id, $section,  $grade_id, '', '', $sy, '', '', '');
+                $processAdmission->setStudInfo($st_id, $profile_id, $section, $grade_id, '', '', $sy, '', '', '');
 
                 //saves the address
-                if ($barangay != NULL):
+                if ($barangay != null):
                     $barangay_id = $processAdmission->setBarangay($barangay, $sy);
                 else:
                     $barangay_id = 0;
                 endif;
-                if ($street == NULL):
+                if ($street == null):
                     $street = '';
                 endif;
                 $city = Modules::run('main/getCities', $mun_city);
@@ -1847,7 +1855,7 @@ class reports extends MX_Controller
         $data['error'] = ''; //initialize image upload error array to empty
 
         $config['upload_path'] = 'uploads';
-        $config['overwrite'] = TRUE;
+        $config['overwrite'] = true;
         $config['allowed_types'] = '*';
         $config['max_size'] = '5000';
 
@@ -1895,16 +1903,16 @@ class reports extends MX_Controller
                            }else
                            {
                                if($id<100){
-                                  $prefix='000'; 
+                                  $prefix='000';
                                }elseif(id<100){
-                                  $prefix='00'; 
+                                  $prefix='00';
                                }
-                               
-                           }   
+
+                           }
                            $st_id = $settings->school_id.  substr($sy, 2, 2).$prefix.$id;
-                         
+
                         endif; */
-                if ($objWorksheet->getCellByColumnAndRow(0, $st)->getValue() != NULL):
+                if ($objWorksheet->getCellByColumnAndRow(0, $st)->getValue() != null):
                     $st_id = $objWorksheet->getCellByColumnAndRow(0, $st)->getValue();
                 else:
                     Modules::run('registrar/getLatestIdNum', $objWorksheet->getCellByColumnAndRow(43, $st)->getValue());
@@ -1912,46 +1920,46 @@ class reports extends MX_Controller
 
                 endif;
 
-                $lastname = ($objWorksheet->getCellByColumnAndRow(1, $st)->getValue() == NULL ? "" : $objWorksheet->getCellByColumnAndRow(1, $st)->getValue());
-                $firstname = ($objWorksheet->getCellByColumnAndRow(2, $st)->getValue() == NULL ? "" : $objWorksheet->getCellByColumnAndRow(2, $st)->getValue());
-                $middlename = ($objWorksheet->getCellByColumnAndRow(3, $st)->getValue() == NULL ? "" : $objWorksheet->getCellByColumnAndRow(3, $st)->getValue());
+                $lastname = ($objWorksheet->getCellByColumnAndRow(1, $st)->getValue() == null ? "" : $objWorksheet->getCellByColumnAndRow(1, $st)->getValue());
+                $firstname = ($objWorksheet->getCellByColumnAndRow(2, $st)->getValue() == null ? "" : $objWorksheet->getCellByColumnAndRow(2, $st)->getValue());
+                $middlename = ($objWorksheet->getCellByColumnAndRow(3, $st)->getValue() == null ? "" : $objWorksheet->getCellByColumnAndRow(3, $st)->getValue());
                 $rfid = '';
-                $grade_id = ($objWorksheet->getCellByColumnAndRow(32, $st)->getValue() == NULL ? 0 : $objWorksheet->getCellByColumnAndRow(32, $st)->getValue());
-                $section = ($objWorksheet->getCellByColumnAndRow(33, $st)->getValue() == NULL ? 0 : $objWorksheet->getCellByColumnAndRow(33, $st)->getValue());
-                $religion = ($objWorksheet->getCellByColumnAndRow(7, $st)->getValue() == NULL ? "" : $objWorksheet->getCellByColumnAndRow(7, $st)->getValue());
+                $grade_id = ($objWorksheet->getCellByColumnAndRow(32, $st)->getValue() == null ? 0 : $objWorksheet->getCellByColumnAndRow(32, $st)->getValue());
+                $section = ($objWorksheet->getCellByColumnAndRow(33, $st)->getValue() == null ? 0 : $objWorksheet->getCellByColumnAndRow(33, $st)->getValue());
+                $religion = ($objWorksheet->getCellByColumnAndRow(7, $st)->getValue() == null ? "" : $objWorksheet->getCellByColumnAndRow(7, $st)->getValue());
                 $gender = $objWorksheet->getCellByColumnAndRow(8, $st)->getValue();
-                $birthdate = date($format = "Y-m-d", PHPExcel_Shared_Date::ExcelToPHP(($objWorksheet->getCellByColumnAndRow(9, $st)->getValue() == NULL ? "" : $objWorksheet->getCellByColumnAndRow(9, $st)->getValue())));;
-                $birthplace = ($objWorksheet->getCellByColumnAndRow(10, $st)->getValue() == NULL ? "" : $objWorksheet->getCellByColumnAndRow(10, $st)->getValue());
+                $birthdate = date($format = "Y-m-d", PHPExcel_Shared_Date::ExcelToPHP(($objWorksheet->getCellByColumnAndRow(9, $st)->getValue() == null ? "" : $objWorksheet->getCellByColumnAndRow(9, $st)->getValue())));;
+                $birthplace = ($objWorksheet->getCellByColumnAndRow(10, $st)->getValue() == null ? "" : $objWorksheet->getCellByColumnAndRow(10, $st)->getValue());
                 // $street = $objWorksheet->getCellByColumnAndRow(10,$st)->getValue();
                 //$street = "";
-                $street = ($objWorksheet->getCellByColumnAndRow(11, $st)->getValue() == NULL ? "" : $objWorksheet->getCellByColumnAndRow(11, $st)->getValue());
-                $barangay = ($objWorksheet->getCellByColumnAndRow(12, $st)->getValue() == NULL ? "" : $objWorksheet->getCellByColumnAndRow(12, $st)->getValue());
-                $mun_city = ($objWorksheet->getCellByColumnAndRow(13, $st)->getValue() == NULL ? "" : $objWorksheet->getCellByColumnAndRow(13, $st)->getValue());
+                $street = ($objWorksheet->getCellByColumnAndRow(11, $st)->getValue() == null ? "" : $objWorksheet->getCellByColumnAndRow(11, $st)->getValue());
+                $barangay = ($objWorksheet->getCellByColumnAndRow(12, $st)->getValue() == null ? "" : $objWorksheet->getCellByColumnAndRow(12, $st)->getValue());
+                $mun_city = ($objWorksheet->getCellByColumnAndRow(13, $st)->getValue() == null ? "" : $objWorksheet->getCellByColumnAndRow(13, $st)->getValue());
                 $phone = '';
-                $f_lastname = ($objWorksheet->getCellByColumnAndRow(14, $st)->getValue() == NULL ? "" : $objWorksheet->getCellByColumnAndRow(14, $st)->getValue());
-                $f_firstname = ($objWorksheet->getCellByColumnAndRow(15, $st)->getValue() == NULL ? "" : $objWorksheet->getCellByColumnAndRow(15, $st)->getValue());
-                $f_middlename = ($objWorksheet->getCellByColumnAndRow(16, $st)->getValue() == NULL ? "" : $objWorksheet->getCellByColumnAndRow(16, $st)->getValue());
-                $f_occupation = ($objWorksheet->getCellByColumnAndRow(17, $st)->getValue() == NULL ? "" : $objWorksheet->getCellByColumnAndRow(17, $st)->getValue());
+                $f_lastname = ($objWorksheet->getCellByColumnAndRow(14, $st)->getValue() == null ? "" : $objWorksheet->getCellByColumnAndRow(14, $st)->getValue());
+                $f_firstname = ($objWorksheet->getCellByColumnAndRow(15, $st)->getValue() == null ? "" : $objWorksheet->getCellByColumnAndRow(15, $st)->getValue());
+                $f_middlename = ($objWorksheet->getCellByColumnAndRow(16, $st)->getValue() == null ? "" : $objWorksheet->getCellByColumnAndRow(16, $st)->getValue());
+                $f_occupation = ($objWorksheet->getCellByColumnAndRow(17, $st)->getValue() == null ? "" : $objWorksheet->getCellByColumnAndRow(17, $st)->getValue());
                 $f_office_name = '';
                 $f_office_address = '';
-                $f_mobile = ($objWorksheet->getCellByColumnAndRow(18, $st)->getValue() == NULL ? "" : $objWorksheet->getCellByColumnAndRow(18, $st)->getValue());
-                $m_lastname = ($objWorksheet->getCellByColumnAndRow(19, $st)->getValue() == NULL ? "" : $objWorksheet->getCellByColumnAndRow(19, $st)->getValue());
-                $m_firstname = ($objWorksheet->getCellByColumnAndRow(20, $st)->getValue() == NULL ? "" : $objWorksheet->getCellByColumnAndRow(20, $st)->getValue());
-                $m_middlename = ($objWorksheet->getCellByColumnAndRow(21, $st)->getValue() == NULL ? "" : $objWorksheet->getCellByColumnAndRow(21, $st)->getValue());
-                $m_occupation = ($objWorksheet->getCellByColumnAndRow(22, $st)->getValue() == NULL ? "" : $objWorksheet->getCellByColumnAndRow(22, $st)->getValue());
+                $f_mobile = ($objWorksheet->getCellByColumnAndRow(18, $st)->getValue() == null ? "" : $objWorksheet->getCellByColumnAndRow(18, $st)->getValue());
+                $m_lastname = ($objWorksheet->getCellByColumnAndRow(19, $st)->getValue() == null ? "" : $objWorksheet->getCellByColumnAndRow(19, $st)->getValue());
+                $m_firstname = ($objWorksheet->getCellByColumnAndRow(20, $st)->getValue() == null ? "" : $objWorksheet->getCellByColumnAndRow(20, $st)->getValue());
+                $m_middlename = ($objWorksheet->getCellByColumnAndRow(21, $st)->getValue() == null ? "" : $objWorksheet->getCellByColumnAndRow(21, $st)->getValue());
+                $m_occupation = ($objWorksheet->getCellByColumnAndRow(22, $st)->getValue() == null ? "" : $objWorksheet->getCellByColumnAndRow(22, $st)->getValue());
                 $m_office_name = '';
                 $m_office_address = '';
-                $m_mobile = ($objWorksheet->getCellByColumnAndRow(23, $st)->getValue() == NULL ? "" : $objWorksheet->getCellByColumnAndRow(23, $st)->getValue());
+                $m_mobile = ($objWorksheet->getCellByColumnAndRow(23, $st)->getValue() == null ? "" : $objWorksheet->getCellByColumnAndRow(23, $st)->getValue());
                 $m_email = '';
-                $g_lastname = ($objWorksheet->getCellByColumnAndRow(24, $st)->getValue() == NULL ? "" : $objWorksheet->getCellByColumnAndRow(24, $st)->getValue());
-                $g_firstname = ($objWorksheet->getCellByColumnAndRow(25, $st)->getValue() == NULL ? "" : $objWorksheet->getCellByColumnAndRow(25, $st)->getValue());
-                $g_middlename = ($objWorksheet->getCellByColumnAndRow(26, $st)->getValue() == NULL ? "" : $objWorksheet->getCellByColumnAndRow(26, $st)->getValue());
+                $g_lastname = ($objWorksheet->getCellByColumnAndRow(24, $st)->getValue() == null ? "" : $objWorksheet->getCellByColumnAndRow(24, $st)->getValue());
+                $g_firstname = ($objWorksheet->getCellByColumnAndRow(25, $st)->getValue() == null ? "" : $objWorksheet->getCellByColumnAndRow(25, $st)->getValue());
+                $g_middlename = ($objWorksheet->getCellByColumnAndRow(26, $st)->getValue() == null ? "" : $objWorksheet->getCellByColumnAndRow(26, $st)->getValue());
                 $g_relation = 'Relative';
-                $g_mobile = ($objWorksheet->getCellByColumnAndRow(28, $st)->getValue() == NULL ? "" : $objWorksheet->getCellByColumnAndRow(28, $st)->getValue());
+                $g_mobile = ($objWorksheet->getCellByColumnAndRow(28, $st)->getValue() == null ? "" : $objWorksheet->getCellByColumnAndRow(28, $st)->getValue());
                 $person_ice = $objWorksheet->getCellByColumnAndRow(39, $st)->getValue();
 
-                $school_last = ($objWorksheet->getCellByColumnAndRow(30, $st)->getValue() == NULL ? "" : $objWorksheet->getCellByColumnAndRow(30, $st)->getValue());
-                $address_school_last = ($objWorksheet->getCellByColumnAndRow(31, $st)->getValue() == NULL ? "" : $objWorksheet->getCellByColumnAndRow(31, $st)->getValue());
+                $school_last = ($objWorksheet->getCellByColumnAndRow(30, $st)->getValue() == null ? "" : $objWorksheet->getCellByColumnAndRow(30, $st)->getValue());
+                $address_school_last = ($objWorksheet->getCellByColumnAndRow(31, $st)->getValue() == null ? "" : $objWorksheet->getCellByColumnAndRow(31, $st)->getValue());
 
                 //$person_contact_ice = $objWorksheet->getCellByColumnAndRow(40,$st)->getValue();
                 //                        if($objWorksheet->getCellByColumnAndRow(5,$st)->getValue()!=NULL):
@@ -1961,7 +1969,7 @@ class reports extends MX_Controller
                 //                        endif;
                 $lrn = '';
                 $religion_id = $processAdmission->setReligion($religion);
-                if ($person_ice == NULL):
+                if ($person_ice == null):
                     $person_contact_ice = '';
                     $person_ice = '';
                 endif;
@@ -1995,15 +2003,15 @@ class reports extends MX_Controller
                 //saves the basic info
                 $profile_id = $processAdmission->saveProfile($basicInfo);
 
-                $processAdmission->setStudInfo($st_id, $profile_id, $section,  $grade_id, '', '', $sy, $school_last, $address_school_last, $lrn);
+                $processAdmission->setStudInfo($st_id, $profile_id, $section, $grade_id, '', '', $sy, $school_last, $address_school_last, $lrn);
 
                 //saves the address
-                if ($barangay != NULL):
+                if ($barangay != null):
                     $barangay_id = $processAdmission->setBarangay($barangay);
                 else:
                     $barangay_id = 0;
                 endif;
-                if ($street == NULL):
+                if ($street == null):
                     $street = '';
                 endif;
                 $city = Modules::run('main/getCities', $mun_city);
@@ -2027,7 +2035,7 @@ class reports extends MX_Controller
                 $date = $birthdate;
                 $processAdmission->setBdate($date, $profile_id, 'bdate_id');
 
-                if ($f_lastname == NULL && $m_lastname == NULL):
+                if ($f_lastname == null && $m_lastname == null):
                     $guardian = array(
                         'lastname'         => $g_lastname,
                         'firstname'        => $g_firstname,
@@ -2040,7 +2048,7 @@ class reports extends MX_Controller
 
                     $guardian_id = $processAdmission->saveProfile($guardian);
 
-                    //$processAdmission->setParentsPro($profile_id, $guardian_id,0, 1, $this->input->post('relationship')); 
+                    //$processAdmission->setParentsPro($profile_id, $guardian_id,0, 1, $this->input->post('relationship'));
 
                     $processAdmission->setContacts($g_mobile, '', $guardian_id);
                 else:
@@ -2060,7 +2068,7 @@ class reports extends MX_Controller
                 $father_id = $processAdmission->saveProfile($father);
 
                 $processAdmission->setContacts($f_mobile, '', $father_id);
-                if ($f_occupation != NULL):
+                if ($f_occupation != null):
                     $processAdmission->chooseOcc($f_occupation, $father_id);
                 endif;
 
@@ -2075,10 +2083,10 @@ class reports extends MX_Controller
                 );
 
                 $mother_id = $processAdmission->saveProfile($mother);
-                if ($f_office_name == NULL):
+                if ($f_office_name == null):
                     $f_office_name = '';
                 endif;
-                if ($m_office_name == NULL):
+                if ($m_office_name == null):
                     $m_office_name = '';
                 endif;
 
@@ -2087,7 +2095,7 @@ class reports extends MX_Controller
 
                 $processAdmission->chooseOcc($m_occupation, $mother_id);
 
-                $processAdmission->setParentsPro($profile_id, $father_id, $mother_id, $f_office_name, 0, $m_office_name, 0,  $guardian_id, $g_relation, $person_ice, $person_contact_ice);
+                $processAdmission->setParentsPro($profile_id, $father_id, $mother_id, $f_office_name, 0, $m_office_name, 0, $guardian_id, $g_relation, $person_ice, $person_contact_ice);
 
                 //$processAdmission->saveMed($blood_type,'',$med_history,'','','', $profile_id );
 
@@ -2115,7 +2123,7 @@ class reports extends MX_Controller
         $data['error'] = ''; //initialize image upload error array to empty
 
         $config['upload_path'] = 'uploads';
-        $config['overwrite'] = TRUE;
+        $config['overwrite'] = true;
         $config['allowed_types'] = '*';
         $config['max_size'] = '5000';
 
@@ -2157,7 +2165,7 @@ class reports extends MX_Controller
 
                 $lastID = json_decode($lastID);
                 $id = $lastID->id + 1;
-                switch (TRUE):
+                switch (true):
                     case $id >= 1000:
                         $prefix = "";
                         break;
@@ -2187,7 +2195,7 @@ class reports extends MX_Controller
                 $rfid = '';
                 $grade_id = $objWorksheet->getCellByColumnAndRow(40, $st)->getValue();
                 $section = $objWorksheet->getCellByColumnAndRow(42, $st)->getValue();
-                $religion = ($objWorksheet->getCellByColumnAndRow(14, $st)->getValue() == NULL ? "" : $objWorksheet->getCellByColumnAndRow(14, $st)->getValue());
+                $religion = ($objWorksheet->getCellByColumnAndRow(14, $st)->getValue() == null ? "" : $objWorksheet->getCellByColumnAndRow(14, $st)->getValue());
                 $gender = $objWorksheet->getCellByColumnAndRow(6, $st)->getValue();
                 //$birthdate = date("Y-m-d", PHPExcel_Shared_Date::ExcelToPHP($objWorksheet->getCellByColumnAndRow(7,$st)->getValue()));
                 //$birthdate = date("Y-m-d", strtotime($objWorksheet->getCellByColumnAndRow(7,$st)->getValue()));
@@ -2197,9 +2205,9 @@ class reports extends MX_Controller
                 $month = $bdate[0];
                 $birthdate = $year . '-' . $month . '-' . $day;
                 $birthplace = '';
-                $street = ($objWorksheet->getCellByColumnAndRow(15, $st)->getValue() == NULL ? "" : $objWorksheet->getCellByColumnAndRow(15, $st)->getValue());
-                $barangay = ($objWorksheet->getCellByColumnAndRow(16, $st)->getValue() == NULL ? "" : $objWorksheet->getCellByColumnAndRow(16, $st)->getValue());
-                $mun_city = ($objWorksheet->getCellByColumnAndRow(20, $st)->getValue() == NULL ? "" : $objWorksheet->getCellByColumnAndRow(20, $st)->getValue());
+                $street = ($objWorksheet->getCellByColumnAndRow(15, $st)->getValue() == null ? "" : $objWorksheet->getCellByColumnAndRow(15, $st)->getValue());
+                $barangay = ($objWorksheet->getCellByColumnAndRow(16, $st)->getValue() == null ? "" : $objWorksheet->getCellByColumnAndRow(16, $st)->getValue());
+                $mun_city = ($objWorksheet->getCellByColumnAndRow(20, $st)->getValue() == null ? "" : $objWorksheet->getCellByColumnAndRow(20, $st)->getValue());
                 $phone = $objWorksheet->getCellByColumnAndRow(37, $st)->getValue();
 
 
@@ -2229,15 +2237,15 @@ class reports extends MX_Controller
                 //saves the basic info
                 $profile_id = $processAdmission->saveProfile($basicInfo);
 
-                $processAdmission->setStudInfo($st_id, $profile_id, '',  $grade_id, '', '', $sy, '', '', $lrn);
+                $processAdmission->setStudInfo($st_id, $profile_id, '', $grade_id, '', '', $sy, '', '', $lrn);
 
                 //saves the address
-                if ($barangay != NULL):
+                if ($barangay != null):
                     $barangay_id = $processAdmission->setBarangay($barangay);
                 else:
                     $barangay_id = 0;
                 endif;
-                if ($street == NULL):
+                if ($street == null):
                     $street = '';
                 endif;
                 $city = Modules::run('main/getCities', $mun_city);
@@ -2262,7 +2270,7 @@ class reports extends MX_Controller
                 $date = $birthdate;
                 $processAdmission->setBdate($date, $profile_id, 'bdate_id');
 
-                if ($objWorksheet->getCellByColumnAndRow(27, $st)->getValue() != NULL):
+                if ($objWorksheet->getCellByColumnAndRow(27, $st)->getValue() != null):
                     $fnameItems = explode(",", $objWorksheet->getCellByColumnAndRow(27, $st)->getValue());
                     $f_lastname = $fnameItems[0];
                     $fremName = $fnameItems[1];
@@ -2282,13 +2290,13 @@ class reports extends MX_Controller
                 $f_office_name = '';
                 $f_office_address = '';
                 $f_mobile = $objWorksheet->getCellByColumnAndRow(37, $st)->getValue();
-                if ($objWorksheet->getCellByColumnAndRow(31, $st)->getValue() != NULL):
+                if ($objWorksheet->getCellByColumnAndRow(31, $st)->getValue() != null):
                     $mnameItems = explode(",", $objWorksheet->getCellByColumnAndRow(31, $st)->getValue());
                     $m_lastname = $mnameItems[0];
                     $m_firstname = $mnameItems[1];
                     $m_middlename = $mnameItems[2];
                 else:
-                    /**if($objWorksheet->getCellByColumnAndRow(27,$st)->getValue()==NULL || $objWorksheet->getCellByColumnAndRow(27,$st)->getValue()==", "):
+                /**if($objWorksheet->getCellByColumnAndRow(27,$st)->getValue()==NULL || $objWorksheet->getCellByColumnAndRow(27,$st)->getValue()==", "):
                                 if($objWorksheet->getCellByColumnAndRow(33,$st)->getValue()!=NULL || $objWorksheet->getCellByColumnAndRow(33,$st)->getValue()!=", "):
                                     $gnameItems = explode( ",", $objWorksheet->getCellByColumnAndRow(33,$st)->getValue());
                                     $g_lastname = $gnameItems[0];
@@ -2310,11 +2318,11 @@ class reports extends MX_Controller
                 $g_mobile = '';
                 $med_history = '';
                 $blood_type = '';
-                $person_ice = NULL;
+                $person_ice = null;
                 $person_contact_ice = '';
                 $lrn = '';
 
-                if ($person_ice == NULL):
+                if ($person_ice == null):
                     $person_contact_ice = '';
                     $person_ice = '';
                 endif;
@@ -2326,16 +2334,16 @@ class reports extends MX_Controller
                         $gender = 'Male';
                         break;
                 endswitch;
-                if ($rfid == NULL):
+                if ($rfid == null):
                     $rfid = "";
                 endif;
-                if ($rfid == NULL):
+                if ($rfid == null):
                     $rfid = "";
                 endif;
 
 
-                if ($f_lastname == NULL || $f_lastname == ""):
-                    if ($m_lastname == NULL):
+                if ($f_lastname == null || $f_lastname == ""):
+                    if ($m_lastname == null):
                         $guardian = array(
                             'lastname'         => $g_lastname,
                             'firstname'        => $g_firstname,
@@ -2349,7 +2357,7 @@ class reports extends MX_Controller
                         $guardian_id = $processAdmission->saveProfile($guardian);
                     endif;
 
-                    //$processAdmission->setParentsPro($profile_id, $guardian_id,0, 1, $this->input->post('relationship')); 
+                    //$processAdmission->setParentsPro($profile_id, $guardian_id,0, 1, $this->input->post('relationship'));
 
                     $processAdmission->setContacts($g_mobile, '', $guardian_id);
                 else:
@@ -2369,7 +2377,7 @@ class reports extends MX_Controller
                 $father_id = $processAdmission->saveProfile($father);
 
                 $processAdmission->setContacts($f_mobile, '', $father_id);
-                if ($f_occupation != NULL):
+                if ($f_occupation != null):
                     $processAdmission->chooseOcc($f_occupation, $father_id);
                 endif;
                 //
@@ -2384,10 +2392,10 @@ class reports extends MX_Controller
                 );
 
                 $mother_id = $processAdmission->saveProfile($mother);
-                if ($f_office_name == NULL):
+                if ($f_office_name == null):
                     $f_office_name = '';
                 endif;
-                if ($m_office_name == NULL):
+                if ($m_office_name == null):
                     $m_office_name = '';
                 endif;
 
@@ -2398,8 +2406,8 @@ class reports extends MX_Controller
 
                 $processAdmission->importParentsPro($profile_id, $father_id, $mother_id, $guardian_id);
                 //                     //$processAdmission->setParentsPro($profile_id, $father_id, $mother_id, $f_office_name, 0, $m_office_name, 0,  $guardian_id, $g_relation, $person_ice, $person_contact_ice);
-                //                    
-                //                   
+                //
+                //
             }
         ?>
             <script type="text/javascript">
@@ -2423,7 +2431,7 @@ class reports extends MX_Controller
         $data['error'] = ''; //initialize image upload error array to empty
 
         $config['upload_path'] = 'uploads';
-        $config['overwrite'] = TRUE;
+        $config['overwrite'] = true;
         $config['allowed_types'] = '*';
         $config['max_size'] = '5000';
 
@@ -2460,7 +2468,7 @@ class reports extends MX_Controller
             for ($st = 3; $st <= ($num_rows); $st++) {
                 //for($st=3; $st<=10; $st++){
 
-                if ($objWorksheet->getCellByColumnAndRow(0, $st)->getValue() != NULL):
+                if ($objWorksheet->getCellByColumnAndRow(0, $st)->getValue() != null):
                     $st_id = $objWorksheet->getCellByColumnAndRow(0, $st)->getValue();
                 else:
                     $lastID = Modules::run('registrar/getLatestIdNum', $objWorksheet->getCellByColumnAndRow(42, $st)->getValue());
@@ -2494,16 +2502,16 @@ class reports extends MX_Controller
                 $mun_city = $objWorksheet->getCellByColumnAndRow(12, $st)->getValue();
                 $postal_code = $objWorksheet->getCellByColumnAndRow(13, $st)->getValue();
                 $phone = $objWorksheet->getCellByColumnAndRow(14, $st)->getValue();
-                $f_firstname = ($objWorksheet->getCellByColumnAndRow(16, $st)->getValue() == NULL ? "" : $objWorksheet->getCellByColumnAndRow(16, $st)->getValue());
-                $f_middlename = ($objWorksheet->getCellByColumnAndRow(17, $st)->getValue() == NULL ? "" : $objWorksheet->getCellByColumnAndRow(17, $st)->getValue());
-                $f_lastname = ($objWorksheet->getCellByColumnAndRow(15, $st)->getValue() == NULL ? "" : $objWorksheet->getCellByColumnAndRow(15, $st)->getValue());
+                $f_firstname = ($objWorksheet->getCellByColumnAndRow(16, $st)->getValue() == null ? "" : $objWorksheet->getCellByColumnAndRow(16, $st)->getValue());
+                $f_middlename = ($objWorksheet->getCellByColumnAndRow(17, $st)->getValue() == null ? "" : $objWorksheet->getCellByColumnAndRow(17, $st)->getValue());
+                $f_lastname = ($objWorksheet->getCellByColumnAndRow(15, $st)->getValue() == null ? "" : $objWorksheet->getCellByColumnAndRow(15, $st)->getValue());
                 $f_occupation = $objWorksheet->getCellByColumnAndRow(18, $st)->getValue();
                 $f_office_name = $objWorksheet->getCellByColumnAndRow(19, $st)->getValue();
                 $f_office_address = $objWorksheet->getCellByColumnAndRow(20, $st)->getValue();
                 $f_mobile = $objWorksheet->getCellByColumnAndRow(21, $st)->getValue();
-                $m_firstname = ($objWorksheet->getCellByColumnAndRow(22, $st)->getValue() == NULL ? "" : $objWorksheet->getCellByColumnAndRow(22, $st)->getValue());
-                $m_middlename = ($objWorksheet->getCellByColumnAndRow(23, $st)->getValue() == NULL ? "" : $objWorksheet->getCellByColumnAndRow(23, $st)->getValue());
-                $m_lastname = ($objWorksheet->getCellByColumnAndRow(24, $st)->getValue() == NULL ? "" : $objWorksheet->getCellByColumnAndRow(24, $st)->getValue());
+                $m_firstname = ($objWorksheet->getCellByColumnAndRow(22, $st)->getValue() == null ? "" : $objWorksheet->getCellByColumnAndRow(22, $st)->getValue());
+                $m_middlename = ($objWorksheet->getCellByColumnAndRow(23, $st)->getValue() == null ? "" : $objWorksheet->getCellByColumnAndRow(23, $st)->getValue());
+                $m_lastname = ($objWorksheet->getCellByColumnAndRow(24, $st)->getValue() == null ? "" : $objWorksheet->getCellByColumnAndRow(24, $st)->getValue());
                 $m_occupation = $objWorksheet->getCellByColumnAndRow(25, $st)->getValue();
                 $m_office_name = $objWorksheet->getCellByColumnAndRow(26, $st)->getValue();
                 $m_office_address = $objWorksheet->getCellByColumnAndRow(27, $st)->getValue();
@@ -2531,13 +2539,13 @@ class reports extends MX_Controller
 
 
 
-                if ($last_school == NULL):
+                if ($last_school == null):
                     $last_school = "";
                     $last_school_address = "";
                 endif;
 
                 $religion_id = $processAdmission->setReligion($religion);
-                if ($person_ice == NULL):
+                if ($person_ice == null):
                     $person_contact_ice = '';
                     $person_ice = '';
                 endif;
@@ -2571,20 +2579,20 @@ class reports extends MX_Controller
                 //saves the basic info
                 $profile_id = $processAdmission->saveProfile($basicInfo);
 
-                $processAdmission->setCollegeInfo($st_id, $profile_id, $course_id, $year_level, ($date_enrolled == NULL ? '0000-00-00' : $date_enrolled), $sy, $semester, $last_school, $last_school_address);
+                $processAdmission->setCollegeInfo($st_id, $profile_id, $course_id, $year_level, ($date_enrolled == null ? '0000-00-00' : $date_enrolled), $sy, $semester, $last_school, $last_school_address);
 
                 //saves the address
-                $barangay = ($barangay == NULL ? "Poblacion" : $barangay);
-                if ($barangay != NULL):
+                $barangay = ($barangay == null ? "Poblacion" : $barangay);
+                if ($barangay != null):
                     $barangay_id = $processAdmission->setBarangay(trim(preg_replace('/\s+/', ' ', $barangay)));
                 else:
                     $barangay_id = 0;
                 endif;
-                if ($street == NULL):
+                if ($street == null):
                     $street = '';
                 endif;
                 $city = Modules::run('main/getCities', trim(preg_replace('/\s+/', ' ', $mun_city)));
-                if ($postal_code == NULL):
+                if ($postal_code == null):
                     $postal_code = 0;
                 endif;
                 $add = array(
@@ -2619,7 +2627,7 @@ class reports extends MX_Controller
 
                     $guardian_id = $processAdmission->saveProfile($guardian);
 
-                    //$processAdmission->setParentsPro($profile_id, $guardian_id,0, 1, $this->input->post('relationship')); 
+                    //$processAdmission->setParentsPro($profile_id, $guardian_id,0, 1, $this->input->post('relationship'));
 
                     $processAdmission->setContacts($g_mobile, '', $guardian_id);
                 else:
@@ -2653,10 +2661,10 @@ class reports extends MX_Controller
                 );
 
                 $mother_id = $processAdmission->saveProfile($mother);
-                if ($f_office_name == NULL):
+                if ($f_office_name == null):
                     $f_office_name = '';
                 endif;
-                if ($m_office_name == NULL):
+                if ($m_office_name == null):
                     $m_office_name = '';
                 endif;
 
@@ -2694,7 +2702,7 @@ class reports extends MX_Controller
         $data['error'] = ''; //initialize image upload error array to empty
 
         $config['upload_path'] = 'uploads';
-        $config['overwrite'] = TRUE;
+        $config['overwrite'] = true;
         $config['allowed_types'] = '*';
         $config['max_size'] = '5000';
 
@@ -2756,7 +2764,7 @@ class reports extends MX_Controller
         }
     }
 
-    function getEDate($date)
+    public function getEDate($date)
     {
         $unixdate = ($date - 25569) * 86400;
         $en_date = gmdate('Y-m-d', ($unixdate));
@@ -2770,7 +2778,7 @@ class reports extends MX_Controller
         return $conduct;
     }
 
-    function saveconduct($st_id, $rating, $term, $school_year)
+    public function saveconduct($st_id, $rating, $term, $school_year)
     {
         switch ($term) {
             case 1:
@@ -2800,7 +2808,7 @@ class reports extends MX_Controller
         endif;
     }
 
-    function sbeMsg($name)
+    public function sbeMsg($name)
     {
         switch ($name):
             case 'csfl':
@@ -2830,18 +2838,18 @@ class reports extends MX_Controller
         endswitch;
     }
 
-    function getBhGroup($id, $bhid = NULL, $dept_id = NULL)
+    public function getBhGroup($id, $bhid = null, $dept_id = null)
     {
         return $this->reports_model->getBhGroup($id, $bhid, $dept_id);
     }
 
 
-    function getStudentStat($id)
+    public function getStudentStat($id)
     {
         return $this->reports_model->getStudentStat($id);
     }
 
-    function getCoreValues()
+    public function getCoreValues()
     {
         return $this->reports_model->getCoreValues();
     }

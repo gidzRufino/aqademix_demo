@@ -1,123 +1,281 @@
-
-<div class="row-fluid"  id="pagination-table" >
-    <div class="col-lg-6">
-        <?php
-        echo $links;
-        ?>
-    </div>
-    <div class="form-group col-lg-4 pull-right" id='searchBox' style="margin:20px 0;">
-        <div class="controls">
-            <input autocomplete="off"  class="form-control" onkeypress="if (event.keyCode==13) searchTeacher(this.value)"  name="searchTeacher" type="text" id="searchTeacher" placeholder="Search Teacher's Family Name" required>
-            <input type="hidden" id="teacher_id" name="teacher_id" value="0" />
+<div class="col-lg-12">
+    <!-- ===== Pagination + Search Row ===== -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div id="links">
+            <?= $links; ?>
         </div>
-        <div style="min-height: 30px; background: #FFF; width:230px; position:absolute; z-index: 2000; display: none;" class="resultOverflow" id="teacherSearch">
 
+        <div class="search-wrapper">
+            <input type="text"
+                class="form-control"
+                placeholder="Search Employee"
+                id="searchEmployee"
+                onkeyup="searchTeacher(this.value)">
+            <button type="button"
+                class="search-btn"
+                onclick="searchTeacher(document.getElementById('searchEmployee').value)">
+                <i class="fa fa-search"></i>
+            </button>
         </div>
     </div>
-    <table style="font-size: 12px;" class="table table-striped table-bordered">
-        <tr>
-            <td></td>
-            <td>USER ID</td>
-            <td>LAST NAME</td>
-            <td>FIRST NAME</td>
-            <td>MIDDLE NAME</td>
-            <td>POSITION</td>
-            <td>STATUS</td>
-            <?php if ($this->session->userdata('is_admin') && $this->session->position != "Cashier"): ?>
-                <td>PW</td>
-                <td>Action</td>
-            <?php endif; ?>
-        </tr>
 
-        <tbody  id="tableDetails">
-            <?php
-            //print_r($employee);
-            foreach ($employee as $s) {
-                //echo $s->isActive;
-                ?>
-
-
-                <tr>
-                    <!-- <td style="width:60px; text-align: center;"><img class="img-circle" style="width:50px;" src="<?php// echo base_url() . 'uploads/' . ($s->avatar == "" ? 'noImage.png' : $s->avatar) ?>" /></td> -->
-                    <td style="width:60px; text-align: center;">
-                        <?php if($s->avatar != ''): 
-                            if (file_exists('uploads/'.$s->avatar)):
-                            ?>
-                                <img class="img-circle" style="width:50px;" src="<?php echo base_url().'uploads/'.$s->avatar  ?>" />
-                            <?php else: ?>
-                                <img class="img-circle" style="width:50px;" src="<?php echo base_url(). 'images/avatar/' . ($s->sex == 'Female' ? 'female.png' : 'male.png')  ?>" />
+    <!-- ===== Employee Table Card ===== -->
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0 position-relative" style="overflow: visible;">
+            <div class="table-responsive" id="employeeTable" style="overflow: visible;">
+                <table class="table table-hover align-middle mb-0" style="font-size:14px;">
+                    <thead class="table-light text-center">
+                        <tr>
+                            <th>Employee</th>
+                            <th>Employee ID</th>
+                            <th>Position</th>
+                            <th>Status</th>
+                            <?php if ($this->session->userdata('is_admin') && $this->session->position != "Cashier"): ?>
+                                <th>PW</th>
+                                <th style="min-width:180px;">Actions</th>
                             <?php endif; ?>
-                        <?php else: ?>
-                            <img class="img-circle" style="width:50px;" src="<?php echo base_url(). 'images/avatar/' . ($s->sex == 'Female' ? 'female.png' : 'male.png')  ?>" />
-                        <?php endif; ?>
-                    </td>
-                    <td><a href='<?php echo base_url('hr/viewTeacherInfo/' . base64_encode($s->uid)) ?>'><?php echo $s->uid; ?></a></td>
-                    <td><?php echo strtoupper($s->lastname); ?></td>
-                    <td><?php echo strtoupper($s->firstname); ?></td>
-                    <td><?php echo strtoupper($s->middlename); ?></td>
-                    <td><?php echo $s->position; ?></td>
-                    <td style="text-align: center; padding-top: 10px">
-                        <?php if ($s->isActive == 1): ?>
-                            <span class="badge badge-pill badge-light nowrap clickover pointer" style="cursor: pointer; background-color: green;" rel="clickover"
-                                  data-content="
-                                  <?php
-                                  $data['eStat'] = $s->isActive;
-                                  $data['eid'] = $s->employee_id;
-                                  $this->load->view('emStatus', $data)
-                                  ?>">
-                                <i class="fa fa-check-circle" title="Active"></i>  Active
-                            </span>
-                        <?php elseif ($s->isActive == 2): ?>
-                            <span class="badge badge-pill badge-light nowrap clickover pointer" style="cursor: pointer; background-color: darkorange;" rel="clickover"
-                                  data-content="
-                                  <?php
-                                  $data['eStat'] = $s->isActive;
-                                  $data['eid'] = $s->employee_id;
-                                  $this->load->view('emStatus', $data)
-                                  ?>">
-                                <i class="fa fa-exclamation-circle" title="Suspended"></i> Suspended
-                            </span>
-                        <?php elseif ($s->isActive == 3): ?>
-                            <span class="badge badge-pill badge-light nowrap clickover pointer" style="cursor: pointer; background-color: red;" rel="clickover"
-                                  data-content="
-                                  <?php
-                                  $data['eStat'] = $s->isActive;
-                                  $data['eid'] = $s->employee_id;
-                                  $this->load->view('emStatus', $data)
-                                  ?>">
-                                <i class="fa fa-times-circle" title="Resigned"></i> Resigned
-                            </span>
-                        <?php else: ?>
-                            <span class="badge badge-pill badge-light nowrap clickover pointer" style="cursor: pointer; background-color: gray;" rel="clickover"
-                                  data-content="
-                                  <?php
-                                  $data['eStat'] = $s->isActive;
-                                  $data['eid'] = $s->employee_id;
-                                  $this->load->view('emStatus', $data)
-                                  ?>">
-                                <i class="fa fa-minus-circle" title="Deactivated"></i> Deactivated
-                            </span>
-                        <?php endif; ?>
+                        </tr>
+                    </thead>
+                    <tbody id="tableDetails">
+                        <?php foreach ($employee as $s):
+                            $name = strtoupper($s->firstname . ' ' . $s->middlename . ' ' . $s->lastname);
+                            $avatar = ($s->avatar && file_exists('uploads/' . $s->avatar))
+                                ? 'uploads/' . $s->avatar
+                                : 'images/avatar/' . ($s->sex == 'Female' ? 'female.png' : 'male.png');
 
+                            $statusColors = [1 => 'success', 2 => 'warning', 3 => 'danger', 0 => 'secondary'];
+                            $statusIcons = [1 => 'fa-check-circle', 2 => 'fa-exclamation-circle', 3 => 'fa-times-circle', 0 => 'fa-minus-circle'];
+                            $statusText = [1 => 'Active', 2 => 'Suspended', 3 => 'Resigned', 0 => 'Deactivated'];
+                            $color = $statusColors[$s->isActive];
+                            $icon = $statusIcons[$s->isActive];
+                            $text = $statusText[$s->isActive];
+                        ?>
+                            <tr class="table-row-hover shadow-sm rounded mb-2">
+                                <!-- Employee Column (Avatar + Name) -->
+                                <td class="text-start">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <img src="<?= base_url($avatar) ?>" class="rounded-circle border" style="width:48px;height:48px;object-fit:cover;">
+                                        <div>
+                                            <div class="fw-semibold" style="cursor:pointer"
+                                                onclick="document.location='<?= base_url('hr/viewTeacherInfo/' . base64_encode($s->uid) . '/' . base64_encode($s->user_id)) ?>'">
+                                                <?= strtoupper($s->lastname) ?>,
+                                            </div>
+                                            <small class="text-muted"><?= strtoupper($s->firstname . ' ' . $s->middlename) ?></small>
+                                        </div>
+                                    </div>
+                                </td>
 
-                    </td>
+                                <!-- User ID -->
+                                <td class="text-center">
+                                    <a class="fw-semibold text-decoration-none" href="<?= base_url('hr/viewTeacherInfo/' . base64_encode($s->uid)) ?>">
+                                        <?= $s->uid ?>
+                                    </a>
+                                </td>
 
-                    <?php if ($this->session->userdata('is_admin') && $this->session->position != "Cashier") { ?>
-                        <td><?php echo $s->secret_key; ?></td>
-                        <td>
-                            <?php if ($s->rfid == "" || $s->rfid == "NULL"): ?>
-                                <a href="#addId" data-toggle="modal"  onclick="showAddRFIDForm('<?php echo $s->user_id ?>', 'RFID', '<?php echo $s->uid ?>')" >Add RFID</a>
-                            <?php else: ?>
-                                <a href="#addId" data-toggle="modal"   onclick="showAddRFIDForm('<?php echo $s->user_id ?>', '<?php echo $s->rfid ?>', '<?php echo $s->uid ?>')" >Edit RFID</a>
-                            <?php endif; ?>
-                            <a href="<?php echo base_url('hr/viewTeacherInfo/' . base64_encode($s->uid)) ?>#dtr">View DTR</a>
-                            <a href="#" onclick="deleteEmployee('<?php echo $s->user_id ?>', '<?php echo $s->employee_id ?>')">Delete Employee</a>
-                        </td>
-                    <?php } ?>
-                </tr> 
-                <?php
-            }
-            ?>
-        </tbody>
-    </table>
+                                <!-- Position -->
+                                <td class="text-center align-middle col-position">
+                                    <span class="badge bg-primary-subtle text-primary">
+                                        <?= $s->position ?>
+                                    </span>
+                                </td>
+
+                                <!-- Status -->
+                                <td class="text-center align-middle col-status">
+                                    <div class="dropend">
+                                        <span class="badge bg-<?= $color ?> dropdown-toggle"
+                                            id="statusDropdown<?= $s->employee_id ?>"
+                                            data-bs-toggle="dropdown"
+                                            data-bs-display="static"
+                                            aria-expanded="false"
+                                            style="cursor:pointer;">
+                                            <i class="fa <?= $icon ?>"></i> <?= $text ?>
+                                        </span>
+
+                                        <ul class="dropdown-menu shadow"
+                                            aria-labelledby="statusDropdown<?= $s->employee_id ?>">
+                                            <li><a class="dropdown-item" href="#" onclick="updateEmployeeStatus('<?= $s->employee_id ?>',1)">Active</a></li>
+                                            <li><a class="dropdown-item" href="#" onclick="updateEmployeeStatus('<?= $s->employee_id ?>',2)">Suspended</a></li>
+                                            <li><a class="dropdown-item" href="#" onclick="updateEmployeeStatus('<?= $s->employee_id ?>',3)">Resigned</a></li>
+                                            <li><a class="dropdown-item" href="#" onclick="updateEmployeeStatus('<?= $s->employee_id ?>',0)">Deactivated</a></li>
+                                        </ul>
+                                    </div>
+                                </td>
+
+                                <?php if ($this->session->userdata('is_admin') && $this->session->position != "Cashier"): ?>
+                                    <!-- ===== PASSWORD COLUMN ===== -->
+                                    <td class="text-center align-middle col-password">
+                                        <span id="pw_mask_<?= $s->employee_id ?>"
+                                            class="badge bg-secondary"
+                                            style="cursor:pointer;"
+                                            onclick="togglePassword('<?= $s->employee_id ?>')">
+                                            ••••••••
+                                        </span>
+
+                                        <span id="pw_real_<?= $s->employee_id ?>"
+                                            class="badge bg-dark d-none"
+                                            style="cursor:pointer;"
+                                            onclick="togglePassword('<?= $s->employee_id ?>')">
+                                            <?= $s->secret_key ?>
+                                        </span>
+                                    </td>
+
+                                    <!-- ===== ACTIONS COLUMN ===== -->
+                                    <td class="text-center align-middle" style="min-width:200px;">
+                                        <div class="d-flex justify-content-center gap-2 flex-wrap">
+                                            <?php if ($s->rfid == "" || $s->rfid == "NULL"): ?>
+                                                <button class="btn btn-sm btn-light border text-primary rounded-pill px-3"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#addId"
+                                                    onclick="showAddRFIDForm('<?= $s->user_id ?>','RFID','<?= $name ?>')">
+                                                    <i class="fa fa-id-card me-1"></i> RFID
+                                                </button>
+                                            <?php else: ?>
+                                                <button class="btn btn-sm btn-light border text-secondary rounded-pill px-3"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#addId"
+                                                    onclick="showAddRFIDForm('<?= $s->user_id ?>','<?= $s->rfid ?>','<?= $name ?>')">
+                                                    <i class="fa fa-edit me-1"></i> RFID
+                                                </button>
+                                            <?php endif; ?>
+
+                                            <button class="btn btn-sm btn-light border text-danger rounded-pill px-3"
+                                                onclick="deleteEmployee('<?= $s->user_id ?>','<?= $s->employee_id ?>')">
+                                                <i class="fa fa-trash me-1"></i> Delete
+                                            </button>
+
+                                        </div>
+                                    </td>
+
+                                <?php endif; ?>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Pagination -->
+    <div class="d-flex justify-content-center mt-3">
+        <?= $links ?>
+    </div>
 </div>
+
+<!-- ===== Custom CSS ===== -->
+<style>
+    .table-row-hover:hover {
+        background-color: #f8f9fa !important;
+        transition: all 0.2s ease-in-out;
+        transform: translateY(-2px);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .table thead th {
+        vertical-align: middle;
+    }
+
+    /* Ensure dropdown appears above table rows */
+    .table-responsive,
+    .card-body {
+        overflow: visible !important;
+    }
+
+    .dropdown-menu {
+        z-index: 1055;
+        /* higher than table rows */
+        position: absolute !important;
+    }
+
+    .col-position {
+        font-size: 1rem;
+    }
+
+    .col-status {
+        font-size: 1rem;
+    }
+
+    .col-password {
+        font-size: 1rem;
+    }
+
+    .search-group .form-control,
+    .search-group .btn {
+        height: 38px;
+    }
+
+    .search-group .btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .input-group>.form-control,
+    .input-group>.btn {
+        height: 38px;
+    }
+
+    .input-group>.btn {
+        line-height: 1;
+    }
+
+    .search-wrapper {
+        position: relative;
+        width: 260px;
+        flex: 0 0 260px;
+        /* prevents it from affecting table width */
+    }
+
+    .search-wrapper .form-control {
+        height: 38px;
+        padding-right: 40px;
+        border-radius: 50px;
+    }
+
+    .search-wrapper .search-btn {
+        position: absolute;
+        top: 50%;
+        right: 6px;
+        transform: translateY(-50%);
+        height: 30px;
+        width: 30px;
+        border: none;
+        background: transparent;
+        color: #6c757d;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+    }
+
+    .table-responsive {
+        width: 100%;
+    }
+
+    .search-wrapper .search-btn:hover {
+        background: #f1f1f1;
+        color: #000;
+    }
+
+    .action-group {
+        display: inline-flex;
+        gap: 6px;
+    }
+
+    .action-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+        background: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all .2s ease;
+    }
+
+    .action-btn:hover {
+        background: #f8f9fa;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, .08);
+    }
+</style>

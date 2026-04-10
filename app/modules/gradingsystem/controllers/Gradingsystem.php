@@ -20,6 +20,7 @@ class gradingsystem extends MX_Controller
         $this->load->library('Pdf');
         $this->load->library('csvimport');
         $this->load->library('csvreader');
+        $this->load->library('pagination');
         $this->load->dbutil();
         $this->load->helper('file');
         $this->load->model('gradingsystem_model');
@@ -992,24 +993,64 @@ class gradingsystem extends MX_Controller
             $this->load->view('observed_values', $data);
         }
 
-        public function gs_settings()
-        {
+    public function gs_settings($offset = 0)
+    {
+        $settings = Modules::run('main/getSet');
 
-            $settings = Modules::run('main/getSet');
-            $data['short_name'] = strtolower($settings->short_name);
-            $data['category'] = $this->gradingsystem_model->getAssessCategoryWithoutPreTest();
-            $data['gs_settings'] = $this->gradingsystem_model->getSettings($this->session->userdata('school_year'));
+        $data['short_name'] = strtolower($settings->short_name);
+        $data['category'] = $this->gradingsystem_model->getAssessCategoryWithoutPreTest();
+        $data['gs_settings'] = $this->gradingsystem_model->getSettings($this->session->userdata('school_year'));
 
-            if ($data['gs_settings']->customized):
-                $data['subjects'] = Modules::run('academic/getSubjects');
-                $data['components'] = $this->gradingsystem_model->getComponents();
-                $this->load->view(strtolower($settings->short_name) . '_gs_settings', $data);
-            else:
-                $data['subjects'] = Modules::run('academic/getSubjects');
-                $data['components'] = $this->gradingsystem_model->getComponents();
-                $this->load->view('gs_settings', $data);
-            endif;
-        }
+
+        $result = $this->gradingsystem_model->getSubjects();
+
+        $config['base_url'] = base_url('gradingsystem/gs_settings');
+        $config['total_rows'] = $result->num_rows();
+        $config['per_page'] = 10;
+
+        // 🔥 VERY IMPORTANT
+        $config['uri_segment'] = 3;
+
+        // 🔥 Bootstrap 5 styling
+        $config['full_tag_open'] = '<nav><ul class="pagination justify-content-end mb-0">';
+        $config['full_tag_close'] = '</ul></nav>';
+
+        $config['first_link'] = 'First';
+        $config['first_tag_open'] = '<li class="page-item">';
+        $config['first_tag_close'] = '</li>';
+
+        $config['last_link'] = 'Last';
+        $config['last_tag_open'] = '<li class="page-item">';
+        $config['last_tag_close'] = '</li>';
+
+        $config['prev_link'] = '&laquo;';
+        $config['prev_tag_open'] = '<li class="page-item">';
+        $config['prev_tag_close'] = '</li>';
+
+        $config['next_link'] = '&raquo;';
+        $config['next_tag_open'] = '<li class="page-item">';
+        $config['next_tag_close'] = '</li>';
+
+        $config['num_tag_open'] = '<li class="page-item">';
+        $config['num_tag_close'] = '</li>';
+
+        $config['cur_tag_open'] = '<li class="page-item active"><a class="page-link" href="#">';
+        $config['cur_tag_close'] = '</a></li>';
+
+        $config['attributes'] = ['class' => 'page-link'];
+
+        $this->pagination->initialize($config);
+
+        // ✅ USE OFFSET HERE
+        $search = $this->input->get('search');
+        $subjects = $this->gradingsystem_model->getSubjects($config['per_page'], $offset, $search);
+
+        $data['links'] = $this->pagination->create_links();
+        $data['subjects'] = $subjects->result();
+        $data['components'] = $this->gradingsystem_model->getComponents();
+
+        $this->load->view('gs_settings', $data);
+    }
 
         public function settings()
         {
@@ -2321,4 +2362,11 @@ class gradingsystem extends MX_Controller
             $data['term'] = $term;
             $this->load->view('forms/scores', $data);
         }
+
+    function deleteSubject()
+    {
+        $id = $this->input->post('subject_id');
+        $q = $this->gradingsystem_model->deleteSubject($id);
+        echo json_encode($q ? array('status' => TRUE, 'msg' => 'Subject Successfuly Deleted') : array('status' => FALSE, 'msg' => 'An Error Occured'));
+    }
     }

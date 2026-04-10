@@ -381,6 +381,7 @@ class search_model extends CI_Model
         $db_details->select('profile_students.st_id as uid');
         $db_details->select('profile_students.parent_id as pid');
         $db_details->select('profile.user_id as u_id');
+        $db_details->select('profile_students_admission.user_id as psid');
         // $db_details->select('lastname');
         // $db_details->select('firstname');
         // $db_details->select('middlename');

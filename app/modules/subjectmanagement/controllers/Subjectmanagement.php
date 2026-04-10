@@ -36,11 +36,11 @@ class subjectmanagement extends MX_Controller {
         $status = $this->subjectmanagement_model->addSubject($subject, $subjectArray);
         
         if($status==1):
-            echo 'Successfully Added';
+            echo json_encode(array('status' => TRUE, 'msg' => 'Successfully Added'));
         elseif($status==2):
-            echo 'This subject already exist';
-        else:    
-            echo 'Sorry Something Went Wrong';
+            echo json_encode(array('status' => FALSE, 'msg' => 'This subject already exist'));
+        else:
+            echo json_encode(array('status' => FALSE, 'msg' => 'Sorry Something Went Wrong'));
         endif;
     }
 
@@ -76,7 +76,33 @@ class subjectmanagement extends MX_Controller {
             $this->subjectmanagement_model->updateSHstrand($strand->st_id, $details);
         }
     }
-    
+
+    function addStrand()
+    {
+        $data = $this->input->post();
+        $q = $this->subjectmanagement_model->addStrand($data);
+        echo json_encode($q ? array('status' => TRUE, 'msg' => 'Strand Successfuly Added') : array('status' => FALSE, 'msg' => 'Unable to add Strand. An Error Occured'));
+    }
+
+    function updateSHStrand()
+    {
+        $data = $this->input->post();
+        $id = $data['st_id'];
+        $q = $this->subjectmanagement_model->updateSHstrand($id, $data);
+        echo json_encode($q ? array('status' => TRUE, 'msg' => 'Strand Successfuly Updated') : array('status' => FALSE, 'msg' => 'Toggle Error'));
+    }
+
+    function deleteStrand($id)
+    {
+        $r = $this->subjectmanagement_model->deleteStrand($id);
+        echo json_encode($r ? array('status' => TRUE, 'msg' => 'Successfuly Deleted') : array('status' => FALSE, 'msg' => 'Delete Strand Failed!'));
+    }
+
+    function getAllStrands()
+    {
+        return $this->subjectmanagement_model->getSHStrands();
+    }
+
     function seniorHighModal()
     {
         $data['strands'] = $this->subjectmanagement_model->getSHStrands();
@@ -186,30 +212,55 @@ class subjectmanagement extends MX_Controller {
         $config['base_url'] = base_url('subjectmanagement/listOfSubjects');
         $config['total_rows'] = $result->num_rows();
         $config['per_page'] = 10;
-        $config['full_tag_open'] = '<ul class="pagination" style="margin:0;">';
-        $config['full_tag_close'] = '</ul>';
-        $config['first_tag_open'] = '<li>';
+
+        // 🔥 Bootstrap 5 Pagination Wrapper
+        $config['full_tag_open'] = '<nav><ul class="pagination justify-content-end mb-0">';
+        $config['full_tag_close'] = '</ul></nav>';
+
+        // 🔥 First
+        $config['first_link'] = 'First';
+        $config['first_tag_open'] = '<li class="page-item">';
         $config['first_tag_close'] = '</li>';
-        $config['prev_tag_open'] = '<li>';
-        $config['prev_tag_close'] = '</li>';
-        $config['next_tag_open'] = '<li>';
-        $config['next_tag_close'] = '</li>';
-        $config['last_tag_open'] = '<li>';
+
+        // 🔥 Last
+        $config['last_link'] = 'Last';
+        $config['last_tag_open'] = '<li class="page-item">';
         $config['last_tag_close'] = '</li>';
-        $config['num_tag_open'] = '<li>';
+
+        // 🔥 Prev
+        $config['prev_link'] = '&laquo;';
+        $config['prev_tag_open'] = '<li class="page-item">';
+        $config['prev_tag_close'] = '</li>';
+
+        // 🔥 Next
+        $config['next_link'] = '&raquo;';
+        $config['next_tag_open'] = '<li class="page-item">';
+        $config['next_tag_close'] = '</li>';
+
+        // 🔥 Number Links
+        $config['num_tag_open'] = '<li class="page-item">';
         $config['num_tag_close'] = '</li>';
-        $config['cur_tag_open'] = '<li class="active"><a href="#">';
+
+        // 🔥 Active Page
+        $config['cur_tag_open'] = '<li class="page-item active"><a class="page-link" href="#">';
         $config['cur_tag_close'] = '</a></li>';
-        
+
+        // 🔥 Links
+        $config['attributes'] = array('class' => 'page-link');
+
+        // Optional nice spacing
+        $config['reuse_query_string'] = TRUE;
+
         $this->pagination->initialize($config);
         
         $page = $this->subjectmanagement_model->getSubjects($config['per_page'], $this->uri->segment(3));
         $data['links'] = $this->pagination->create_links();
         $data['subjects'] = $page->result();
-        $data['main_content']   = 'listOfSubjects';
-        $data['modules']        = 'subjectmanagement';
-        
-        echo Modules::run('templates/main_content', $data);
+        $this->load->view('listOfSubjects', $data);
+        // $data['main_content']   = 'listOfSubjects';
+        // $data['modules']        = 'subjectmanagement';
+
+        // echo Modules::run('templates/main_content', $data);
     }
     
     
@@ -315,10 +366,42 @@ class subjectmanagement extends MX_Controller {
         return $dept;
     }
 
+    function getDeptByID($id)
+    {
+        return $this->subjectmanagement_model->getDeptByID($id);
+    }
+
     function checkSubjectSettings($id) {
         return $this->subjectmanagement_model->checkSubjectSettings($id);
     }
-    
-    
+
+    function saveOrder()
+    {
+        $order = $this->input->post('order');
+        $grade_id = $this->input->post('grade_id');
+
+        if (!empty($order)) {
+
+            foreach ($order as $item) {
+
+                $this->subjectmanagement_model->updatePosition(
+                    $item['id'],
+                    $item['position'],
+                    $grade_id
+                );
+            }
+
+            echo json_encode([
+                'status' => true,
+                'message' => 'Order updated successfully'
+            ]);
+        } else {
+
+            echo json_encode([
+                'status' => false,
+                'message' => 'No data received'
+            ]);
+        }
+    }
 }
 

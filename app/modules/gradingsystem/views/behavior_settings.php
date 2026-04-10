@@ -7,99 +7,129 @@ foreach ($coreValues as $cv):
     endif;
 endforeach;
 ?>
-<div class="col-lg-12">
-    <div class="panel panel-green">
-        <div class="panel-heading clearfix">
-            <h4>Observed Values and Behavioral Statements
-                <i onclick="$('#addCoreValues').modal('show'), $('#opt').val(1), $('#inputCore').val('')"class="pull-right pointer fa fa-2x fa-plus"></i>
-            </h4>
-            <i class="fa fa-info-circle"></i> Right click on each Values or Statements to view options.
+<div class="col-12 mb-4">
+    <div class="card shadow-sm border-0">
+        <div class="card-header d-flex justify-content-between align-items-center bg-white">
+            <h5 class="mb-0 text-dark">
+                Observed Values & Behavioral Statements
+                <small class="text-muted d-block">Right click or click the options icon to manage values/statements</small>
+            </h5>
+            <button class="btn btn-sm btn-outline-success" onclick="$('#addCoreValues').modal('show'); $('#opt').val(1); $('#inputCore').val('')">
+                <i class="fa fa-plus"></i> Add Value
+            </button>
         </div>
-        <div class="panel-body">
-            <table class="table table-bordered" id="ovAndbs">
-                <tr>
-                    <?php if ($isSub > 0): ?>
-                    <th style="width: 40%">Observed Values</th>
-                    <th >Behavioral Statements</th>
-                    <?php else: ?>
-                        <th>Observed Values</th>
-                    <?php endif; ?>
-                </tr>
-                <?php 
-                foreach ($coreValues as $cv):
-                    $bStatements = Modules::run('gradingsystem/getListOfValues', $cv->core_id);
-                    //count($bStatements->result());
-                ?>
-                <tr>
-                    <td style="vertical-align: middle; text-align: left;" data-toggle="context" data-target="#editValues" onmouseover="$('#core_id').val('<?php echo $cv->core_id ?>'), $('#bStatement').text('<?php echo $cv->core_values ?>', $('#inputCore').val('<?php echo $cv->core_values ?>'))">
-                        <?php echo $cv->core_values; ?>
-                    </td>
-                    <?php if ($isSub > 0): ?>
-                    <td>
-                        <!-- <table class="table table-bordered"> -->
-                        <ul>
-                        <?php foreach ($bStatements->result() as $bs): 
-                            ?>
-                            <!-- <tr>
-                                <td style="vertical-align: middle; text-align: left;"> -->
-                                <li data-toggle="context" data-target="#editBS" onmouseover="$('#bh_id').val('<?php echo $bs->bh_id ?>'), $('#addEditBS').text('Edit Behavioral Statement'), $('#inputBS').val('<?php echo $bs->bh_name; ?>')">
-                                    <?php echo $bs->bh_name; ?>
-                                </li>
-                            <!--     </td>
-                            </tr> -->
+        <div class="card-body p-3">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle" id="ovAndbs">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 40%">Observed Values</th>
+                            <?php if ($isSub > 0): ?>
+                                <th>Behavioral Statements</th>
+                            <?php endif; ?>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($coreValues as $cv):
+                            $bStatements = Modules::run('gradingsystem/getListOfValues', $cv->core_id);
+                        ?>
+                            <tr class="align-top">
+                                <td class="text-dark fw-semibold"
+                                    data-bs-toggle="tooltip" data-bs-placement="top" title="Right click for options"
+                                    onmouseover="$('#core_id').val('<?php echo $cv->core_id ?>'), $('#inputCore').val('<?php echo $cv->core_values ?>')">
+                                    <?php echo $cv->core_values; ?>
+                                    <div class="dropdown float-end">
+                                        <a class="text-secondary" href="#" role="button" id="cvOptions<?php echo $cv->core_id ?>" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <i class="fas fa-ellipsis-v"></i>
+                                        </a>
+                                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="cvOptions<?php echo $cv->core_id ?>">
+                                            <li><a class="dropdown-item" href="#" onclick="$('#addBS').modal('show'); $('#opt').val(1);"><i class="fa fa-plus fa-fw"></i> Add Behavioral Statement</a></li>
+                                            <li><a class="dropdown-item" href="#" onclick="$('#addCoreValues').modal('show'); $('#addEditCV').text('Edit Observed Values'); $('#opt').val(2)"><i class="fa fa-edit fa-fw"></i> Edit Observed Value</a></li>
+                                            <li><a class="dropdown-item text-danger" href="#" onclick="deleteValues(1)"><i class="fa fa-trash fa-fw"></i> Remove Observed Value</a></li>
+                                        </ul>
+                                    </div>
+                                </td>
+                                <?php if ($isSub > 0): ?>
+                                    <td>
+                                        <ul class="list-group list-group-flush">
+                                            <?php foreach ($bStatements->result() as $bs): ?>
+                                                <li class="list-group-item d-flex justify-content-between align-items-center py-2"
+                                                    onmouseover="$('#bh_id').val('<?php echo $bs->bh_id ?>'); $('#inputBS').val('<?php echo $bs->bh_name ?>'); $('#addEditBS').text('Edit Behavioral Statement')">
+                                                    <?php echo $bs->bh_name; ?>
+                                                    <div class="dropdown">
+                                                        <a class="text-secondary" href="#" role="button" id="bsOptions<?php echo $bs->bh_id ?>" data-bs-toggle="dropdown" aria-expanded="false">
+                                                            <i class="fas fa-ellipsis-h"></i>
+                                                        </a>
+                                                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="bsOptions<?php echo $bs->bh_id ?>">
+                                                            <li><a class="dropdown-item" href="#" onclick="$('#opt').val(2); $('#addBS').modal('show');"><i class="fa fa-edit fa-fw"></i> Edit</a></li>
+                                                            <li><a class="dropdown-item text-danger" href="#" onclick="deleteValues(2)"><i class="fa fa-trash fa-fw"></i> Remove</a></li>
+                                                        </ul>
+                                                    </div>
+                                                </li>
+                                            <?php endforeach; ?>
+                                        </ul>
+                                    </td>
+                                <?php endif; ?>
+                            </tr>
                         <?php endforeach; ?>
-                        </ul>
-                        <!-- </table> -->
-                    </td>
-                    <?php endif; ?>
-                </tr>    
-                    
-                <?php
-                endforeach;
-            ?>
-                
-            </table>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
-<div id="addCoreValues" style="width:500px; margin: 10px auto 0;" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-    <div class="panel panel-green">
-        <div class="panel-heading">
-            <h4 id="addEditCV">Add Observed Values </h4>
+
+<!-- Modal: Add/Edit Core Value -->
+<div class="modal fade" id="addCoreValues" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-sm">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="addEditCV">Add Observed Value</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="text" class="form-control mb-3" id="inputCore" placeholder="Enter Observed Value">
+                <div class="d-flex justify-content-end gap-2">
+                    <button class="btn btn-success" onclick="addBh()">Save</button>
+                    <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </div>
         </div>
-        <div class="panel-body">
-            <input type="text" class="form-control" name="inputCore" id="inputCore" placeholder="Enter Observed Values" /><br />
-            <button onclick="addBh()" class="btn btn-success btn-sm pull-right">Save</button>
-            <button type="button" data-dismiss="modal" class="btn btn-warning btn-sm pull-right">Cancel</button>
-        </div>
-    </div>    
+    </div>
 </div>
-<div id="addBS" style="width:500px; margin: 10px auto 0;" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-    <div class="panel panel-green">
-        <div class="panel-heading">
-            <h4 id="addEditBS">Add Behavioral Statements to <br/><b id="bStatement"></b></h4>
+
+<!-- Modal: Add/Edit Behavioral Statement -->
+<div class="modal fade" id="addBS" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-sm">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="addEditBS">Add Behavioral Statement <br /><b id="bStatement"></b></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="text" class="form-control mb-3" id="inputBS" placeholder="Enter Behavioral Statement">
+                <div class="d-flex justify-content-end gap-2">
+                    <button class="btn btn-success" onclick="addBehavioralStatement()">Save</button>
+                    <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </div>
         </div>
-        <div class="panel-body">
-            <input type="text" class="form-control" name="inputBS" id="inputBS" placeholder="Enter Behavioral Statement" /><br />
-            <button onclick="addBehavioralStatement()" class="btn btn-success btn-sm pull-right">Save</button>
-            <button type="button" data-dismiss="modal" class="btn btn-warning btn-sm pull-right">Cancel</button>
-        </div>
-    </div>    
+    </div>
 </div>
 <div id="editValues">
     <ul class="dropdown-menu" role="menu">
-       <li class="pointer"><a onclick="$('#addBS').modal('show'), $('#opt').val(1)"><i class="fa fa-plus fa-fw"></i> Add Behavioral Statements</a></li>
-       <li class="divider"></li>
-       <li class="pointer"><a onclick="$('#addCoreValues').modal('show'), $('#addEditCV').text('Edit Observed Values'), $('#opt').val(2)"><i class="fa fa-edit fa-fw"></i> Edit Observed Values</a></li>
-       <li class="divider"></li>
-       <li onclick="deleteValues(1)" class="pointer"><a tabindex="-1"><i class="fa fa-trash fa-fw"></i> Remove Observed Values</a></li>
+        <li class="pointer"><a onclick="$('#addBS').modal('show'), $('#opt').val(1)"><i class="fa fa-plus fa-fw"></i> Add Behavioral Statements</a></li>
+        <li class="divider"></li>
+        <li class="pointer"><a onclick="$('#addCoreValues').modal('show'), $('#addEditCV').text('Edit Observed Values'), $('#opt').val(2)"><i class="fa fa-edit fa-fw"></i> Edit Observed Values</a></li>
+        <li class="divider"></li>
+        <li onclick="deleteValues(1)" class="pointer"><a tabindex="-1"><i class="fa fa-trash fa-fw"></i> Remove Observed Values</a></li>
     </ul>
 </div>
 <div id="editBS">
     <ul class="dropdown-menu" role="menu">
-       <li class="pointer"><a onclick="$('#opt').val(2), $('#addBS').modal('show')"><i class="fa fa-edit fa-fw"></i>Edit Behavioral Statements</a></li>
-       <li class="divider"></li>
-       <li onclick="deleteValues(2)" class="pointer"><a tabindex="-1"><i class="fa fa-trash fa-fw"></i>Remove Behavioral Statements</a></li>
+        <li class="pointer"><a onclick="$('#opt').val(2), $('#addBS').modal('show')"><i class="fa fa-edit fa-fw"></i>Edit Behavioral Statements</a></li>
+        <li class="divider"></li>
+        <li onclick="deleteValues(2)" class="pointer"><a tabindex="-1"><i class="fa fa-trash fa-fw"></i>Remove Behavioral Statements</a></li>
     </ul>
 </div>
 <input type="hidden" id="core_id" value="0" />
@@ -123,12 +153,12 @@ endforeach;
                 $.ajax({
                     type: 'GET',
                     url: '<?php echo base_url() . 'gradingsystem/displayObservedValues' ?>',
-                    success: function (data) {
+                    success: function(data) {
                         $('#ovAndbs').html(data);
                     }
                 })
             },
-            error: function () {
+            error: function() {
                 alert('An Error Occured!');
             }
         })
@@ -151,7 +181,7 @@ endforeach;
                 $.ajax({
                     type: 'GET',
                     url: '<?php echo base_url() . 'gradingsystem/displayObservedValues' ?>',
-                    success: function (data) {
+                    success: function(data) {
                         $('#ovAndbs').html(data);
                     }
                 })
@@ -168,12 +198,12 @@ endforeach;
             type: 'GET',
             url: url,
             dataType: 'json',
-            success: function (data){
+            success: function(data) {
                 alert(data.msg);
                 $.ajax({
                     type: 'GET',
                     url: '<?php echo base_url() . 'gradingsystem/displayObservedValues' ?>',
-                    success: function (data) {
+                    success: function(data) {
                         $('#ovAndbs').html(data);
                     }
                 })

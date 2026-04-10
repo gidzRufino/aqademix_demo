@@ -89,8 +89,8 @@ class Users extends MX_Controller {
         $sy = $this->input->post('sy');
 
         $this->users_model->editUserInfo(base64_decode($pk),base64_decode($table), $id, $column, $value,$sy);
-        
-        echo json_encode(array('status' => TRUE, 'msg' =>$value));
+
+        echo json_encode(array('status' => TRUE, 'msg' => $value));
     }
     
     function editProfileLevel()

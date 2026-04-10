@@ -1,114 +1,104 @@
-<div id="accessControls">
-    <div class="panel panel-green">
-        <div class="panel-heading">
-            <h5>Menu Access</h5>
-        </div>
-        <div class="panel-body">
-            <div class="col-lg-6">
-                        <h4 class="alert alert-success text-center">Assigned</h4>
-                    <div id="menu_accessAssigned" class="panel-body">
-                        <?php
-                        $menu = $positionAccess->menu_access; //this is taken from the template.php
-                        if($menu!=""){
-                        $item = explode(",", $menu);
-                            foreach ($item as $m){
-                                $menuItem = Modules::run('nav/getMenuAccess', $m);
-                             ?>
-                             <div style='cursor:pointer; margin-bottom:5px;' onclick='unAssignAccess("<?php echo $menuItem->menu_id?>", "menuAccess", "menu_access"), $(this).fadeOut(500)' class='alert alert-success alert-dismissable span11'>
-                                <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-                                <div id="un_<?php echo $menuItem->menu_id ?>_name" class="notify">
-                                   <?php echo $menuItem->menu_name; ?>
-                                </div>    
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+<div id="accessControls" class="container-fluid mt-4">
 
-                           </div>
-                            <?php
-                            }
-                        }
-                     ?>
-                    </div>
+    <div class="card border-0 shadow-sm rounded-4">
+
+        <!-- Header -->
+        <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+            <div class="fw-semibold">
+                <i class="fa-solid fa-shield-halved text-primary me-2"></i>
+                Menu Access Control
             </div>
-            <div class="col-lg-6">
-                <h4 class="alert alert-danger text-center">Unassigned</h4>
-                <div id="menu_accessUnAssigned" class="panel-body">
-                    <?php foreach ($menuAccess as $mnA){
-                        $menu = Modules::run('nav/getMenuDashAccess', $position_id, $mnA->menu_id, 'menu');
-                        if(!$menu){
-                             ?>
-                             <div id="<?php echo $mnA->menu_id ?>" column="menu_access" accessValue="menuAccess" onclick="assignAccess('<?php echo $mnA->menu_id?>', 'menuAccess', 'menu_access')" style='cursor:pointer; margin-bottom:5px;' class='alert alert-danger alert-dismissable span11'>
-                                 <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&DoubleLeftArrow;</button>
-                                <div id="<?php echo $mnA->menu_id ?>_name" class="notify">
-                                   <?php echo $mnA->menu_name; ?>
-                                </div>    
+
+            <span class="badge bg-primary-subtle text-primary" id="assignedCount">
+                <?= !empty($positionAccess->menu_access) ? count(explode(",", $positionAccess->menu_access)) : 0 ?> Enabled
+            </span>
+        </div>
+
+        <!-- Body -->
+        <div class="card-body custom-scroll">
+
+            <div class="row g-3">
+
+                <?php
+                $assigned = explode(',', $positionAccess->menu_access ?? '');
+                foreach ($menuAccess as $mnA):
+                    $isChecked = in_array($mnA->menu_id, $assigned);
+                ?>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="permission-card d-flex justify-content-between align-items-center p-3 mb-3 shadow-sm rounded-4"
+                            style="background: rgba(255,255,255,0.9); backdrop-filter: blur(6px); transition: all 0.3s ease;">
+
+                            <!-- Label -->
+                            <div class="d-flex align-items-center">
+                                <i class="fa fa-folder me-2 text-muted"></i>
+                                <span id="<?= $mnA->menu_id ?>_name"><?= $mnA->menu_name ?></span>
                             </div>
-                            <?php
-                         }
-                        }
-                     ?>
+
+                            <!-- Toggle Switch -->
+                            <div class="form-check form-switch m-0">
+                                <input type="checkbox"
+                                    class="form-check-input permission-toggle"
+                                    data-id="<?= $mnA->menu_id ?>"
+                                    <?= $isChecked ? 'checked' : '' ?>>
+                            </div>
+                        </div>
                     </div>
-                </div>
+                <?php endforeach; ?>
+
             </div>
+
         </div>
     </div>
-    <input type ="hidden" value="<?php echo $positionAccess->menu_access ?>" id="menuAccess" />
+
+    <input type="hidden" value="<?= $positionAccess->menu_access ?>" id="menuAccess">
+
 </div>
 
-<script type="text/javascript">
-    
-    function unAssignAccess(id, access, db_column)
-    {
-        var accessValue = $('#'+access).val();
-        var newValue = accessValue.replace(id+',',"");
-        if(newValue==accessValue){
-            newValue = accessValue.replace(','+id,"");
-            if(newValue==accessValue){
-                newValue = accessValue.replace(id,"");
-            }
-        }else{
-            newValue = accessValue.replace(id+',',"");
-        }
-
-        var url = "<?php echo base_url().'main/unlinkAccess/'?>"
-        var accessName = $('#un_'+id+"_name").html()
-        $.ajax({
-               type: "POST",
-               url: url,
-               data: "column="+db_column+"&id="+newValue+"&position_id="+<?php echo $position_id ?>+"&accessValue="+accessValue+"&accessName="+accessName+'&csrf_test_name='+$.cookie('csrf_cookie_name'), // serializes the form's elements.
-               success: function(data)
-               {
-                   $('#'+db_column+"UnAssigned").append(data)
-                   $('#'+access).val(newValue)
-               }
-         });
-
-            return false;
-    }
-    
-    
-    function assignAccess(id,access, db_column)
-    {
-       
-        var url = "<?php echo base_url().'main/saveAccess/'?>"
-       
-        var accessValue = $('#'+access).val();
-        var accessName = $('#'+id+"_name").html()
-       // alert(accessValue)
-        $.ajax({
-               type: "POST",
-               url: url,
-               data: "column="+db_column+"&id="+id+"&position_id="+<?php echo $position_id ?>+"&accessValue="+accessValue+"&accessName="+accessName+'&csrf_test_name='+$.cookie('csrf_cookie_name'), // serializes the form's elements.
-               success: function(data)
-               {
-                   $('#'+db_column+"Assigned").append(data)
-                   if(accessValue!=""){
-                       $('#'+access).val(accessValue+','+id)
-                   }else{
-                      $('#'+access).val(id) 
-                   }
-                   
-               }
-         });
-
-            return false;
+<style>
+    /* Scroll */
+    .custom-scroll {
+        max-height: 500px;
+        overflow-y: auto;
     }
 
-</script>
+    /* Permission Card */
+    .permission-card {
+        background: #f8f9fa;
+        border-radius: 14px;
+        padding: 14px 16px;
+        transition: all 0.25s ease;
+        border: 1px solid transparent;
+    }
+
+    /* Hover */
+    .permission-card:hover {
+        background: #ffffff;
+        transform: translateY(-2px);
+        box-shadow: 0 10px 22px rgba(0, 0, 0, 0.08);
+    }
+
+    /* Active (checked) */
+    .permission-card.active {
+        border: 1px solid rgba(13, 110, 253, 0.2);
+        background: rgba(13, 110, 253, 0.05);
+    }
+
+    /* Switch */
+    .form-check-input {
+        width: 42px;
+        height: 22px;
+        cursor: pointer;
+    }
+
+    /* Smooth toggle */
+    .form-check-input:checked {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+    }
+
+    /* Badge */
+    .bg-primary-subtle {
+        background: rgba(13, 110, 253, 0.1);
+    }
+</style>

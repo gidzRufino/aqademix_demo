@@ -1,21 +1,18 @@
 <div class="row">
     <div class="col-lg-12">
-        <h3 style="margin-top: 20px;" class="page-header">List of Employees
-            <div class="btn-group pull-right" role="group" aria-label="">
-                <button type="button" class="btn btn-default" onclick="document.location = '<?php echo base_url('hr/payroll') ?>'">Payroll</button>
-                <!--<button type="button" class="btn btn-primary" id="subOver" rel="clickover" onclick="document.location = '<?php echo base_url('hr/listSubOver'); ?>'">Substitution / Overload</button>-->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3 class="page-header">List of Employees</h3>
+            <div class="btn-group" role="group" aria-label="Actions">
+                <button type="button" class="btn btn-secondary" onclick="document.location='<?php echo base_url('hr/payroll') ?>'">Payroll</button>
 
                 <?php if ($this->session->userdata('position_id') == 1): ?>
-                    <a id="CSVExportBtn" href="<?php echo base_url() . 'reports/exportTeachersToCsv' ?>" class="btn btn-default btn-success">Export To CSV </a>
-                    <a href="#importCsv" data-toggle="modal" id="uploadAssessment" class="btn btn-warning pull-right">
+                    <a id="CSVExportBtn" href="<?php echo base_url() . 'reports/exportTeachersToCsv' ?>" class="btn btn-success">Export To CSV</a>
+                    <a href="#importCsv" data-bs-toggle="modal" id="uploadAssessment" class="btn btn-warning">
                         <i class="fa fa-upload"></i>
                     </a>
                 <?php endif; ?>
             </div>
-
-        </h3>
-
-
+        </div>
     </div>
 </div>
 
@@ -27,104 +24,87 @@ foreach ($leave as $l):
     endif;
 endforeach;
 ?>
-<div class="">
-    <div class="row">
-        <div class="col-md-12">
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
             <!-- Nav tabs -->
-            <div class="card">
-                <ul class="nav nav-tabs" role="tablist">
-                    <li role="presentation" class="<?php echo ($option == 1 ? 'active' : '') ?>" onclick="getEmStat(1)"><a href="#home" aria-controls="home" role="tab" data-toggle="tab"><i class="fa fa-check-circle"></i>  <span>Active</span></a></li>
-                    <li role="presentation" class="<?php echo ($option == 2 ? 'active' : '') ?>" onclick="getEmStat(2)"><a href="#profile" aria-controls="profile" role="tab" data-toggle="tab"><i class="fa fa-times-circle"></i>  <span>Suspended</span></a></li>
-                    <li role="presentation" class="<?php echo ($option == 3 ? 'active' : '') ?>" onclick="getEmStat(3)"><a href="#messages" aria-controls="messages" role="tab" data-toggle="tab"><i class="fa fa-minus-circle"></i>  <span>Resigned</span></a></li>
-                    <li role="presentation" class="<?php echo ($option == 0 ? 'active' : '') ?>" onclick="getEmStat(0)"><a href="#settings" aria-controls="settings" role="tab" data-toggle="tab"><i class="fa fa-exclamation-circle"></i>  <span>Deactivated</span></a></li>
-                    <li class="pull-right pointer"><a href="#leaveRequest" data-toggle="tab"><span class="badge badge-primary" id="lr" style="background-color: red;"><?php echo $tl; ?></span> Leave Requests</a></li>
-                </ul>
+            <ul class="nav nav-tabs" id="employeeTabs" role="tablist">
+                <li class="nav-item" onclick="getEmStat(1)">
+                    <a class="nav-link <?php echo ($option == 1 ? 'active' : '') ?>" id="active-tab" data-bs-toggle="tab" href="#home" role="tab">
+                        <i class="fa fa-check-circle"></i> <span>Active</span>
+                    </a>
+                </li>
+                <li class="nav-item" onclick="getEmStat(2)">
+                    <a class="nav-link <?php echo ($option == 2 ? 'active' : '') ?>" id="suspended-tab" data-bs-toggle="tab" href="#profile" role="tab">
+                        <i class="fa fa-times-circle"></i> <span>Suspended</span>
+                    </a>
+                </li>
+                <li class="nav-item" onclick="getEmStat(3)">
+                    <a class="nav-link <?php echo ($option == 3 ? 'active' : '') ?>" id="resigned-tab" data-bs-toggle="tab" href="#messages" role="tab">
+                        <i class="fa fa-minus-circle"></i> <span>Resigned</span>
+                    </a>
+                </li>
+                <li class="nav-item" onclick="getEmStat(0)">
+                    <a class="nav-link <?php echo ($option == 0 ? 'active' : '') ?>" id="deactivated-tab" data-bs-toggle="tab" href="#settings" role="tab">
+                        <i class="fa fa-exclamation-circle"></i> <span>Deactivated</span>
+                    </a>
+                </li>
+                <li class="nav-item ms-auto">
+                    <a class="nav-link" href="#leaveRequest" data-bs-toggle="tab">
+                        <span class="badge bg-danger" id="lr"><?php echo $tl; ?></span> Leave Requests
+                    </a>
+                </li>
+            </ul>
 
-                <!-- Tab panes -->
-                <div class="tab-content">
-                    <div role="tabpanel" class="tab-pane active" id="home">
-                        <?php
-                        $data['links'] = $links;
-                        $data['employee'] = $employee;
-                        $this->load->view('activeEmployees', $data);
-                        ?>
-                    </div>
-                    <div role="tabpanel" class="tab-pane" id="profile">
-                        <?php
-                        $data['links'] = $links;
-                        $data['employee'] = $employee;
-                        $this->load->view('activeEmployees', $data);
-                        ?>
-                    </div>
-                    <div role="tabpanel" class="tab-pane" id="messages">
-                        <?php
-                        $data['links'] = $links;
-                        $data['employee'] = $employee;
-                        $this->load->view('activeEmployees', $data);
-                        ?>
-                    </div>
-                    <div role="tabpanel" class="tab-pane" id="settings">
-                        <?php
-                        $data['links'] = $links;
-                        $data['employee'] = $employee;
-                        $this->load->view('activeEmployees', $data);
-                        ?>
-                    </div>
-                    <div role="tabpanel" class="tab-pane" id="leaveRequest">
-                        <?php
-                        $data['leave'] = $leave;
-                        $this->load->view('leaveRequests', $data);
-                        ?>
-                    </div>
+            <!-- Tab panes -->
+            <div class="tab-content p-3">
+                <div class="tab-pane fade show active" id="home">
+                    <?php
+                    $data['links'] = $links;
+                    $data['employee'] = $employee;
+                    $this->load->view('activeEmployees', $data);
+                    ?>
+                </div>
+                <div class="tab-pane fade" id="profile">
+                    <?php $this->load->view('activeEmployees', $data); ?>
+                </div>
+                <div class="tab-pane fade" id="messages">
+                    <?php $this->load->view('activeEmployees', $data); ?>
+                </div>
+                <div class="tab-pane fade" id="settings">
+                    <?php $this->load->view('activeEmployees', $data); ?>
+                </div>
+                <div class="tab-pane fade" id="leaveRequest">
+                    <?php
+                    $data['leave'] = $leave;
+                    $this->load->view('leaveRequests', $data);
+                    ?>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Add Identification Card -->
-<div id="addId" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-    <div style='width:450px; height:auto; margin:50px auto 0;  background:white;'>
-        <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-            <h3 id="myModalLabel">Scan Employee's Identification Card</h3>
-        </div>
-        <div class="modal-body">
-            <div class="control-group">
-                <label class="control-label" for="input">CARD NUMBER:</label>
-                <div class="controls">
-                    <input type="text" id="inputCard" onclick="this.value = ''" placeholder="RFID" required>
-                    <input type="hidden" id="stud_id">
-                    <input type="hidden" id="emp_id">
-                </div>
+<!-- Import CSV Modal -->
+<div class="modal fade" id="importCsv" tabindex="-1" aria-labelledby="importCsvLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:350px;">
+        <div class="modal-content">
+            <div class="modal-header bg-success-subtle">
+                <h5 class="modal-title" id="importCsvLabel">Upload Teachers CSV</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-        </div>
-        <div class="modal-footer">
-            <button class="btn" data-dismiss="modal">Close</button>
-            <button onclick="updateProfile('<?php echo base64_encode('user_id') ?>', '<?php echo base64_encode('esk_profile') ?>', 'rfid')" class="btn btn-primary">Save </button>
-            <div id="resultSection" class="help-block"></div>
+            <?php
+            $attributes = array('class' => '', 'id' => 'importCSV', 'style' => 'margin-top:10px;');
+            echo form_open_multipart(base_url() . 'hr/importTeachers', $attributes);
+            ?>
+            <div class="modal-body">
+                <input type="file" name="userfile" class="form-control mb-2">
+                <input type="submit" name="submit" value="UPLOAD" class="btn btn-success w-100">
+            </div>
+            <?php echo form_close(); ?>
         </div>
     </div>
-</div>
-<div id="importCsv" style="width:350px; margin: 10px auto 0;" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-    <div class="panel panel-green">
-        <div class="panel-heading">
-            <h4>Upload Teachers CSV</h4>
-        </div>
-        <?php
-        $attributes = array('class' => '', 'id' => 'importCSV', 'style' => 'margin-top:20px;');
-        echo form_open_multipart(base_url() . 'hr/importTeachers', $attributes);
-        ?>
-        <div class="panel-body">
-
-            <input style="height:30px" type="file" name="userfile"><br />
-            <input type="submit" name="submit" value="UPLOAD" class="btn btn-success">
-        </div>
-        <?php
-        echo form_close();
-        ?>
-    </div>
-
 </div>
 
 <script type="text/javascript">
@@ -135,30 +115,47 @@ endforeach;
         });
     });
 
-    function showAddRFIDForm(id, st_id, emp_id) {
-        $('#stud_id').val(id)
-        $('#emp_id').val(emp_id)
-        $("#inputCard").attr('placeholder', st_id);
-        document.getElementById("inputCard").focus()
-    }
+    // function showAddRFIDForm(id, st_id, emp_id) {
+    //     alert(id + ' ' + st_id + ' ' + emp_id)
+    //     $('#stud_id').val(id)
+    //     $('#emp_id').val(emp_id)
+    //     $("#inputCard").attr('placeholder', st_id);
+    //     document.getElementById("inputCard").focus()
+    // }
 
     function updateProfile(pk, table, column) {
         var url = "<?php echo base_url() . 'users/editProfile/' ?>"; // the script where you handle the form input.
         var pk_id = $('#stud_id').val();
         var emp_id = $('#emp_id').val();
-        var value = $('#inputCard').val()
-        $.ajax({
-            type: "POST",
-            url: url,
-            dataType: 'json',
-            data: 'id=' + pk_id + '&column=' + column + '&value=' + value + '&tbl=' + table + '&pk=' + pk + '&csrf_test_name=' + $.cookie('csrf_cookie_name'), // serializes the form's elements.
-            success: function(data) {
-                alert('RFID Successfully Saved');
-                // updateAttendanceFormat(emp_id, value)
-                location.reload();
+        var value = $('#inputCard').val();
+        var rfid = $('#rfid').val();
+        var cont = 0;
+
+        if (value === '') {
+            if (rfid == 'RFID') {
+                alert('No Card Number Entered');
+            } else {
+                value = rfid;
+                cont = 1;
             }
-        });
-        return false; // avoid to execute the actual submit of the form.
+        } else {
+            cont = 1;
+        }
+
+        if (cont === 1) {
+            $.ajax({
+                type: "POST",
+                url: url,
+                dataType: 'json',
+                data: 'id=' + pk_id + '&column=' + column + '&value=' + value + '&tbl=' + table + '&pk=' + pk + '&csrf_test_name=' + $.cookie('csrf_cookie_name'), // serializes the form's elements.
+                success: function(data) {
+                    alert('RFID Successfully Saved');
+                    // updateAttendanceFormat(emp_id, value)
+                    location.reload();
+                }
+            });
+            return false; // avoid to execute the actual submit of the form.
+        }
     }
 
     function updateAttendanceFormat(user_id, rfid) {
@@ -256,6 +253,58 @@ endforeach;
                 $('#lr').text(t);
             }
         })
+    }
+
+    function updateEmployeeStatus(employeeId, status) {
+        var csrf = $.cookie('csrf_cookie_name'); // CSRF token
+        $.ajax({
+            type: 'POST',
+            url: '<?php echo base_url("hr/updateEmStatus") ?>',
+            data: {
+                eid: employeeId,
+                status: status,
+                csrf_test_name: csrf
+            },
+            success: function() {
+                // Reload the page to reflect changes
+                location.reload();
+            },
+            error: function() {
+                alert('Failed to update status.');
+            }
+        });
+    }
+
+    function togglePassword(empId) {
+        const mask = document.getElementById('pw_mask_' + empId);
+        const real = document.getElementById('pw_real_' + empId);
+
+        if (real.classList.contains('d-none')) {
+            real.classList.remove('d-none');
+            mask.classList.add('d-none');
+        } else {
+            real.classList.add('d-none');
+            mask.classList.remove('d-none');
+        }
+    }
+
+    function resetPassword(empId) {
+        if (!confirm("Reset this employee's password?")) return;
+
+        $.ajax({
+            url: "<?= base_url('hr/resetPassword') ?>",
+            type: "POST",
+            data: {
+                employee_id: empId,
+                csrf_test_name: $.cookie('csrf_cookie_name')
+            },
+            success: function(res) {
+                alert("Password has been reset successfully.");
+            },
+            error: function() {
+                alert("Error resetting password.");
+            }
+        });
     }
 </script>
 <style type="text/css">

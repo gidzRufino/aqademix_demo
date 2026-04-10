@@ -1,37 +1,57 @@
+<div id="basicInfo">
+  <div class="row g-3">
 
-<div id='basicInfo'>
-    <div class='control-group pull-left'>
-              <label class='control-label'>First Name</label>
-              <div class='controls'>
-                <input type='text' name='firstname' value='<?php echo $firstname ?>' placeholder='<?php echo $firstname ?>' id='firstname' />
-              </div>
-              
+    <div class="col-md-4">
+      <label class="form-label">First Name</label>
+      <input type="text"
+        class="form-control"
+        name="firstname"
+        value="<?php echo $firstname ?>"
+        placeholder="<?php echo $firstname ?>"
+        id="firstname">
     </div>
-    <div class='control-group pull-left'>
-              <label class='control-label'>Middle Name</label>
-              <div class='controls'>
-                <input type='text' name='middlename' value='<?php echo $middlename ?>' placeholder='<?php echo $middlename ?>' id='middlename' />
-              </div>
-              
+
+    <div class="col-md-4">
+      <label class="form-label">Middle Name</label>
+      <input type="text"
+        class="form-control"
+        name="middlename"
+        value="<?php echo $middlename ?>"
+        placeholder="<?php echo $middlename ?>"
+        id="middlename">
     </div>
-    <div class='control-group pull-left'>
-              <label class='control-label'>Last Name</label>
-              <div class='controls'>
-                <input type='text' name='lastname' value='<?php echo $lastname ?>' placeholder='<?php echo $lastname ?>' id='lastname' />
-              </div>
-              
+
+    <div class="col-md-4">
+      <label class="form-label">Last Name</label>
+      <input type="text"
+        class="form-control"
+        name="lastname"
+        value="<?php echo $lastname ?>"
+        placeholder="<?php echo $lastname ?>"
+        id="lastname">
     </div>
-            
-            
+
+  </div>
 </div>
-<div style='margin:5px 0 10px; float:right;'>
-     
-    <input type='hidden' id='pos' value='<?php echo $pos?>' />
-    <input type='hidden' id='st_user_id' value='<?php echo $st_user_id?>' />
-    <input type='hidden' id='rowid' value='<?php echo $user_id?>' />
-    <input type='hidden' id='name_id' value='<?php echo $name_id?>' />
-     
-     <button data-dismiss='clickover' class='btn btn-small btn-danger pull-right'>Cancel</button>&nbsp;&nbsp;
-     <a href='#' data-dismiss='clickover' onclick='editBasicInfo()' style='margin-right:10px;' class='btn btn-small btn-success pull-right'>Save</a>
-</div>    
 
+<!-- Hidden Fields -->
+<input type="hidden" id="pos" value="<?php echo $pos ?>">
+<input type="hidden" id="st_user_id" value="<?php echo $st_user_id ?>">
+<input type="hidden" id="rowid" value="<?php echo $user_id ?>">
+<input type="hidden" id="name_id" value="<?php echo $name_id ?>">
+
+<!-- Buttons -->
+<div class="d-flex justify-content-end gap-2 mt-3">
+
+  <button class="btn btn-danger btn-sm"
+    data-bs-dismiss="popover">
+    Cancel
+  </button>
+
+  <button class="btn btn-success btn-sm"
+    onclick="editBasicInfo()"
+    data-bs-dismiss="popover">
+    Save
+  </button>
+
+</div>
